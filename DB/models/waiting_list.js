@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../index');
+const sequelize = require('../config');
 const User = require('./user');
 const Lesson = require('./lesson');
 
@@ -13,7 +13,7 @@ const WaitingList = sequelize.define('waiting_list', {
     timestamps: false
 });
 
-WaitingList.belongsTo(User, { foreignKey: 'client_id' });
-WaitingList.belongsTo(Lesson, { foreignKey: 'lesson_id' });
+// WaitingList.belongsTo(User, { foreignKey: 'client_id' });
+// WaitingList.belongsTo(Lesson, { foreignKey: 'lesson_id' });
 
 module.exports = WaitingList;

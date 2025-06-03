@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../index');
+const sequelize = require('../config');
 const User = require('./user');
 
 const SystemMessage = sequelize.define('system_message', {
@@ -12,6 +12,6 @@ const SystemMessage = sequelize.define('system_message', {
     timestamps: false
 });
 
-SystemMessage.belongsTo(User, { foreignKey: 'client_id' });
+// SystemMessage.belongsTo(User, { foreignKey: 'client_id' });
 
 module.exports = SystemMessage;

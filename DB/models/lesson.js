@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../index');
+const sequelize = require('../config');
 const User = require('./user');
 
 const Lesson = sequelize.define('lesson', {
@@ -17,6 +17,6 @@ const Lesson = sequelize.define('lesson', {
     timestamps: false
 });
 
-Lesson.belongsTo(User, { foreignKey: 'instructor_id', as: 'Instructor' });
+// Lesson.belongsTo(User, { foreignKey: 'instructor_id', as: 'Instructor' });
 
 module.exports = Lesson;

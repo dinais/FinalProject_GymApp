@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../index');
+const sequelize = require('../config');
 const User = require('./user');
 const Lesson = require('./lesson');
 
@@ -11,7 +11,7 @@ const Favorite = sequelize.define('favorite', {
     timestamps: false
 });
 
-Favorite.belongsTo(User, { foreignKey: 'user_id' });
-Favorite.belongsTo(Lesson, { foreignKey: 'lesson_id' });
+// Favorite.belongsTo(User, { foreignKey: 'user_id' });
+// Favorite.belongsTo(Lesson, { foreignKey: 'lesson_id' });
 
 module.exports = Favorite;

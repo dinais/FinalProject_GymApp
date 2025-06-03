@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../index');
+const sequelize = require('../config');
 const User = require('./user');
 
 const Password = sequelize.define('password', {
@@ -11,6 +11,6 @@ const Password = sequelize.define('password', {
     timestamps: false
 });
 
-Password.belongsTo(User, { foreignKey: 'user_id' });
+// Password.belongsTo(User, { foreignKey: 'user_id' });
 
 module.exports = Password;

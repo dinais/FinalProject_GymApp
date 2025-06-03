@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 require('dotenv').config(); // כדי לקרוא מ .env
 const PORT = process.env.PORT || 5000;
+console.log('DB_USER:', process.env.DB_USER);
 
 // ייבוא החיבור למסד הנתונים
 const sequelize = require('../DB/config');
