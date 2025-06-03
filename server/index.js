@@ -14,8 +14,8 @@ const db = require('../DB/models');
 app.use(express.json());
 
 // בדיקה שהשרת עובד
-app.get('/api/hello', (req, res) => {
-  res.json({ message: 'Hello from server!' });
+app.get('/', (req, res) => {
+  res.send('Welcome to my server!');
 });
 
 // התחברות למסד והפעלת השרת
