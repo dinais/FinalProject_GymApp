@@ -1,5 +1,4 @@
-const sequelize = require('../index');
-
+const sequelize = require('../config');
 // ייבוא מודלים
 const User = require('./user');
 const Password = require('./password');
