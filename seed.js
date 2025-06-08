@@ -1,3 +1,4 @@
+const bcrypt = require('bcrypt');
 const { User, Role, Lesson, Favorite, Cancellation, MyLesson, WaitingList, Password, SystemMessage } = require('./DB/models');
 
 async function seed() {
@@ -67,11 +68,18 @@ async function seed() {
     { client_id: 'u3', lesson_id: 1, date: new Date('2025-05-29') }
   ]);
 
-  await Password.bulkCreate([
-    { user_id: 'u1', hash: 'hashed_password_1' },
-    { user_id: 'u2', hash: 'hashed_password_2' },
-    { user_id: 'u3', hash: 'hashed_password_3' },
-  ]);
+  // סיסמאות אמיתיות שתוכלי להיכנס איתן
+  const passwords = [
+    { user_id: 'u1', plain: 'password123' },
+    { user_id: 'u2', plain: 'secret456' },
+    { user_id: 'u3', plain: 'mypassword789' },
+  ];
+
+  // הצפנת הסיסמאות
+  for (const pw of passwords) {
+    const hash = await bcrypt.hash(pw.plain, 10);
+    await Password.create({ user_id: pw.user_id, hash });
+  }
 
   await SystemMessage.bulkCreate([
     { client_id: 'u2', role: 'client', message: 'Welcome to the system!' },

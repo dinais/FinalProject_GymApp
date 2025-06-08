@@ -5,6 +5,8 @@ const userController = require('../controllers/users_controller');
 // הרשמה משתמש חדש
 router.post('/register', userController.registerUser);
 
+router.post('/login', userController.loginUser);
+
 // שליפת כל המשתמשים
 router.get('/', userController.getAllUsers);
 
@@ -16,5 +18,8 @@ router.put('/:id', userController.updateUser);
 
 // מחיקת משתמש
 router.delete('/:id', userController.deleteUser);
+
+// רענון טוקן
+router.post('/refresh-token', userController.refreshToken);
 
 module.exports = router;
