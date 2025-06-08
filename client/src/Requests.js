@@ -22,6 +22,9 @@ async function refreshTokenIfNeeded(response) {
 
 async function sendRequestWithRefresh(method, url, body = null) {
   const makeFetch = async (token) => {
+    console.log(`${BASE_URL}/${url}`);
+    console.log(token);
+    
     return fetch(`${BASE_URL}/${url}`, {
       method,
       headers: {

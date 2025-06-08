@@ -21,13 +21,13 @@ const db = require('../DB/models'); // טוען את המודלים והקשרי
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: ['http://localhost:3000', 'http://localhost:3004'], // הוסף את שני הפורטים
   credentials: true
 }));
 
 // נתיבים
 
-app.use('/api/users', userRouter);
+app.use('/', userRouter);
 app.use('/api/lessons', lessonRouter);
 
 

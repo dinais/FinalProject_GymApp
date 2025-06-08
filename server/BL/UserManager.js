@@ -67,6 +67,9 @@ const UserManager = {
                     }
                 ]
             });
+            console.log('user:', user);
+console.log('user.password:', user?.password);
+console.log('user.password.hash:', user?.password?.hash);
 
             if (!user || !user.password || !user.password.hash) {
                 return {
