@@ -13,8 +13,8 @@ const SystemMessage = require('./system_message');
 // --------- Associations ---------
 
 // Password שייך ל-User
-Password.belongsTo(User, { foreignKey: 'user_id' });
-User.hasOne(Password, { foreignKey: 'user_id' });
+Password.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+User.hasOne(Password, { foreignKey: 'user_id', as: 'password' });
 
 // שיעור שייך למדריך (User)
 Lesson.belongsTo(User, { foreignKey: 'instructor_id', as: 'Instructor' });
@@ -49,8 +49,9 @@ WaitingList.belongsTo(Lesson, { foreignKey: 'lesson_id' });
 Lesson.hasMany(WaitingList, { foreignKey: 'lesson_id' });
 
 // Roles
-Role.belongsTo(User, { foreignKey: 'client_id' });
-User.hasMany(Role, { foreignKey: 'client_id' });
+Role.belongsTo(User, { foreignKey: 'client_id', as: 'user' });
+User.hasMany(Role, { foreignKey: 'client_id', as: 'roles' });
+
 
 // System Messages
 SystemMessage.belongsTo(User, { foreignKey: 'client_id' });

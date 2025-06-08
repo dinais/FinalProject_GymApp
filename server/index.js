@@ -21,7 +21,7 @@ app.use(cors({
 
 // נתיבים
 
-app.use('/api/users', userRoutes);
+app.use('/', userRoutes);
 
 // בדיקה
 app.get('/', (req, res) => {
