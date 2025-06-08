@@ -1,28 +1,43 @@
 const express = require('express');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const userRoutes = require('./API/routes/users_router');
+require('dotenv').config(); // לקרוא משתנים מ-.env
+
 const app = express();
-require('dotenv').config(); // כדי לקרוא מ .env
 const PORT = process.env.PORT || 5000;
-console.log('DB_USER:', process.env.DB_USER);
 
-// ייבוא החיבור למסד הנתונים
+// התחברות למסד נתונים
 const sequelize = require('../DB/config');
+const db = require('../DB/models'); // טוען את המודלים והקשרים
 
-// טוען את כל המודלים ומבצע את הקשרים ביניהם
-const db = require('../DB/models');
-
-// כדי לפרש בקשות JSON
+// Middleware
 app.use(express.json());
+app.use(cookieParser());
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
 
-// בדיקה שהשרת עובד
+// נתיבים
+
+app.use('/api/users', userRoutes);
+
+// בדיקה
 app.get('/', (req, res) => {
   res.send('Welcome to my server!');
 });
 
-// התחברות למסד והפעלת השרת
+// התחלת שרת
 sequelize.authenticate()
   .then(() => {
     console.log('✅ Database connected');
-    return sequelize.sync(); // לא חובה אם הטבלאות כבר קיימות
+
+    if (process.env.NODE_ENV !== 'production') {
+      return sequelize.sync(); // רק בפיתוח
+    }
+
+    return Promise.resolve(); // אם ב-production
   })
   .then(() => {
     app.listen(PORT, () => {

@@ -1,9 +1,8 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from "react-router-dom"
 import { CurrentUser, Error } from './App';
 import { postRequest, setRefreshTokenInCookies } from '../Requests';
-import '../css/Login.css';
-
+// import '../css/Login.css';
 
 function RegistrationPermission() {
     const { setCurrentUser } = useContext(CurrentUser);
@@ -22,8 +21,10 @@ function RegistrationPermission() {
         const requestResult = await postRequest(`register`, formData)
         if (requestResult.succeeded) {
             const { name, email, address, phone } = formData;
-            localStorage.setItem("currentUser", JSON.stringify({ name, email, address, phone, id: requestResult.data.userId }));
-            setCurrentUser({ name, email, address, phone, id: requestResult.data.userId });
+            // מאפסים roles - כי המזכירה תגדיר אותם מאוחר יותר
+            const userObject = { name, email, address, phone, id: requestResult.data.userId, roles: [] };
+            localStorage.setItem("currentUser", JSON.stringify(userObject));
+            setCurrentUser(userObject);
             localStorage.setItem("token", requestResult.data.accessToken);
             setRefreshTokenInCookies(requestResult.data.refreshToken);
             navigate(`/users/${requestResult.data.userId}/home`);
@@ -104,7 +105,6 @@ function RegistrationPermission() {
                 </form>
                 <Link to="/login">Login</Link>
             </div>
-
         </>
     );
 }

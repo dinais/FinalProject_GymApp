@@ -13,48 +13,48 @@ const SystemMessage = require('./system_message');
 // --------- Associations ---------
 
 // Password שייך ל-User
-Password.belongsTo(User, { foreignKey: 'userId' });
-User.hasOne(Password, { foreignKey: 'userId' });
+Password.belongsTo(User, { foreignKey: 'user_id' });
+User.hasOne(Password, { foreignKey: 'user_id' });
 
 // שיעור שייך למדריך (User)
-Lesson.belongsTo(User, { foreignKey: 'instructorId', as: 'Instructor' });
-User.hasMany(Lesson, { foreignKey: 'instructorId', as: 'LessonsTaught' });
+Lesson.belongsTo(User, { foreignKey: 'instructor_id', as: 'Instructor' });
+User.hasMany(Lesson, { foreignKey: 'instructor_id', as: 'LessonsTaught' });
 
 // MyLesson – קישור בין משתמש לשיעור
-MyLesson.belongsTo(User, { foreignKey: 'userId' });
-User.hasMany(MyLesson, { foreignKey: 'userId' });
+MyLesson.belongsTo(User, { foreignKey: 'user_id' });
+User.hasMany(MyLesson, { foreignKey: 'user_id' });
 
-MyLesson.belongsTo(Lesson, { foreignKey: 'lessonId' });
-Lesson.hasMany(MyLesson, { foreignKey: 'lessonId' });
+MyLesson.belongsTo(Lesson, { foreignKey: 'lesson_id' });
+Lesson.hasMany(MyLesson, { foreignKey: 'lesson_id' });
 
 // Favorites
-Favorite.belongsTo(User, { foreignKey: 'userId' });
-User.hasMany(Favorite, { foreignKey: 'userId' });
+Favorite.belongsTo(User, { foreignKey: 'user_id' });
+User.hasMany(Favorite, { foreignKey: 'user_id' });
 
-Favorite.belongsTo(Lesson, { foreignKey: 'lessonId' });
-Lesson.hasMany(Favorite, { foreignKey: 'lessonId' });
+Favorite.belongsTo(Lesson, { foreignKey: 'lesson_id' });
+Lesson.hasMany(Favorite, { foreignKey: 'lesson_id' });
 
 // Cancellations
-Cancellation.belongsTo(User, { foreignKey: 'instructorId', as: 'InstructorCanceled' });
-User.hasMany(Cancellation, { foreignKey: 'instructorId', as: 'CancellationsMade' });
+Cancellation.belongsTo(User, { foreignKey: 'instructor_id', as: 'InstructorCanceled' });
+User.hasMany(Cancellation, { foreignKey: 'instructor_id', as: 'CancellationsMade' });
 
-Cancellation.belongsTo(Lesson, { foreignKey: 'lessonId' });
-Lesson.hasMany(Cancellation, { foreignKey: 'lessonId' });
+Cancellation.belongsTo(Lesson, { foreignKey: 'lesson_id' });
+Lesson.hasMany(Cancellation, { foreignKey: 'lesson_id' });
 
 // Waiting List
-WaitingList.belongsTo(User, { foreignKey: 'clientId' });
-User.hasMany(WaitingList, { foreignKey: 'clientId' });
+WaitingList.belongsTo(User, { foreignKey: 'client_id' });
+User.hasMany(WaitingList, { foreignKey: 'client_id' });
 
-WaitingList.belongsTo(Lesson, { foreignKey: 'lessonId' });
-Lesson.hasMany(WaitingList, { foreignKey: 'lessonId' });
+WaitingList.belongsTo(Lesson, { foreignKey: 'lesson_id' });
+Lesson.hasMany(WaitingList, { foreignKey: 'lesson_id' });
 
 // Roles
-Role.belongsTo(User, { foreignKey: 'userId' });
-User.hasMany(Role, { foreignKey: 'userId' });
+Role.belongsTo(User, { foreignKey: 'client_id' });
+User.hasMany(Role, { foreignKey: 'client_id' });
 
 // System Messages
-SystemMessage.belongsTo(User, { foreignKey: 'clientId' });
-User.hasMany(SystemMessage, { foreignKey: 'clientId' });
+SystemMessage.belongsTo(User, { foreignKey: 'client_id' });
+User.hasMany(SystemMessage, { foreignKey: 'client_id' });
 
 // ייצוא כל המודלים
 module.exports = {
