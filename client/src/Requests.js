@@ -48,7 +48,7 @@ async function refreshTokenIfNeeded(response) {
 // פונקציה לשלוח בקשה עם רענון טוקן במקרה של שגיאה
 async function sendRequestWithRefresh(method, url, body = null) {
     const makeFetch = async (token) => {
-        return fetch(`http://localhost:3001/${url}`, {
+        return fetch(`http://localhost:5000/${url}`, {
             method,
             headers: {
                 'Content-Type': 'application/json',

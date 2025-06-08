@@ -1,11 +1,17 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const userRoutes = require('./API/routes/users_router');
-require('dotenv').config(); // לקרוא משתנים מ-.env
+const userRouter = require('./API/routes/users_router');
+const lessonRouter = require('./API/routes/lesson_router');
+
+require('dotenv').config({ path: __dirname + '/.env' });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+console.log({path: __dirname + '\\.env'});
+
+console.log('DB_USER:', process.env.DB_USER);
+console.log('DB_PASS:', process.env.DB_PASS);
 
 // התחברות למסד נתונים
 const sequelize = require('../DB/config');
@@ -21,7 +27,9 @@ app.use(cors({
 
 // נתיבים
 
-app.use('/api/users', userRoutes);
+app.use('/api/users', userRouter);
+app.use('/api/lessons', lessonRouter);
+
 
 // בדיקה
 app.get('/', (req, res) => {
