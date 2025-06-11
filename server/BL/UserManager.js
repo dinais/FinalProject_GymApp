@@ -68,8 +68,12 @@ const UserManager = {
                 ]
             });
             console.log('user:', user);
-console.log('user.password:', user?.password);
-console.log('user.password.hash:', user?.password?.hash);
+            console.log('user.password:', user?.password);
+            console.log('user.password.hash:', user?.password?.hash);
+            // console.log("hi",password);
+            // let hashedPassword = await bcrypt.hash(password, 10);
+            // console.log("hi",hashedPassword);
+
 
             if (!user || !user.password || !user.password.hash) {
                 return {
@@ -80,6 +84,7 @@ console.log('user.password.hash:', user?.password?.hash);
             }
 
             const isValid = await bcrypt.compare(password, user.password.hash);
+            
             if (!isValid) {
                 return {
                     succeeded: false,

@@ -21,8 +21,12 @@ exports.registerUser = async (req, res) => {
 
 
 exports.loginUser = async (req, res) => {
+
   try {
+    console.log("קיבלתי בקשה ל־/login");
+
     const { gmail, password } = req.body;
+    console.log(req.body); // בדוק מה באמת הגיע
     const result = await UserManager.login({ gmail, password });
 
     if (!result.succeeded) {

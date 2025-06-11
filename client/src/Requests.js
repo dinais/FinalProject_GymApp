@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:5000';  // שים לב כאן את הפורט הנכון של השרת שלך
+const BASE_URL = 'http://localhost:5000/api';  // שים לב כאן את הפורט הנכון של השרת שלך
 
 // שליחת בקשה עם אפשרות לרענן טוקן במקרה של 401 או 403
 async function refreshTokenIfNeeded(response) {
@@ -24,6 +24,7 @@ async function sendRequestWithRefresh(method, url, body = null) {
   const makeFetch = async (token) => {
     console.log(`${BASE_URL}/${url}`);
     console.log(token);
+    console.log(body);
     
     return fetch(`${BASE_URL}/${url}`, {
       method,

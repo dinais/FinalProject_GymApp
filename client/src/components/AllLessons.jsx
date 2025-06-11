@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { getRequest } from '../Requests';
 
 function AllLessons() {
   const [lessons, setLessons] = useState([]);
@@ -15,7 +15,7 @@ function AllLessons() {
   const fetchLessons = async () => {
     try {
       const weekStart = getStartOfWeek(weekOffset);
-      const res = await axios.get(`/api/lessons/week?weekStart=${weekStart}`);
+      const res = await getRequest(`lessons/week?weekStart=${weekStart}`);
       setLessons(res.data);
     } catch (err) {
       console.error('Failed to fetch lessons', err);
