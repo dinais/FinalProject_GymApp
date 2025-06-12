@@ -1,11 +1,16 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config');
-const User = require('./user');
-const Lesson = require('./lesson');
 
-const WaitingList = sequelize.define('waiting_list', {
+
+const waiting_list = sequelize.define('waiting_list', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    client_id: { type: DataTypes.STRING },
+    user_id: {
+    type: DataTypes.INTEGER,
+    references: {
+        model: 'users',
+        key: 'id'
+    }
+},
     lesson_id: { type: DataTypes.INTEGER },
     date: DataTypes.DATE
 }, {
@@ -13,7 +18,4 @@ const WaitingList = sequelize.define('waiting_list', {
     timestamps: false
 });
 
-// WaitingList.belongsTo(User, { foreignKey: 'client_id' });
-// WaitingList.belongsTo(Lesson, { foreignKey: 'lesson_id' });
-
-module.exports = WaitingList;
+module.exports = waiting_list;

@@ -1,7 +1,7 @@
 
 const UserManager = require('../../BL/UserManager');
 const jwt = require('jsonwebtoken');
-
+//לשנות לפונקציות היחידות שיש היוזר מנגר ב BL
 
 exports.registerUser = async (req, res) => {
   try {

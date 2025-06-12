@@ -1,16 +1,12 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config');
-const User = require('./user');
 
-const Role = sequelize.define('role', {
+const role = sequelize.define('role', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    client_id: { type: DataTypes.STRING },
-    role: DataTypes.STRING // אפשר גם ENUM אם רוצים
+    role: { type: DataTypes.STRING }
 }, {
     tableName: 'roles',
     timestamps: false
 });
 
-// Role.belongsTo(User, { foreignKey: 'client_id' });
-
-module.exports = Role;
+module.exports = role;

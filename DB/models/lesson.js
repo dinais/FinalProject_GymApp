@@ -1,8 +1,8 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config');
-const User = require('./user');
+const user = require('./user');
 
-const Lesson = sequelize.define('lesson', {
+const lesson = sequelize.define('lesson', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     lesson_type: DataTypes.STRING,
     hours: DataTypes.INTEGER,
@@ -19,4 +19,4 @@ const Lesson = sequelize.define('lesson', {
 
 // Lesson.belongsTo(User, { foreignKey: 'instructor_id', as: 'Instructor' });
 
-module.exports = Lesson;
+module.exports = lesson;

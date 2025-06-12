@@ -1,11 +1,17 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config');
-const User = require('./user');
-const Lesson = require('./lesson');
+const user = require('./user');
+const lesson = require('./lesson');
 
-const MyLesson = sequelize.define('my_lesson', {
+const lesson_registrations = sequelize.define('my_lesson', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    user_id: { type: DataTypes.STRING },
+    user_id: {
+    type: DataTypes.INTEGER,
+    references: {
+        model: 'users',
+        key: 'id'
+    }
+},
     lesson_id: { type: DataTypes.INTEGER },
     registration_date: DataTypes.DATE
 }, {
@@ -13,7 +19,4 @@ const MyLesson = sequelize.define('my_lesson', {
     timestamps: false
 });
 
-// MyLesson.belongsTo(User, { foreignKey: 'user_id' });
-// MyLesson.belongsTo(Lesson, { foreignKey: 'lesson_id' });
-
-module.exports = MyLesson;
+module.exports = lesson_registrations;

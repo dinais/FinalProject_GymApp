@@ -1,7 +1,7 @@
 const { User, Role, Password } = require('../../DB/models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
+// פונקציות נפרדות
 const UserManager = {
     async registerUser(userData) {
         const {

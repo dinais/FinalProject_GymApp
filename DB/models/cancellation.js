@@ -1,9 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config');
-const User = require('./user');
-const Lesson = require('./lesson');
 
-const Cancellation = sequelize.define('cancellation', {
+const cancellation = sequelize.define('cancellation', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     instructor_id: { type: DataTypes.STRING },
     lesson_id: { type: DataTypes.INTEGER },
@@ -13,7 +11,5 @@ const Cancellation = sequelize.define('cancellation', {
     timestamps: false
 });
 
-// Cancellation.belongsTo(User, { foreignKey: 'instructor_id' });
-// Cancellation.belongsTo(Lesson, { foreignKey: 'lesson_id' });
 
-module.exports = Cancellation;
+module.exports = cancellation;

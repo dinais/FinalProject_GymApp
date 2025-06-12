@@ -1,10 +1,16 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config');
-const User = require('./user');
+const user = require('./user');
 
-const Password = sequelize.define('password', {
+const password = sequelize.define('password', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    user_id: { type: DataTypes.STRING },
+    user_id: {
+    type: DataTypes.INTEGER,
+    references: {
+        model: 'users',
+        key: 'id'
+    }
+},
     hash: DataTypes.STRING
 }, {
     tableName: 'passwords',
@@ -13,4 +19,4 @@ const Password = sequelize.define('password', {
 
 // Password.belongsTo(User, { foreignKey: 'user_id' });
 
-module.exports = Password;
+module.exports = password;
