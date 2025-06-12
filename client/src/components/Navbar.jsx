@@ -34,7 +34,7 @@ const Navbar = ({ username, role }) => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <span>שלום, {username}</span>
         <Link to="/logout">
-          <img src="/logout-icon.svg" alt="Logout" style={{ width: '20px' }} />
+          {/* <img src="/logout-icon.svg" alt="Logout" style={{ width: '20px' }} /> */}
         </Link>
       </div>
     </nav>

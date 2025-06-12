@@ -58,7 +58,7 @@ const App = () => {
               element={
                 currentUser ? (
                   currentRole ? (
-                    <Navigate to="/home" replace />
+                    <Navigate to="/home/*" replace />
                   ) : currentUser.roles.length === 0 ? (
                     <div style={{ padding: "2rem", textAlign: "center" }}>
                       <h2>המזכירה טרם הגדירה את תפקידך</h2>
@@ -81,16 +81,16 @@ const App = () => {
 
             {/* דף הבית של המשתמש לפי תפקיד */}
             <Route
-              path="/home"
+              path="/home/*"
               element={
                 currentUser && currentRole ? (
                   <>
                     <Navbar username={currentUser.name} role={currentRole} />
                     <Routes>
-                      <Route path="/my-lessons" element={<MyLessons />} />
-                      <Route path="/all-lessons" element={<AllLessons />} />
-                      <Route path="/messages" element={<Messages />} />
-                      <Route path="/profile" element={<Profile />} />
+                      <Route path="my-lessons" element={<MyLessons />} />
+                      <Route path="all-lessons" element={<AllLessons />} />
+                      <Route path="messages" element={<Messages />} />
+                      <Route path="profile" element={<Profile />} />
                       {currentRole === "trainee" && (
                         <>
                           <Route path="/favorites" element={<Favorites />} />

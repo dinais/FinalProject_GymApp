@@ -6,7 +6,11 @@ require('dotenv').config();
 //לסדר שההרצה של הבסיס נתונים שתהיה דרך הבסיס נתונים ולא דגרך השרת
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT||5000;
+console.log({path: __dirname + '\\.env'});
+
+console.log('DB_USER:', process.env.DB_USER);
+console.log('DB_PASS:', process.env.DB_PASS);
 
 // התחברות למסד נתונים
 const sequelize = require('../DB/config');
@@ -16,13 +20,15 @@ const db = require('../DB/models'); // טוען את המודלים והקשרי
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: ['http://localhost:3000', 'http://localhost:3004'], // הוסף את שני הפורטים
   credentials: true
 }));
 
 // נתיבים
 
-app.use('/', userRoutes);
+app.use('/api/users', userRouter);
+app.use('/api/lessons', lessonRouter);
+
 
 // בדיקה
 app.get('/', (req, res) => {

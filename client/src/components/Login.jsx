@@ -15,7 +15,7 @@ function Login() {
   setErrorMessage('');
   try {
     console.log("Sending login request with", userData);
-    const requestResult = await postRequest('login', userData);
+    const requestResult = await postRequest('users/login', userData);
     console.log("Login response:", requestResult);
 
     if (requestResult.succeeded) {
