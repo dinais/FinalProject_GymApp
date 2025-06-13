@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const { user, role, user_role, lesson, favorite, cancellation, my_lesson, waiting_list, password, system_message } = require('./DB/models');
+const { user, role, user_role, lesson, favorite, cancellation, lesson_registrations, waiting_list, password, system_message } = require('./DB/models');
 
 async function seed() {
   try {
@@ -83,7 +83,7 @@ async function seed() {
     ]);
 
     // 7. הרשמות לשיעורים
-    await my_lesson.bulkCreate([
+    await lesson_registrations.bulkCreate([
       { user_id: client1.id, lesson_id: 1, registration_date: new Date('2025-05-30') },
       { user_id: client2.id, lesson_id: 2, registration_date: new Date('2025-06-01') },
       { user_id: client3.id, lesson_id: 3, registration_date: new Date('2025-06-02') },
@@ -103,12 +103,15 @@ async function seed() {
       { user_id: client3.id, plain: 'clientpass3' },
       { user_id: secretary.id, plain: 'secret123' }
     ];
+    console.log(passwords);
+    
 
     for (const pw of passwords) {
       const hash = await bcrypt.hash(pw.plain, 10);
       if (!pw.user_id) throw new Error('user_id is null or undefined for password seed');
       await password.create({ user_id: pw.user_id, hash });
     }
+    console.log('system_message:', system_message);
 
     // 10. הודעות מערכת
     await system_message.bulkCreate([
