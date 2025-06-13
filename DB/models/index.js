@@ -3,7 +3,7 @@ const sequelize = require('../config');
 const user = require('./user');
 const password = require('./password');
 const lesson = require('./lesson');
-const my_lesson = require('./lesson_registrations');
+const lesson_registrations = require('./lesson_registrations');
 const favorite = require('./favorite');
 const cancellation = require('./cancellation');
 const waiting_list = require('./waiting_list');
@@ -23,11 +23,11 @@ lesson.belongsTo(user, { foreignKey: 'instructor_id', as: 'Instructor' });
 user.hasMany(lesson, { foreignKey: 'instructor_id', as: 'LessonsTaught' });
 
 // MyLesson – קישור בין משתמש לשיעור
-my_lesson.belongsTo(user, { foreignKey: 'user_id' });
-user.hasMany(my_lesson, { foreignKey: 'user_id' });
+lesson_registrations.belongsTo(user, { foreignKey: 'user_id' });
+user.hasMany(lesson_registrations, { foreignKey: 'user_id' });
 
-my_lesson.belongsTo(lesson, { foreignKey: 'lesson_id' });
-lesson.hasMany(my_lesson, { foreignKey: 'lesson_id' });
+lesson_registrations.belongsTo(lesson, { foreignKey: 'lesson_id' });
+lesson.hasMany(lesson_registrations, { foreignKey: 'lesson_id' });
 
 // Favorites
 favorite.belongsTo(user, { foreignKey: 'user_id' });
@@ -69,7 +69,7 @@ module.exports = {
     user,
     password,
     lesson,
-    my_lesson,
+    lesson_registrations,
     favorite,
     cancellation,
     waiting_list,
