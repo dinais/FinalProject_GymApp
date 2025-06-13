@@ -56,8 +56,8 @@ role.belongsTo(user, { foreignKey: 'user_id', as: 'user' });
 user.hasMany(role, { foreignKey: 'user_id', as: 'roles' });
 
 // user-Role
-user.belongsToMany(role, { through: user_roles , foreignKey: 'user_id' });
-role.belongsToMany(user, { through: user_roles , foreignKey: 'role_id' });
+user.belongsToMany(role, { through: user_role , foreignKey: 'user_id' });
+role.belongsToMany(user, { through: user_role , foreignKey: 'role_id' });
 
 // System Messages
 system_message.belongsTo(user, { foreignKey: 'user_id' });

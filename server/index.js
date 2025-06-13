@@ -1,7 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const userRoutes = require('./API/routes/users_router');
+const userRouter = require('./API/routes/users_router');
+const lessonRouter = require('./API/routes/lesson_router');
 require('dotenv').config(); 
 //לסדר שההרצה של הבסיס נתונים שתהיה דרך הבסיס נתונים ולא דגרך השרת
 

@@ -1,5 +1,5 @@
 
-const UserManager = require('../../BL/UserManager');
+const user_manager = require('../../BL/user_manager');
 const jwt = require('jsonwebtoken');
 //לשנות לפונקציות היחידות שיש היוזר מנגר ב BL
 
@@ -11,7 +11,7 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ error: 'יש לציין תפקיד (roleId)' });
     }
 
-    const newUser = await UserManager.registerUser(userData);
+    const newUser = await user_manager.registerUser(userData);
     res.status(201).json({ message: 'המשתמש נרשם בהצלחה', user: newUser });
   } catch (err) {
     console.error(err);
@@ -25,9 +25,9 @@ exports.loginUser = async (req, res) => {
   try {
     console.log("קיבלתי בקשה ל־/login");
 
-    const { gmail, password } = req.body;
+    const { email, password } = req.body;
     console.log(req.body); // בדוק מה באמת הגיע
-    const result = await UserManager.login({ gmail, password });
+    const result = await user_manager.login({ email, password });
 
     if (!result.succeeded) {
       // במקרה של כשלון, מחזירים שגיאה ללקוח
@@ -55,7 +55,7 @@ exports.loginUser = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await UserManager.getAllUsers();
+    const users = await user_manager.getAllUsers();
     res.json(users);
   } catch (err) {
     console.error(err);
@@ -65,7 +65,7 @@ exports.getAllUsers = async (req, res) => {
 
 exports.getUserById = async (req, res) => {
   try {
-    const user = await UserManager.getUserById(req.params.id);
+    const user = await user_manager.getUserById(req.params.id);
     if (user) {
       res.json(user);
     } else {
@@ -79,7 +79,7 @@ exports.getUserById = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   try {
-    const updated = await UserManager.updateUser(req.params.id, req.body);
+    const updated = await user_manager.updateUser(req.params.id, req.body);
     if (updated) {
       res.json({ message: 'User updated successfully' });
     } else {
@@ -93,7 +93,7 @@ exports.updateUser = async (req, res) => {
 
 exports.deleteUser = async (req, res) => {
   try {
-    const deleted = await UserManager.deleteUser(req.params.id);
+    const deleted = await user_manager.deleteUser(req.params.id);
     if (deleted) {
       res.json({ message: 'User deleted successfully' });
     } else {

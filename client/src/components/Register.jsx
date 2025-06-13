@@ -24,7 +24,7 @@ function RegistrationPermission() {
             const requestResult = await postRequest('register', {
                 first_name: formData.first_name,
                 last_name: formData.last_name,
-                gmail: formData.email,
+                email: formData.email,
                 address: formData.address,
                 phone: formData.phone,
                 password: formData.password,

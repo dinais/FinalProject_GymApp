@@ -1,5 +1,5 @@
 const db = require('../../DAL/dal');
-const { Lesson} = require('../../../DB/models');
+const { lesson} = require('../../../DB/models');
 const { Op } = require('sequelize');
 
 const getLessonsByWeek = async (req, res) => {
@@ -9,7 +9,7 @@ const getLessonsByWeek = async (req, res) => {
     const end = new Date(start);
     end.setDate(end.getDate() + 7);
 
-    const lessons = await db.findAll(Lesson, {
+    const all_lessons = await db.findAll(lesson, {
       where: {
         start_date: {
           [Op.gte]: start,
@@ -18,7 +18,7 @@ const getLessonsByWeek = async (req, res) => {
       },
     });
 
-    res.json(lessons);
+    res.json(all_lessons);
   } catch (err) {
     console.error('Error fetching lessons:', err);
     res.status(500).json({ error: 'Failed to fetch lessons' });
