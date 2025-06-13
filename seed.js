@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const { user, role, user_role, lesson, favorite, cancellation, my_lesson, waiting_list, password, system_message } = require('./DB/models');
+const { user, role, user_role, lesson, favorite, cancellation, lesson_registrations, waiting_list, password, system_message } = require('./DB/models');
 
 async function seed() {
   try {
@@ -83,7 +83,7 @@ async function seed() {
     ]);
 
     // 7. הרשמות לשיעורים
-    await my_lesson.bulkCreate([
+    await lesson_registrations.bulkCreate([
       { user_id: client1.id, lesson_id: 1, registration_date: new Date('2025-05-30') },
       { user_id: client2.id, lesson_id: 2, registration_date: new Date('2025-06-01') },
       { user_id: client3.id, lesson_id: 3, registration_date: new Date('2025-06-02') },

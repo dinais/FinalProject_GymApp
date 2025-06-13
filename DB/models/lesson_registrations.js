@@ -3,7 +3,7 @@ const sequelize = require('../config');
 const user = require('./user');
 const lesson = require('./lesson');
 
-const lesson_registrations = sequelize.define('my_lesson', {
+const lesson_registrations = sequelize.define('lesson_registrations', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     user_id: {
     type: DataTypes.INTEGER,
@@ -15,7 +15,7 @@ const lesson_registrations = sequelize.define('my_lesson', {
     lesson_id: { type: DataTypes.INTEGER },
     registration_date: DataTypes.DATE
 }, {
-    tableName: 'my_lessons',
+    tableName: 'lesson_registrations',
     timestamps: false
 });
 

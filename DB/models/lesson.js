@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config');
 
-const lesson = sequelize.define('lesson', {
+const lesson = sequelize.define('lessons', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     lesson_type: DataTypes.STRING,
     hours: DataTypes.INTEGER,
