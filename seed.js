@@ -103,12 +103,15 @@ async function seed() {
       { user_id: client3.id, plain: 'clientpass3' },
       { user_id: secretary.id, plain: 'secret123' }
     ];
+    console.log(passwords);
+    
 
     for (const pw of passwords) {
       const hash = await bcrypt.hash(pw.plain, 10);
       if (!pw.user_id) throw new Error('user_id is null or undefined for password seed');
       await password.create({ user_id: pw.user_id, hash });
     }
+    console.log('system_message:', system_message);
 
     // 10. הודעות מערכת
     await system_message.bulkCreate([
