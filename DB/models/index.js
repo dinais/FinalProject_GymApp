@@ -10,7 +10,7 @@ const waiting_list = require('./waiting_list');
 const role = require('./role');
 const system_message = require('./system_message');
 const user_role = require('./user_role');
-
+const reserved_spot = require('./reserved_spot');
 
 // --------- Associations ---------
 
@@ -63,6 +63,11 @@ role.belongsToMany(user, { through: user_role , foreignKey: 'role_id' });
 system_message.belongsTo(user, { foreignKey: 'user_id' });
 user.hasMany(system_message, { foreignKey: 'user_id' });
 
+
+reserved_spot.belongsTo(lesson, { foreignKey: 'lesson_id' });
+reserved_spot.belongsTo(user, { foreignKey: 'user_id' });
+lesson.hasMany(reserved_spot, { foreignKey: 'lesson_id' });
+user.hasMany(reserved_spot, { foreignKey: 'user_id' });
 // ייצוא כל המודלים
 module.exports = {
     sequelize,
@@ -75,5 +80,6 @@ module.exports = {
     waiting_list,
     role,
     system_message,
-    user_role
+    user_role,
+    reserved_spot
 };

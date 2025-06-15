@@ -10,48 +10,53 @@ function Login() {
     const navigate = useNavigate();
     const [userData, setUserData] = useState({ email: '', password: '' });
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setErrorMessage('');
-        try {
-            const requestResult = await postRequest('users/login', userData);
-            
-            if (requestResult.succeeded) {
-                const user = requestResult.data.user;
-                const token = requestResult.data.accessToken;
-                
-                const userInfo = {
-                    first_name: user.first_name,
-                    last_name: user.last_name,
-                    email: user.email,
-                    address: user.address,
-                    phone: user.phone,
-                    id: user.id,
-                    roles: user.roles || []
-                };
-                
-                localStorage.setItem("token", token);
-                localStorage.removeItem("selectedRole");
-                
-                if (userInfo.roles.length === 1) {
-                    const role = userInfo.roles[0];
-                    setCurrentUser(userInfo);
-                    setCurrentRole(role);
-                    localStorage.setItem("currentUser", JSON.stringify(userInfo));
-                    localStorage.setItem("selectedRole", role); // הוספה חשובה!
-                    navigate('/');
-                } else {
-                    setCurrentUser(userInfo);
-                    localStorage.setItem("currentUser", JSON.stringify(userInfo));
-                    navigate('/RoleSelector');
-                }
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMessage('');
+    try {
+        const requestResult = await postRequest('users/login', userData);
+        
+        if (requestResult.succeeded) {
+            const user = requestResult.data.user;
+            const token = requestResult.data.accessToken;
+
+            const userInfo = {
+                first_name: user.first_name,
+                last_name: user.last_name,
+                email: user.email,
+                address: user.address,
+                phone: user.phone,
+                id: user.id,
+                roles: user.roles || []
+            };
+
+            // שמירה בטוקן
+            localStorage.setItem("token", token);
+
+            // !!! כאן - לפני הכל - איפוס תפקיד קודם
+            localStorage.removeItem("selectedRole");
+
+            // המשך רגיל
+            localStorage.setItem("currentUser", JSON.stringify(userInfo));
+            setCurrentUser(userInfo);
+
+            if (userInfo.roles.length === 1) {
+                const role = userInfo.roles[0];
+                setCurrentRole(role);
+                localStorage.setItem("selectedRole", role);
+                navigate('/');
             } else {
-                setErrorMessage(requestResult.error || 'Login failed');
+                navigate('/RoleSelector');
             }
-        } catch (error) {
-            setErrorMessage(error.message || 'Unexpected error during login');
+
+        } else {
+            setErrorMessage(requestResult.error || 'Login failed');
         }
-    };
+    } catch (error) {
+        setErrorMessage(error.message || 'Unexpected error during login');
+    }
+};
+
 
     return (
         <div className="login-container">

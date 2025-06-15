@@ -16,7 +16,7 @@ async function seed() {
   try {
     // 1. צור משתמשים
     const users = await user.bulkCreate([
-      { first_name: "David", last_name: "Cohen", address: "Tel Aviv", phone: "0501234567", id_number: "123456789", email: "david.cohen@example.com" }, // מאמן
+      { first_name: "David", last_name: "Cohen", address: "Tel Aviv", phone: "0501234567", id_number: "123456789", email: "dinablack092@gmail.com" }, // מאמן
       { first_name: "Sarah", last_name: "Levi", address: "Jerusalem", phone: "0529876543", id_number: "234567890", email: "sarah.levi@example.com" }, // לקוחה
       { first_name: "Maya", last_name: "Goldberg", address: "Haifa", phone: "0541237890", id_number: "345678901", email: "maya.goldberg@example.com" }, // לקוחה
       { first_name: "Noa", last_name: "Bar", address: "Ramat Gan", phone: "0509876543", id_number: "456789012", email: "noa.bar@example.com" }, // מזכירה
@@ -36,6 +36,7 @@ async function seed() {
     // 3. קשר בין משתמשים לתפקידים
     await user_role.bulkCreate([
       { user_id: coach1.id, role_id: roles.find(r => r.role === 'coach').id },
+      { user_id: coach1.id, role_id: roles.find(r => r.role === 'client').id },
       { user_id: coach2.id, role_id: roles.find(r => r.role === 'coach').id },
       { user_id: client1.id, role_id: roles.find(r => r.role === 'client').id },
       { user_id: client2.id, role_id: roles.find(r => r.role === 'client').id },

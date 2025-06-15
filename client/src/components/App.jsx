@@ -12,9 +12,8 @@ import InstructorsList from './InstructorsList';
 import TraineesList from './TraineesList';
 import Login from './Login';
 import Register from './Register';
-import TrainingProgram from './TrainingProgram'; // חדש
+import TrainingProgram from './TrainingProgram';
 
-// יצירת קונטקסטים
 export const CurrentUser = createContext({});
 export const Error = createContext({});
 
@@ -23,26 +22,31 @@ const App = () => {
   const [currentRole, setCurrentRole] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // טעינת משתמש ותפקיד מה־localStorage בעת טעינת האפליקציה
-  useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('currentUser'));
-    const savedRole = localStorage.getItem('selectedRole');
-    if (user) setCurrentUser(user);
-    if (savedRole) setCurrentRole(savedRole);
-  }, []);
+  // טען את המשתמש מה-localStorage
+useEffect(() => {
+  const user = JSON.parse(localStorage.getItem('currentUser'));
+  const savedRole = localStorage.getItem('selectedRole');
 
-  // אם למשתמש יש תפקיד יחיד - נקבע אותו אוטומטית
-  useEffect(() => {
-    if (currentUser && (!currentRole || currentRole === '')) {
-      const roles = currentUser.roles || [];
-      if (roles.length === 1) {
-        setCurrentRole(roles[0]);
-        localStorage.setItem('selectedRole', roles[0]);
-      }
+  if (user) {
+    setCurrentUser(user);
+
+    const roles = user.roles || [];
+
+    if (savedRole && roles.includes(savedRole)) {
+      setCurrentRole(savedRole);
+    } else if (roles.length === 1) {
+      const singleRole = roles[0];
+      setCurrentRole(singleRole);
+      localStorage.setItem('selectedRole', singleRole);
+    } else {
+      setCurrentRole(null);
+      localStorage.removeItem('selectedRole');
     }
-  }, [currentUser, currentRole]);
+  }
+}, []);
 
-  // ניקוי הודעת שגיאה לאחר 5 שניות
+
+  // אפס שגיאות אוטומטית
   useEffect(() => {
     if (errorMessage) {
       const timer = setTimeout(() => setErrorMessage(''), 5000);
@@ -51,104 +55,75 @@ const App = () => {
   }, [errorMessage]);
 
   return (
-  <CurrentUser.Provider value={{ currentUser, setCurrentUser, currentRole, setCurrentRole }}>
-    <Error.Provider value={{ errorMessage, setErrorMessage }}>
-      <Router>
-        <Routes>
+    <CurrentUser.Provider value={{ currentUser, setCurrentUser, currentRole, setCurrentRole }}>
+      <Error.Provider value={{ errorMessage, setErrorMessage }}>
+        <Router>
+          <Routes>
 
-          {/* דף הבית */}
-          <Route
-            path="/"
-            element={
-              currentUser ? (
-                currentRole ? (
-                  <Navigate to="/home/*" replace />
-                ) : currentUser.roles.length === 0 ? (
-                  <div style={{ padding: '2rem', textAlign: 'center' }}>
-                    <h2>המזכירה טרם הגדירה את תפקידך</h2>
-                    <p>אנא המתן עד שהמזכירה תעדכן את תפקידך במערכת.</p>
-                  </div>
+            {/* דף הבית */}
+<Route
+  path="/"
+  element={
+    (() => {
+      const user = JSON.parse(localStorage.getItem('currentUser'));
+      const selectedRole = localStorage.getItem('selectedRole');
+
+      if (!user) return <Navigate to="/login" replace />;
+      if (user.roles.length === 0) {
+        return (
+          <div style={{ padding: '2rem', textAlign: 'center' }}>
+            <h2>המזכירה טרם הגדירה את תפקידך</h2>
+            <p>אנא המתן עד שהמזכירה תעדכן את תפקידך במערכת.</p>
+          </div>
+        );
+      }
+      if (!selectedRole) return <RoleSelector />;
+      return <Navigate to="/home/*" replace />;
+    })()
+  }
+/>
+
+
+
+            {/* תצוגת דף הבית לפי תפקיד */}
+            <Route
+              path="/home/*"
+              element={
+                currentUser && currentRole ? (
+                  <>
+                    <Navbar username={currentUser.first_name} role={currentRole} />
+                    <Routes>
+                      <Route path="my-lessons" element={<MyLessons />} />
+                      <Route path="all-lessons" element={<AllLessons />} />
+                      <Route path="messages" element={<Messages />} />
+                      <Route path="profile" element={<Profile />} />
+
+                      {currentRole === 'client' && <Route path="favorites" element={<Favorites />} />}
+                      {currentRole === 'coach' && <Route path="training-program" element={<TrainingProgram />} />}
+                      {currentRole === 'secretary' && (
+                        <>
+                          <Route path="all-instructors" element={<InstructorsList />} />
+                          <Route path="all-trainees" element={<TraineesList />} />
+                        </>
+                      )}
+                      <Route path="logout" element={<h2>התנתקת מהמערכת</h2>} />
+                    </Routes>
+                  </>
                 ) : (
-                  <RoleSelector
-                    roles={currentUser.roles}
-                    onSelect={(role) => {
-                      setCurrentRole(role);
-                      localStorage.setItem('selectedRole', role);
-                    }}
-                  />
+                  <Navigate to="/" replace />
                 )
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
+              }
+            />
 
-          {/* עמוד הבית לפי תפקיד */}
-          <Route
-            path="/home/*"
-            element={
-              currentUser && currentRole ? (
-                <>
-                  <Navbar username={currentUser.first_name} role={currentRole} />
-                  <Routes>
-                    {/* משותפים */}
-                    <Route path="my-lessons" element={<MyLessons />} />
-                    <Route path="all-lessons" element={<AllLessons />} />
-                    <Route path="messages" element={<Messages />} />
-                    <Route path="profile" element={<Profile />} />
-
-                    {/* ללקוח */}
-                    {currentRole === 'client' && (
-                      <Route path="favorites" element={<Favorites />} />
-                    )}
-
-                    {/* למאמן */}
-                    {currentRole === 'coach' && (
-                      <Route path="training-program" element={<TrainingProgram />} />
-                    )}
-
-                    {/* למזכירה */}
-                    {currentRole === 'secretary' && (
-                      <>
-                        <Route path="all-instructors" element={<InstructorsList />} />
-                        <Route path="all-trainees" element={<TraineesList />} />
-                      </>
-                    )}
-
-                    {/* התנתקות */}
-                    <Route path="logout" element={<h2>התנתקת מהמערכת</h2>} />
-                  </Routes>
-                </>
-              ) : (
-                <Navigate to="/" replace />
-              )
-            }
-          />
-
-          {/* עמוד כניסה */}
-          <Route
-            path="/login"
-            element={
-              currentUser ? <Navigate to="/home" replace /> : <Login />
-            }
-          />
-
-          {/* עמוד הרשמה */}
-          <Route
-            path="/register"
-            element={
-              currentUser ? <Navigate to="/home" replace /> : <Register />
-            }
-          />
-
-          {/* כל נתיב לא קיים */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
-    </Error.Provider>
-  </CurrentUser.Provider>
-);
-
+            <Route path="/login" element={currentUser ? <Navigate to="/" replace /> : <Login />} />
+            <Route path="/register" element={currentUser ? <Navigate to="/" replace /> : <Register />} />
+            <Route path="/RoleSelector" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </Error.Provider>
+    </CurrentUser.Provider>
+  );
 };
 
 export default App;

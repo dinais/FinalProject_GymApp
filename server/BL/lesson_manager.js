@@ -1,6 +1,7 @@
 const dal = require('../DAL/dal');
 const { Op } = require('sequelize');
-const { lesson, lesson_registrations, waiting_list } = require('../../DB/models');
+const { lesson, lesson_registrations, waiting_list,user, reserved_spot} = require('../../DB/models');
+const { sendEmail } = require('../services/mailer'); // תעדכן לפי הנתיב שלך
 
 /**
  * Retrieves all lessons for a given week.
@@ -110,6 +111,7 @@ exports.getRegisteredCounts = async (weekStart) => {
  * @returns {Promise<Object>} An object indicating the status of the join operation ('joined', 'waitlist', 'already_joined', 'already_waitlist', 'not_found').
  */
 
+
 exports.joinLesson = async (userId, lessonId) => {
   console.log(`Manager: User ${userId} attempting to join lesson ${lessonId}`);
 
@@ -118,7 +120,23 @@ exports.joinLesson = async (userId, lessonId) => {
     return { success: false, message: 'Lesson not found' };
   }
 
-  // בדיקה אם המשתמש כבר רשום לשיעור
+  // ניקוי שמורות שפגו
+  await reserved_spot.destroy({
+    where: {
+      lesson_id: lessonId,
+      expires_at: { [Op.lt]: new Date() }
+    }
+  });
+
+  // מביא את כל השמורות בתוקף לשיעור
+  const reservedSpots = await reserved_spot.findAll({
+    where: {
+      lesson_id: lessonId,
+      expires_at: { [Op.gt]: new Date() }
+    }
+  });
+
+  // בדיקה אם המשתמש כבר רשום
   const existingRegistration = await lesson_registrations.findOne({
     where: { user_id: userId, lesson_id: lessonId }
   });
@@ -131,54 +149,120 @@ exports.joinLesson = async (userId, lessonId) => {
     where: { user_id: userId, lesson_id: lessonId }
   });
 
-  // נחשב את מספר המשתתפים בפועל
   const registeredCount = await lesson_registrations.count({
     where: { lesson_id: lessonId }
   });
 
-  const hasRoom = registeredCount < theLesson.max_participants;
+  const maxParticipants = theLesson.max_participants;
+  const reservedCount = reservedSpots.length;
 
-  if (hasRoom) {
-    // אם המשתמש היה ברשימת המתנה – נסיר אותו
-    if (existingWaitlist) {
-      await waiting_list.destroy({
-        where: { user_id: userId, lesson_id: lessonId }
+  const userHasReservation = reservedSpots.some(rs => rs.user_id === userId);
+
+  const totalSpotsLeft = maxParticipants - registeredCount;
+
+  // 1. אם אין מקום בכלל
+  if (totalSpotsLeft <= 0) {
+    // אם המשתמש עם שמורה, אולי אפשר להירשם, אחרת לדחות
+    if (userHasReservation) {
+      // משתמש עם שמורה רשאי להירשם
+      if (existingWaitlist) {
+        await waiting_list.destroy({ where: { user_id: userId, lesson_id: lessonId } });
+      }
+      await reserved_spot.destroy({ where: { user_id: userId, lesson_id: lessonId } });
+      await lesson_registrations.create({
+        user_id: userId,
+        lesson_id: lessonId,
+        registration_date: new Date()
       });
+      return { success: true, message: 'User successfully registered with reservation' };
     }
 
-    // נרשום אותו לשיעור
+    // אין מקום ואין שמורה
+    // אם המשתמש כבר ברשימת המתנה נחזיר הודעה מתאימה, אחרת נוסיף אותו
+    if (!existingWaitlist) {
+      await waiting_list.create({
+        user_id: userId,
+        lesson_id: lessonId,
+        date: new Date()
+      });
+      return { success: false, message: 'Lesson is full. User added to waitlist' };
+    } else {
+      return { success: false, message: 'User is already in the waitlist for this lesson' };
+    }
+  }
+
+  // 2. אם יש שמורות בתוקף
+  if (reservedCount > 0) {
+    if (userHasReservation) {
+      // המשתמש עם שמורה - ניתן להירשם מיד
+      if (existingWaitlist) {
+        await waiting_list.destroy({ where: { user_id: userId, lesson_id: lessonId } });
+      }
+
+      await reserved_spot.destroy({
+        where: { user_id: userId, lesson_id: lessonId }
+      });
+
+      await lesson_registrations.create({
+        user_id: userId,
+        lesson_id: lessonId,
+        registration_date: new Date()
+      });
+
+      return { success: true, message: 'User successfully registered with reservation' };
+    } else {
+      // למשתמש אין שמורה - נבדוק אם יש מקומות פנויים מעבר לשמורות
+      const spotsForNonReserved = totalSpotsLeft - reservedCount;
+
+      if (spotsForNonReserved > 0) {
+        // יש מקום למשתמשים ללא שמורה להירשם
+        if (existingWaitlist) {
+          await waiting_list.destroy({ where: { user_id: userId, lesson_id: lessonId } });
+        }
+
+        await lesson_registrations.create({
+          user_id: userId,
+          lesson_id: lessonId,
+          registration_date: new Date()
+        });
+
+        return { success: true, message: 'User successfully registered' };
+      } else {
+        // אין מקום למשתמשים ללא שמורה - הוסף לרשימת המתנה, רק אם לא קיים כבר
+        if (!existingWaitlist) {
+          await waiting_list.create({
+            user_id: userId,
+            lesson_id: lessonId,
+            date: new Date()
+          });
+          return { success: false, message: 'Lesson is full due to reserved spots. User added to waitlist' };
+        } else {
+          return { success: false, message: 'User is already in the waitlist for this lesson' };
+        }
+      }
+    }
+  }
+
+  // 3. אין שמורות בכלל - משתמש יכול להירשם כל עוד יש מקום
+  if (totalSpotsLeft > 0) {
+    if (existingWaitlist) {
+      await waiting_list.destroy({ where: { user_id: userId, lesson_id: lessonId } });
+    }
+
     await lesson_registrations.create({
       user_id: userId,
       lesson_id: lessonId,
       registration_date: new Date()
     });
 
-    return {
-      success: true,
-      message: 'User successfully registered to lesson' + (existingWaitlist ? ' (was on waitlist)' : '')
-    };
+    return { success: true, message: 'User successfully registered' };
   }
 
-  // אין מקום – אבל אולי הוא כבר ברשימת המתנה
-  if (existingWaitlist) {
-    return {
-      success: false,
-      message: 'User is already on the waitlist for this lesson'
-    };
-  }
-
-  // הוסף לרשימת המתנה
-  await waiting_list.create({
-    user_id: userId,
-    lesson_id: lessonId,
-    date: new Date()
-  });
-
-  return {
-    success: true,
-    message: 'Lesson is full. User added to the waitlist'
-  };
+  // 4. ברירת מחדל - אי אפשר להירשם
+  return { success: false, message: 'Registration is not allowed at this time' };
 };
+
+
 
 
 
@@ -192,7 +276,6 @@ exports.joinLesson = async (userId, lessonId) => {
 exports.cancelLesson = async (userId, lessonId) => {
   console.log(`Manager: User ${userId} attempting to cancel lesson ${lessonId}`);
 
-  // 1. ננסה להסיר מהמשתתפים
   const removedRegistered = await dal.removeWhere(lesson_registrations, {
     lesson_id: lessonId,
     user_id: userId
@@ -201,7 +284,13 @@ exports.cancelLesson = async (userId, lessonId) => {
   if (removedRegistered) {
     console.log(`Manager: User ${userId} cancelled registration for lesson ${lessonId}`);
 
-    // 2. אם היה רשום, נבדוק אם יש מישהו בהמתנה כדי להכניס במקומו
+    // עדכון כמות משתתפים
+    await lesson.increment('current_participants', {
+      by: -1,
+      where: { id: lessonId }
+    });
+
+    // מישהו בהמתנה?
     const waitlist = await waiting_list.findAll({
       where: { lesson_id: lessonId },
       order: [['date', 'ASC']],
@@ -211,23 +300,33 @@ exports.cancelLesson = async (userId, lessonId) => {
     if (waitlist.length > 0) {
       const firstInLine = waitlist[0];
 
-      // נסיר אותו מרשימת המתנה
       await waiting_list.destroy({ where: { id: firstInLine.id } });
 
-      // נכניס אותו לרשימת משתתפים
-      await lesson_registrations.create({
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 דקות קדימה
+
+      await reserved_spot.create({
         user_id: firstInLine.user_id,
         lesson_id: lessonId,
-        registration_date: new Date()
+        expires_at: expiresAt
       });
 
-      console.log(`Manager: Moved user ${firstInLine.user_id} from waitlist to registered for lesson ${lessonId}`);
+      const user_model = await user.findByPk(firstInLine.user_id);
+      const lessonObj = await lesson.findByPk(lessonId);
+
+      const subject = 'התפנה מקום בשיעור';
+      
+      const text = `שלום ${user_model.first_name || ''},\n\nהתפנה מקום בשיעור "${lessonObj.lesson_type}". שמרנו לך מקום עד השעה ${expiresAt.toLocaleTimeString()}.\nהיכנס/י לאפליקציה כדי להשלים את ההרשמה.\n\nבהצלחה!`;
+      // שליחת מייל למשתמש
+      console.log(`Sending email to: ${user_model.email}`);
+      await sendEmail(user_model.email, subject, text);
+
+      console.log(`Manager: Reserved spot created and email sent to user ${firstInLine.user_id}`);
     }
 
     return { status: 'cancelled_from_registered' };
   }
 
-  // 3. לא היה רשום - ננסה להסיר מהמתנה
+  // אם לא היה רשום – ננסה למחוק מרשימת המתנה
   const removedWaitlist = await dal.removeWhere(waiting_list, {
     lesson_id: lessonId,
     user_id: userId
