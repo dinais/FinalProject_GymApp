@@ -15,6 +15,10 @@ const lesson = sequelize.define('lessons', {
     },
     room_number: DataTypes.STRING,
     max_participants: DataTypes.INTEGER,
+    current_participants: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+    },
     start_date: DataTypes.DATE,
     end_date: DataTypes.DATE
 }, {

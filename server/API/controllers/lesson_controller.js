@@ -26,12 +26,23 @@ exports.getRegisteredCounts = async (req, res) => {
   res.json(counts);
 };
 
+
 exports.joinLesson = async (req, res) => {
-  const { lessonId } = req.params;
-  const { userId } = req.body;
-  const result = await lessonManager.joinLesson(userId, lessonId);
-  res.json(result);
+  console.log(`Joining lesson ${req.params.lessonId} for user ${req.body.userId}`);
+  console.log('BODY:', req.body);
+console.log('PARAMS:', req.params);
+
+  const userId = parseInt(req.body.userId); // או מ-token אם יש auth
+  const lessonId = parseInt(req.params.lessonId);
+
+  try {
+    const result = await lessonManager.joinLesson(userId, lessonId);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 };
+
 
 exports.cancelLesson = async (req, res) => {
   const { lessonId } = req.params;

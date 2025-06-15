@@ -54,16 +54,18 @@ async function seed() {
         for (let j = 0; j < lessonTypes.length; j++) {
           const instructor = j % 2 === 0 ? coach1 : coach2;
 
-          lessons.push({
-            lesson_type: lessonTypes[j],
-            hours: j % 2 === 0 ? 1 : 2,
-            day: days[i],
-            instructor_id: instructor.id,  // כאן השתמשנו ב-id
-            room_number: rooms[j],
-            max_participants: 10 + j * 2,
-            start_date: new Date(weekStart),
-            end_date: new Date(weekEnd),
-          });
+lessons.push({
+  lesson_type: lessonTypes[j],
+  hours: j % 2 === 0 ? 1 : 2,
+  day: days[i],
+  instructor_id: instructor.id,
+  room_number: rooms[j],
+  max_participants: 10 + j * 2,
+  current_participants: 0, // ← שדה חדש
+  start_date: new Date(weekStart),
+  end_date: new Date(weekEnd),
+});
+
         }
       }
     }
@@ -83,11 +85,16 @@ async function seed() {
     ]);
 
     // 7. הרשמות לשיעורים
-    await lesson_registrations.bulkCreate([
-      { user_id: client1.id, lesson_id: 1, registration_date: new Date('2025-05-30') },
-      { user_id: client2.id, lesson_id: 2, registration_date: new Date('2025-06-01') },
-      { user_id: client3.id, lesson_id: 3, registration_date: new Date('2025-06-02') },
-    ]);
+// 7. הרשמות לשיעורים
+await lesson_registrations.bulkCreate([
+  { user_id: client1.id, lesson_id: 1, registration_date: new Date('2025-05-30') },
+  { user_id: client2.id, lesson_id: 2, registration_date: new Date('2025-06-01') },
+  { user_id: client3.id, lesson_id: 3, registration_date: new Date('2025-06-02') },
+]);
+
+// עדכון current_participants
+await lesson.increment('current_participants', { by: 1, where: { id: [1, 2, 3] } });
+
 
     // 8. רשימת המתנה
     await waiting_list.bulkCreate([

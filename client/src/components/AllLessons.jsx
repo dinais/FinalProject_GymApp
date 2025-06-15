@@ -38,7 +38,11 @@ function AllLessons() {
 
   const handleJoin = async (lessonId) => {
     try {
+      console.log(`Joining lesson ${lessonId} for user ${currentUser.id}`);
+      
       const res = await postRequest(`lessons/${lessonId}/join`, { userId: currentUser.id });
+      console.log(res);
+      
       if (res.data.status === 'joined') {
         setMyLessonIds(prev => [...prev, lessonId]);
       } else if (res.data.status === 'waitlist') {

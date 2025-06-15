@@ -1,6 +1,6 @@
 const dal = require('../DAL/dal');
-const { lesson, lesson_registrations } = require('../../DB/models');
 const { Op } = require('sequelize');
+const { lesson, lesson_registrations, waiting_list } = require('../../DB/models');
 
 /**
  * Retrieves all lessons for a given week.
@@ -36,24 +36,21 @@ exports.getUserLessons = async (userId, weekStart) => {
     const end = new Date(start);
     end.setDate(start.getDate() + 7);
 
-    console.log(`Manager: Fetching user ${userId} registered lessons where start_date is between ${start.toISOString()} and ${end.toISOString()}`);
-
     return dal.findAll(lesson, {
         include: [{
             model: lesson_registrations,
             where: {
-                userId,
-                is_waitlist: false
+                user_id: userId
             }
         }],
         where: {
-            // FIX: Changed 'date' to 'start_date' to match the Lesson model and DB schema
             start_date: {
                 [Op.between]: [start, end]
             }
         }
     });
 };
+
 
 /**
  * Retrieves lessons a specific user is waitlisted for within a given week.
@@ -66,24 +63,21 @@ exports.getUserWaitlistedLessons = async (userId, weekStart) => {
     const end = new Date(start);
     end.setDate(start.getDate() + 7);
 
-    console.log(`Manager: Fetching user ${userId} waitlisted lessons where start_date is between ${start.toISOString()} and ${end.toISOString()}`);
-
     return dal.findAll(lesson, {
         include: [{
-            model: lesson_registrations,
+            model: waiting_list,
             where: {
-                userId,
-                is_waitlist: true
+                user_id: userId
             }
         }],
         where: {
-            // FIX: Changed 'date' to 'start_date' to match the Lesson model and DB schema
             start_date: {
                 [Op.between]: [start, end]
             }
         }
     });
 };
+
 
 /**
  * Calculates the number of registered participants for each lesson within a given week.
@@ -96,12 +90,12 @@ exports.getRegisteredCounts = async (weekStart) => {
     const counts = {};
 
     for (const lessonItem of lessonsInWeek) { // FIX: Renamed 'lesson' to 'lessonItem' to avoid conflict with imported model
-        const participants = await dal.findAll(lesson_registrations, {
-            where: {
-                lessonId: lessonItem.id, // Use lessonItem's ID
-                is_waitlist: false
-            }
-        });
+const participants = await dal.findAll(lesson_registrations, {
+    where: {
+        lesson_id: lessonItem.id
+    }
+});
+
         counts[lessonItem.id] = participants.length;
     }
 
@@ -115,51 +109,60 @@ exports.getRegisteredCounts = async (weekStart) => {
  * @param {number} lessonId - The ID of the lesson to join.
  * @returns {Promise<Object>} An object indicating the status of the join operation ('joined', 'waitlist', 'already_joined', 'already_waitlist', 'not_found').
  */
+
 exports.joinLesson = async (userId, lessonId) => {
-    console.log(`Manager: User ${userId} attempting to join lesson ${lessonId}`);
-    const currentLesson = await dal.findById(lesson, lessonId); // Renamed user_lesson to currentLesson
-    if (!currentLesson) return { status: 'not_found' }; // FIX: Changed 'lesson' to 'currentLesson'
+  console.log(`Manager: User ${userId} attempting to join lesson ${lessonId}`);
+console.log(`Step 0: User ID: ${userId}, Lesson ID: ${lessonId}`);
 
-    const registered = await dal.findAll(lesson_registrations, {
-        where: {
-            lessonId,
-            userId, // Include userId in where clause to find specific registration
-            is_waitlist: false
-        }
-    });
 
-    const waitlisted = await dal.findAll(lesson_registrations, {
-        where: {
-            lessonId,
-            userId, // Include userId in where clause to find specific waitlist entry
-            is_waitlist: true
-        }
-    });
+  const theLesson = await lesson.findByPk(lessonId);
+  console.log('Step 1: Lesson fetched', theLesson?.id);
 
-    // Check if already registered or waitlisted by the user
-    if (registered.length > 0) return { status: 'already_joined' };
-    if (waitlisted.length > 0) return { status: 'already_waitlist' };
+  if (!theLesson) throw new Error('Lesson not found');
 
-    // Get total registered count for the lesson
-    const currentRegisteredCount = await dal.findAll(lesson_registrations, {
-        where: {
-            lessonId,
-            is_waitlist: false
-        }
-    });
+  // בדוק אם השיעור מלא
+  if (theLesson.current_participants >= theLesson.max_participants) {
+    throw new Error('Lesson is full');
+  }
+console.log('Step 2: Checking if full');
 
-    if (currentRegisteredCount.length < currentLesson.max_participants) {
-        // FIX: Changed 'LessonParticipant' to 'lesson_registrations'
-        await dal.create(lesson_registrations, { lessonId, userId, is_waitlist: false });
-        console.log(`Manager: User ${userId} successfully joined lesson ${lessonId}`);
-        return { status: 'joined' };
-    } else {
-        // FIX: Changed 'LessonParticipant' to 'lesson_registrations'
-        await dal.create(lesson_registrations, { lessonId, userId, is_waitlist: true });
-        console.log(`Manager: User ${userId} added to waitlist for lesson ${lessonId}`);
-        return { status: 'waitlist' };
-    }
+  // בדוק אם המשתמש כבר רשום
+  const existingRegistration = await lesson_registrations.findOne({
+    where: { user_id: userId, lesson_id: lessonId },
+  });
+console.log(existingRegistration);
+
+  if (existingRegistration) {
+    console.log("hi");
+    
+    throw new Error('User is already registered for this lesson');
+  }
+console.log('Step 3: Checking existing registration');
+
+  // הסר מרשימת המתנה אם קיים
+  await waiting_list.destroy({
+    where: { user_id: userId, lesson_id: lessonId },
+  });
+  console.log('Step 4: Removing from waitlist');
+
+
+  // רישום לשיעור
+  await lesson_registrations.create({
+    user_id: userId,
+    lesson_id: lessonId,
+    registration_date: new Date(),
+  });
+console.log('Step 5: Creating registration');
+
+  // העלה את כמות הנרשמים בפועל
+  await lesson.increment('current_participants', {
+    by: 1,
+    where: { id: lessonId },
+  });
+console.log('Step 6: Incrementing count');
+  return { success: true, message: 'User successfully registered to lesson' };
 };
+
 
 /**
  * Handles a user cancelling their lesson registration or waitlist entry.
@@ -174,8 +177,8 @@ exports.cancelLesson = async (userId, lessonId) => {
     // Try to remove from registered participants first
     const removedRegistered = await dal.remove(lesson_registrations, {
         where: {
-            lessonId,
-            userId,
+            lesson_id: lessonId,
+            user_id: userId,
             is_waitlist: false
         }
     });
@@ -185,7 +188,7 @@ exports.cancelLesson = async (userId, lessonId) => {
         // If a spot opened up, check waitlist for the first in line
         const waitlist = await dal.findAll(lesson_registrations, {
             where: {
-                lessonId,
+                lesson_id: lessonId,
                 is_waitlist: true
             },
             order: [['registration_date', 'ASC']], // Order by registration_date for true FIFO waitlist
@@ -205,8 +208,8 @@ exports.cancelLesson = async (userId, lessonId) => {
     // If not found in registered, try to remove from waitlist
     const removedWaitlist = await dal.remove(lesson_registrations, {
         where: {
-            lessonId,
-            userId,
+            lesson_id: lessonId,
+            user_id: userId,
             is_waitlist: true
         }
     });

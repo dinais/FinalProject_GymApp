@@ -4,10 +4,16 @@ async function create(model, data) {
   return await model.create(data);
 }
 
-async function findAll(model, options = {}) {
   // options יכול לכלול include, where, attributes ועוד
-  return await model.findAll(options);
+async function findAll(model, options = {}) {
+  try {
+    return await model.findAll(options);
+  } catch (err) {
+    console.error("🔥 Sequelize findAll error for model", model.name, ":", err);
+    throw err;
+  }
 }
+
 
 async function findById(model, id, options = {}) {
   return await model.findByPk(id, options);

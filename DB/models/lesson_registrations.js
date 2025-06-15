@@ -4,19 +4,29 @@ const user = require('./user');
 const lesson = require('./lesson');
 
 const lesson_registrations = sequelize.define('lesson_registrations', {
-    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    user_id: {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  user_id: {
     type: DataTypes.INTEGER,
     references: {
-        model: 'users',
-        key: 'id'
+      model: user,
+      key: 'id'
     }
-},
-    lesson_id: { type: DataTypes.INTEGER },
-    registration_date: DataTypes.DATE
+  },
+  lesson_id: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: lesson,
+      key: 'id'
+    }
+  },
+  registration_date: DataTypes.DATE
 }, {
-    tableName: 'lesson_registrations',
-    timestamps: false
+  tableName: 'lesson_registrations',
+  timestamps: false
 });
 
 module.exports = lesson_registrations;
