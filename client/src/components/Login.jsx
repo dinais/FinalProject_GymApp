@@ -2,12 +2,12 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from "react-router-dom";
 import { CurrentUser, Error } from './App';
 import { postRequest } from '../Requests';
+import './login.css'; // הוספת הCSS
 
 function Login() {
     const { setCurrentUser, setCurrentRole } = useContext(CurrentUser);
     const { errorMessage, setErrorMessage } = useContext(Error);
     const navigate = useNavigate();
-
     const [userData, setUserData] = useState({ email: '', password: '' });
 
     const handleSubmit = async (e) => {
@@ -15,11 +15,11 @@ function Login() {
         setErrorMessage('');
         try {
             const requestResult = await postRequest('users/login', userData);
-
+            
             if (requestResult.succeeded) {
                 const user = requestResult.data.user;
                 const token = requestResult.data.accessToken;
-
+                
                 const userInfo = {
                     first_name: user.first_name,
                     last_name: user.last_name,
@@ -29,10 +29,10 @@ function Login() {
                     id: user.id,
                     roles: user.roles || []
                 };
-
+                
                 localStorage.setItem("token", token);
                 localStorage.removeItem("selectedRole");
-
+                
                 if (userInfo.roles.length === 1) {
                     const role = userInfo.roles[0];
                     setCurrentUser(userInfo);
@@ -66,7 +66,7 @@ function Login() {
                         onChange={e => setUserData(prev => ({ ...prev, email: e.target.value }))}
                     />
                 </div>
-
+                
                 <div className="form-group">
                     <label>Password:</label>
                     <input
@@ -76,10 +76,10 @@ function Login() {
                         onChange={e => setUserData(prev => ({ ...prev, password: e.target.value }))}
                     />
                 </div>
-
+                
                 <button type="submit" className="login-button">Login</button>
             </form>
-
+            
             <Link to="/register">Don't have an account? Register</Link>
             {errorMessage && <div className="error-message">{errorMessage}</div>}
         </div>
