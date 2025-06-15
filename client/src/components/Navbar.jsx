@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CurrentUser } from './App';
+import './navbar.css'; // ייבוא קובץ ה-CSS
 
 const Navbar = ({ username, role }) => {
   const { setCurrentUser } = useContext(CurrentUser);
@@ -52,7 +53,9 @@ const Navbar = ({ username, role }) => {
       </div>
 
       <div className="navbar-right">
-        <button onClick={handleLogout}>התנתקות</button>
+        <button className="logout-btn" onClick={handleLogout}>
+          התנתקות
+        </button>
       </div>
     </nav>
   );
