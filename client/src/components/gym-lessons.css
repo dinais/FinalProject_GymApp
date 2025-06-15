@@ -1,0 +1,441 @@
+* {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #7c3aed 50%, #0f172a 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated Background Elements */
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .background-blob {
+            position: absolute;
+            border-radius: 50%;
+            mix-blend-mode: multiply;
+            filter: blur(60px);
+            opacity: 0.2;
+            animation: blob 7s infinite;
+        }
+
+        .blob-1 {
+            top: -10rem;
+            right: -10rem;
+            width: 20rem;
+            height: 20rem;
+            background: #7c3aed;
+            animation-delay: 0s;
+        }
+
+        .blob-2 {
+            bottom: -10rem;
+            left: -10rem;
+            width: 20rem;
+            height: 20rem;
+            background: #06b6d4;
+            animation-delay: 2s;
+        }
+
+        .blob-3 {
+            top: 10rem;
+            left: 10rem;
+            width: 20rem;
+            height: 20rem;
+            background: #ec4899;
+            animation-delay: 4s;
+        }
+
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.2);
+            background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        /* Container and Layout */
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .main-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(to right, #ffffff, #c4b5fd, #a5f3fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            letter-spacing: -0.05em;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 300;
+        }
+
+        /* Week Navigation */
+        .week-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.75rem;
+            color: white;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.25);
+        }
+
+        .nav-button span {
+            transition: transform 0.3s ease;
+        }
+
+        .nav-button:hover .arrow-left {
+            transform: translateX(-0.25rem);
+        }
+
+        .nav-button:hover .arrow-right {
+            transform: translateX(0.25rem);
+        }
+
+        .week-display {
+            padding: 1rem 2rem;
+            background: linear-gradient(to right, rgba(124, 58, 237, 0.3), rgba(6, 182, 212, 0.3));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 1rem;
+            color: white;
+            font-weight: 600;
+            font-size: 1.125rem;
+            min-width: 16rem;
+            text-align: center;
+        }
+
+        .calendar-icon {
+            display: inline-block;
+            margin-left: 0.5rem;
+        }
+
+        /* Days Grid */
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 1024px) {
+            .days-grid {
+                grid-template-columns: repeat(7, 1fr);
+            }
+        }
+
+        /* Day Column */
+        .day-column {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .day-column:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .day-header {
+            background: linear-gradient(to right, rgba(124, 58, 237, 0.5), rgba(6, 182, 212, 0.5));
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .day-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.25rem;
+        }
+
+        .day-subtitle {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Lessons Container */
+        .lessons-container {
+            padding: 1rem;
+            min-height: 20rem;
+        }
+
+        .lessons-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        /* Lesson Card */
+        .lesson-card {
+            position: relative;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .lesson-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .lesson-card.joined {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.2));
+            border-color: rgba(34, 197, 94, 0.3);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+        }
+
+        .lesson-card.waitlist {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(245, 158, 11, 0.2));
+            border-color: rgba(249, 115, 22, 0.3);
+            box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);
+        }
+
+        /* Lesson Type Header */
+        .lesson-type-header {
+            padding: 0.75rem;
+            font-weight: 700;
+            color: white;
+            font-size: 1.125rem;
+        }
+
+        .lesson-type-crossfit { background: linear-gradient(to right, #ef4444, #f97316); }
+        .lesson-type-yoga { background: linear-gradient(to right, #10b981, #059669); }
+        .lesson-type-hiit { background: linear-gradient(to right, #8b5cf6, #ec4899); }
+        .lesson-type-pilates { background: linear-gradient(to right, #3b82f6, #06b6d4); }
+        .lesson-type-boxing { background: linear-gradient(to right, #374151, #dc2626); }
+        .lesson-type-spinning { background: linear-gradient(to right, #eab308, #f97316); }
+        .lesson-type-zumba { background: linear-gradient(to right, #ec4899, #8b5cf6); }
+        .lesson-type-powerlifting { background: linear-gradient(to right, #1f2937, #4b5563); }
+
+        /* Lesson Details */
+        .lesson-details {
+            padding: 1rem;
+        }
+
+        .lesson-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .lesson-info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.875rem;
+        }
+
+        .lesson-info-item .icon {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        /* Capacity Bar */
+        .capacity-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .capacity-bar {
+            flex: 1;
+            height: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 0.25rem;
+            overflow: hidden;
+        }
+
+        .capacity-fill {
+            height: 100%;
+            background: linear-gradient(to right, #10b981, #059669);
+            transition: all 0.5s ease;
+        }
+
+        .capacity-fill.full {
+            background: #ef4444;
+        }
+
+        /* Status and Actions */
+        .lesson-actions {
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-joined {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #10b981;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-waitlist {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #f59e0b;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #7c3aed, #06b6d4);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(to right, #6d28d9, #0891b2);
+            box-shadow: 0 10px 20px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-disabled {
+            background: rgba(107, 114, 128, 0.3);
+            border: 1px solid rgba(107, 114, 128, 0.3);
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn-disabled:hover {
+            transform: none;
+        }
+
+        /* No Lessons Message */
+        .no-lessons {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .no-lessons-icon {
+            width: 3rem;
+            height: 3rem;
+            margin: 0 auto 0.5rem;
+            opacity: 0.5;
+        }
+
+        /* Icons */
+        .icon {
+            width: 1.25rem;
+            height: 1.25rem;
+            fill: currentColor;
+        }
+
+        /* Animations */
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .main-title {
+                font-size: 2.5rem;
+            }
+            
+            .week-nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .days-grid {
+                grid-template-columns: 1fr;
+            }
+        }
