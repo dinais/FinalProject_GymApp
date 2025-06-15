@@ -1,14 +1,17 @@
 const nodemailer = require('nodemailer');
 
+require('dotenv').config(); // בתחילת הקובץ
+
 const transporter = nodemailer.createTransport({
     host: 'smtp-relay.brevo.com',
     port: 587,
-    secure: false, // כי 587 זה TLS (STARTTLS)
+    secure: false,
     auth: {
-        user: '8fbb6f001@smtp-brevo.com',
-        pass: 'jYN3h2G6aKE7SWk9'
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
     }
 });
+
 
 async function sendEmail(toEmail, subject, text) {
     const mailOptions = {
