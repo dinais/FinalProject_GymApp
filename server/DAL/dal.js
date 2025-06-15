@@ -28,11 +28,16 @@ async function remove(model, id) {
   const deletedCount = await model.destroy({ where: { id } });
   return deletedCount > 0;
 }
+async function removeWhere(model, where) {
+  const deletedCount = await model.destroy({ where });
+  return deletedCount > 0;
+}
 
 module.exports = {
   create,
   findAll,
   findById,
   update,
-  remove
+  remove,
+  removeWhere
 };
