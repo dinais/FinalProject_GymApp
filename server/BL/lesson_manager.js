@@ -1,6 +1,6 @@
 const dal = require('../DAL/dal');
 const { Op } = require('sequelize');
-const { lesson, lesson_registrations, waiting_list,user, reserved_spot} = require('../../DB/models');
+const { lesson, lesson_registrations, waiting_list, user, reserved_spot } = require('../../DB/models');
 const { sendEmail } = require('../services/mailer'); // תעדכן לפי הנתיב שלך
 
 /**
@@ -18,7 +18,6 @@ exports.getLessonsForWeek = async (weekStart) => {
 
   return dal.findAll(lesson, {
     where: {
-      // FIX: Changed 'date' to 'start_date' to match the Lesson model and DB schema
       start_date: {
         [Op.between]: [start, end]
       }
@@ -26,11 +25,89 @@ exports.getLessonsForWeek = async (weekStart) => {
   });
 };
 
+// *** פונקציה עבור "השיעורים שלי" ***
+/**
+ * Retrieves all lessons (both registered and waitlisted) for a specific user within a given week,
+ * along with their current registration status and participant counts.
+ * @param {number} userId - The ID of the user.
+ * @param {string} weekStart - The ISO string representing the start of the week.
+ * @returns {Promise<Array>} A promise that resolves to an array of lesson objects
+ * with 'status' ('joined'/'waitlist') and 'current_participants'.
+ */
+exports.getUserRegisteredAndWaitlistedLessons = async (userId, weekStart) => {
+  const start = new Date(weekStart);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 7);
+
+  console.log(`Manager: Fetching registered and waitlisted lessons for user ${userId} for week starting ${weekStart}`);
+
+  const registeredLessons = await dal.findAll(lesson, {
+    include: [{
+      model: lesson_registrations,
+      where: {
+        user_id: userId
+      },
+      attributes: [] // לא רוצים להחזיר שדות מטבלת הרישומים עצמה
+    }],
+    where: {
+      start_date: {
+        [Op.between]: [start, end]
+      }
+    },
+    attributes: [ // נבחר במפורש את השדות שאנחנו רוצים
+      'id', 'lesson_type', 'hours', 'day', 'room_number', 'max_participants', 'start_date',
+      // נוסיף שדה סטטוס קבוע עבור רישומים
+      // *** תיקון כאן: שימוש ב-lesson.sequelize.literal ***
+      [lesson.sequelize.literal("'joined'"), 'status'] 
+    ]
+  });
+
+  const waitlistedLessons = await dal.findAll(lesson, {
+    include: [{
+      model: waiting_list,
+      where: {
+        user_id: userId
+      },
+      attributes: [] // לא רוצים להחזיר שדות מטבלת רשימת ההמתנה
+    }],
+    where: {
+      start_date: {
+        [Op.between]: [start, end]
+      }
+    },
+    attributes: [ // נבחר במפורש את השדות שאנחנו רוצים
+      'id', 'lesson_type', 'hours', 'day', 'room_number', 'max_participants', 'start_date',
+      // נוסיף שדה סטטוס קבוע עבור רשימת המתנה
+      // *** תיקון כאן: שימוש ב-lesson.sequelize.literal ***
+      [lesson.sequelize.literal("'waitlist'"), 'status']
+    ]
+  });
+
+  // נאחד את שתי הרשימות ונוודא שאין כפילויות (למקרה של באג, למרות שלא אמור לקרות)
+  const allUserLessonsMap = new Map();
+  registeredLessons.forEach(l => allUserLessonsMap.set(l.id, l.toJSON())); // toJSON כדי לקבל אובייקט רגיל
+  waitlistedLessons.forEach(l => allUserLessonsMap.set(l.id, l.toJSON()));
+
+  const combinedLessons = Array.from(allUserLessonsMap.values());
+
+  // עבור כל שיעור, נביא את כמות המשתתפים הנוכחית
+  for (const lessonItem of combinedLessons) {
+    const registeredCount = await lesson_registrations.count({
+      where: { lesson_id: lessonItem.id }
+    });
+    lessonItem.current_participants = registeredCount;
+  }
+  
+  return combinedLessons;
+};
+
+
 /**
  * Retrieves lessons a specific user is registered for within a given week.
  * @param {number} userId - The ID of the user.
  * @param {string} weekStart - The ISO string representing the start of the week.
  * @returns {Promise<Array>} A promise that resolves to an array of lesson objects the user is registered for.
+ * @deprecated - Use getUserRegisteredAndWaitlistedLessons instead for "My Lessons" view.
  */
 exports.getUserLessons = async (userId, weekStart) => {
   const start = new Date(weekStart);
@@ -58,6 +135,7 @@ exports.getUserLessons = async (userId, weekStart) => {
  * @param {number} userId - The ID of the user.
  * @param {string} weekStart - The ISO string representing the start of the week.
  * @returns {Promise<Array>} A promise that resolves to an array of lesson objects the user is waitlisted for.
+ * @deprecated - Use getUserRegisteredAndWaitlistedLessons instead for "My Lessons" view.
  */
 exports.getUserWaitlistedLessons = async (userId, weekStart) => {
   const start = new Date(weekStart);
@@ -90,7 +168,7 @@ exports.getRegisteredCounts = async (weekStart) => {
   const lessonsInWeek = await exports.getLessonsForWeek(weekStart); // This now correctly uses start_date
   const counts = {};
 
-  for (const lessonItem of lessonsInWeek) { // FIX: Renamed 'lesson' to 'lessonItem' to avoid conflict with imported model
+  for (const lessonItem of lessonsInWeek) {
     const participants = await dal.findAll(lesson_registrations, {
       where: {
         lesson_id: lessonItem.id
@@ -110,8 +188,6 @@ exports.getRegisteredCounts = async (weekStart) => {
  * @param {number} lessonId - The ID of the lesson to join.
  * @returns {Promise<Object>} An object indicating the status of the join operation ('joined', 'waitlist', 'already_joined', 'already_waitlist', 'not_found').
  */
-
-
 exports.joinLesson = async (userId, lessonId) => {
   console.log(`Manager: User ${userId} attempting to join lesson ${lessonId}`);
 
@@ -174,7 +250,12 @@ exports.joinLesson = async (userId, lessonId) => {
         lesson_id: lessonId,
         registration_date: new Date()
       });
-      return { success: true, message: 'User successfully registered with reservation' };
+      // עדכון כמות משתתפים בשיעור
+      await lesson.increment('current_participants', {
+        by: 1,
+        where: { id: lessonId }
+      });
+      return { success: true, message: 'User successfully registered with reservation', status: 'joined' };
     }
 
     // אין מקום ואין שמורה
@@ -185,9 +266,9 @@ exports.joinLesson = async (userId, lessonId) => {
         lesson_id: lessonId,
         date: new Date()
       });
-      return { success: false, message: 'Lesson is full. User added to waitlist' };
+      return { success: false, message: 'Lesson is full. User added to waitlist', status: 'waitlist' };
     } else {
-      return { success: false, message: 'User is already in the waitlist for this lesson' };
+      return { success: false, message: 'User is already in the waitlist for this lesson', status: 'already_waitlist' };
     }
   }
 
@@ -208,8 +289,13 @@ exports.joinLesson = async (userId, lessonId) => {
         lesson_id: lessonId,
         registration_date: new Date()
       });
+      // עדכון כמות משתתפים בשיעור
+      await lesson.increment('current_participants', {
+        by: 1,
+        where: { id: lessonId }
+      });
 
-      return { success: true, message: 'User successfully registered with reservation' };
+      return { success: true, message: 'User successfully registered with reservation', status: 'joined' };
     } else {
       // למשתמש אין שמורה - נבדוק אם יש מקומות פנויים מעבר לשמורות
       const spotsForNonReserved = totalSpotsLeft - reservedCount;
@@ -225,8 +311,13 @@ exports.joinLesson = async (userId, lessonId) => {
           lesson_id: lessonId,
           registration_date: new Date()
         });
+        // עדכון כמות משתתפים בשיעור
+        await lesson.increment('current_participants', {
+          by: 1,
+          where: { id: lessonId }
+        });
 
-        return { success: true, message: 'User successfully registered' };
+        return { success: true, message: 'User successfully registered', status: 'joined' };
       } else {
         // אין מקום למשתמשים ללא שמורה - הוסף לרשימת המתנה, רק אם לא קיים כבר
         if (!existingWaitlist) {
@@ -235,9 +326,9 @@ exports.joinLesson = async (userId, lessonId) => {
             lesson_id: lessonId,
             date: new Date()
           });
-          return { success: false, message: 'Lesson is full due to reserved spots. User added to waitlist' };
+          return { success: false, message: 'Lesson is full due to reserved spots. User added to waitlist', status: 'waitlist' };
         } else {
-          return { success: false, message: 'User is already in the waitlist for this lesson' };
+          return { success: false, message: 'User is already in the waitlist for this lesson', status: 'already_waitlist' };
         }
       }
     }
@@ -254,16 +345,18 @@ exports.joinLesson = async (userId, lessonId) => {
       lesson_id: lessonId,
       registration_date: new Date()
     });
+    // עדכון כמות משתתפים בשיעור
+    await lesson.increment('current_participants', {
+      by: 1,
+      where: { id: lessonId }
+    });
 
-    return { success: true, message: 'User successfully registered' };
+    return { success: true, message: 'User successfully registered', status: 'joined' };
   }
 
   // 4. ברירת מחדל - אי אפשר להירשם
-  return { success: false, message: 'Registration is not allowed at this time' };
+  return { success: false, message: 'Registration is not allowed at this time', status: 'not_allowed' };
 };
-
-
-
 
 
 /**
@@ -284,9 +377,9 @@ exports.cancelLesson = async (userId, lessonId) => {
   if (removedRegistered) {
     console.log(`Manager: User ${userId} cancelled registration for lesson ${lessonId}`);
 
-    // עדכון כמות משתתפים
-    await lesson.increment('current_participants', {
-      by: -1,
+    // עדכון כמות משתתפים בשיעור
+    await lesson.decrement('current_participants', {
+      by: 1,
       where: { id: lessonId }
     });
 
@@ -314,10 +407,12 @@ exports.cancelLesson = async (userId, lessonId) => {
       const lessonObj = await lesson.findByPk(lessonId);
 
       const subject = 'התפנה מקום בשיעור';
-      
-      const text = `שלום ${user_model.first_name || ''},\n\nהתפנה מקום בשיעור "${lessonObj.lesson_type}". שמרנו לך מקום עד השעה ${expiresAt.toLocaleTimeString()}.\nהיכנס/י לאפליקציה כדי להשלים את ההרשמה.\n\nבהצלחה!`;
+
+      const text = `שלום ${user_model.first_name || ''},\n\nהתפנה מקום בשיעור "${lessonObj.lesson_type}". שמרנו לך מקום עד השעה ${expiresAt.toLocaleTimeString('he-IL')}.\nהיכנס/י לאפליקציה כדי להשלים את ההרשמה.\n\nבהצלחה!`; // שיניתי לפורמט ישראלי
+
       // שליחת מייל למשתמש
       console.log(`Sending email to: ${user_model.email}`);
+      // ודא שפונקציית sendEmail קיימת ופועלת
       await sendEmail(user_model.email, subject, text);
 
       console.log(`Manager: Reserved spot created and email sent to user ${firstInLine.user_id}`);
@@ -340,4 +435,3 @@ exports.cancelLesson = async (userId, lessonId) => {
   console.log(`Manager: User ${userId} not found in registered or waitlist for lesson ${lessonId}`);
   return { status: 'not_found' };
 };
-
