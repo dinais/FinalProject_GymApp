@@ -35,7 +35,7 @@ const TraineesList = () => {
             return;
         }
         setLoading(true);
-        const result = await getRequest('admin/users/role/client');
+        const result = await getRequest('users/secretary/role/client');
         if (result.succeeded) {
             setTrainees(result.data);
             setErrorMessage('');
@@ -118,11 +118,11 @@ const TraineesList = () => {
         let result;
 
         if (currentTrainee) { // עריכה
-            result = await putRequest(`admin/users/${currentTrainee.id}`, formData);
+            result = await putRequest(`secretary/users/${currentTrainee.id}`, formData);
         } else { // הוספה (ללא סיסמה מצד הלקוח)
             // שימו לב: אנחנו כבר לא שולחים plainPassword כאן.
             // ה-Backend יהיה אחראי ליצור סיסמה זמנית או לסמן את המשתמש כדורש איפוס.
-            result = await postRequest('admin/users', formData);
+            result = await postRequest('secretary/users', formData);
         }
 
         if (result.succeeded) {
@@ -138,7 +138,7 @@ const TraineesList = () => {
     const handleDeleteClick = async (traineeId) => {
         if (window.confirm('האם אתה בטוח שברצונך למחוק מתאמן זה? פעולה זו בלתי הפיכה.')) {
             setLoading(true);
-            const result = await deleteRequest(`admin/users/${traineeId}`);
+            const result = await deleteRequest(`secretary/users/${traineeId}`);
             if (result.succeeded) {
                 setErrorMessage('');
                 fetchTrainees();

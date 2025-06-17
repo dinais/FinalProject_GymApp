@@ -14,7 +14,7 @@ const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     try {
-        const requestResult = await postRequest('auth/login', userData);
+        const requestResult = await postRequest('users/login', userData);
         
         if (requestResult.succeeded) {
             const user = requestResult.data.user;

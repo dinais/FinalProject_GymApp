@@ -1,129 +1,202 @@
+const user_manager = require('../../BL/user_manager'); // ודא שהנתיב נכון
+const jwt = require('jsonwebtoken'); // נשאר לייבוא כי הוא משמש ב-refreshToken
 
-const user_manager = require('../../BL/user_manager');
-const jwt = require('jsonwebtoken');
-//לשנות לפונקציות היחידות שיש היוזר מנגר ב BL
+// ודא שמשתני הסביבה זמינים כאן
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../../.env') });
 
+// הרשמת משתמש חדש
 exports.registerUser = async (req, res) => {
-  try {
-    const userData = req.body;
+    try {
+        const userData = req.body;
+        // שינוי: עכשיו מצפים ל-roleName במקום roleId
+        // אם לא נשלח roleName, ניתן ברירת מחדל ל"client" (מתאמן)
+        if (!userData.roleName) {
+            userData.roleName = 'client'; // ברירת מחדל: מתאמן
+            console.warn('roleName לא צוין ברישום, הוגדר כברירת מחדל: "client"');
+        }
 
-    if (!userData.roleId) {
-      return res.status(400).json({ error: 'יש לציין תפקיד (roleId)' });
+        const newUser = await user_manager.registerUser(userData);
+        res.status(201).json({ message: 'המשתמש נרשם בהצלחה', user: newUser });
+    } catch (err) {
+        console.error('Error in registerUser:', err);
+        // שגיאות ספציפיות מה-BL
+        if (err.message.includes('קיים כבר')) {
+            return res.status(409).json({ error: err.message });
+        }
+        res.status(500).json({ error: 'נכשל לרשום את המשתמש', details: err.message });
     }
-
-    const newUser = await user_manager.registerUser(userData);
-    res.status(201).json({ message: 'המשתמש נרשם בהצלחה', user: newUser });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'נכשל לרשום את המשתמש' });
-  }
 };
 
-
+// כניסת משתמש
 exports.loginUser = async (req, res) => {
+    try {
+        console.log("קיבלתי בקשה ל־/login");
+        const { email, password } = req.body;
+        const result = await user_manager.login({ email, password });
 
-  try {
-    console.log("קיבלתי בקשה ל־/login");
+        if (!result.succeeded) {
+            return res.status(401).json({ message: result.error });
+        }
 
-    const { email, password } = req.body;
-    console.log(req.body); // בדוק מה באמת הגיע
-    const result = await user_manager.login({ email, password });
+        const { accessToken, refreshToken, user } = result.data;
 
-    if (!result.succeeded) {
-      // במקרה של כשלון, מחזירים שגיאה ללקוח
-      return res.status(401).json({ message: result.error });
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // true ב-production (https), false בפיתוח
+            sameSite: 'Lax', // או 'None' אם ה-frontend בדומין אחר עם secure:true
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 ימים
+        });
+
+        res.json({ accessToken, user }); // החזר גם את ה-user ל־React אם צריך
+    } catch (err) {
+        console.error('Error in loginUser:', err);
+        res.status(401).json({ message: err.message || 'Login failed' });
     }
-
-    const { accessToken, refreshToken, user } = result.data;
-
-    // שמור את ה-refreshToken כ-cookie HttpOnly
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: false, // שנה ל־true אם ב־https
-      sameSite: 'Lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 ימים
-    });
-
-    res.json({ accessToken, user }); // החזר גם את ה-user ל־React אם צריך
-  } catch (err) {
-    console.error(err);
-    res.status(401).json({ message: err.message || 'Login failed' });
-  }
 };
 
-
-
+// שליפת כל המשתמשים (נגיש רק למזכירה/אדמין דרך הראוטר)
 exports.getAllUsers = async (req, res) => {
-  try {
-    const users = await user_manager.getAllUsers();
-    res.json(users);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch users' });
-  }
+    try {
+        // המידלוויר 'protect' כבר העלה את המשתמש המאומת ופרטיו (כולל תפקידים) ל-req.user.
+        // אין צורך לבצע כאן בדיקת הרשאות נוספת, היא כבר נעשתה בראוטר.
+        const users = await user_manager.getAllUsers();
+        res.json(users);
+    } catch (err) {
+        console.error('Error in getAllUsers:', err);
+        res.status(500).json({ error: 'Failed to fetch users', details: err.message });
+    }
 };
 
+// שליפת משתמש לפי ID
 exports.getUserById = async (req, res) => {
-  try {
-    const user = await user_manager.getUserById(req.params.id);
-    if (user) {
-      res.json(user);
-    } else {
-      res.status(404).json({ error: 'User not found' });
+    try {
+        const userId = req.params.id;
+        const requestingUser = req.user; // המשתמש המאומת מהטוקן
+
+        // לוגיקה לבדיקה האם המשתמש המבקש רשאי לצפות בפרופיל:
+        // 1. אם המשתמש המבקש הוא מזכירה או אדמין - מורשה לראות כל פרופיל.
+        // 2. אם המשתמש המבקש אינו מזכירה/אדמין, הוא מורשה לראות רק את הפרופיל של עצמו.
+        if (!requestingUser.roles.includes('secretary') && !requestingUser.roles.includes('admin')) {
+            if (requestingUser.id.toString() !== userId.toString()) { // השוואת ID (string vs. number)
+                return res.status(403).json({ error: 'אין לך הרשאה לצפות בפרופיל של משתמש אחר.' });
+            }
+        }
+
+        const user = await user_manager.getUserById(userId);
+        if (user) {
+            res.json(user);
+        } else {
+            res.status(404).json({ error: 'משתמש לא נמצא' });
+        }
+    } catch (err) {
+        console.error('Error in getUserById:', err);
+        res.status(500).json({ error: 'נכשל לשלוף את המשתמש', details: err.message });
     }
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch user' });
-  }
 };
 
+// עדכון משתמש (נגיש רק למזכירה/אדמין דרך הראוטר)
 exports.updateUser = async (req, res) => {
-  try {
-    const updated = await user_manager.updateUser(req.params.id, req.body);
-    if (updated) {
-      res.json({ message: 'User updated successfully' });
-    } else {
-      res.status(404).json({ error: 'User not found or no changes' });
+    try {
+        const userId = req.params.id;
+        const updateData = req.body;
+        const requestingUser = req.user; // המשתמש המאומת
+
+        // אכיפת הרשאה: משתמש רגיל לא יכול לעדכן תפקידים או משתמשים אחרים.
+        // מכיוון שהראוטר כבר מגביל את זה למזכירה/אדמין, אין צורך בבדיקת תפקידים מפורשת כאן
+        // אלא אם כן תרצה לאפשר ללקוח לעדכן את הפרופיל שלו (ואז צריך להתאים את הראוטר)
+        // אם מזכירה/אדמין מעדכנים את עצמם, הם יכולים לשנות הכל.
+
+        const updated = await user_manager.updateUser(userId, updateData);
+        if (updated) {
+            res.json({ message: 'המשתמש עודכן בהצלחה' });
+        } else {
+            res.status(404).json({ error: 'משתמש לא נמצא או לא היו שינויים' });
+        }
+    } catch (err) {
+        console.error('Error in updateUser:', err);
+        res.status(500).json({ error: 'נכשל לעדכן את המשתמש', details: err.message });
     }
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to update user' });
-  }
 };
 
+// מחיקת משתמש (נגיש רק למזכירה/אדמין דרך הראוטר)
 exports.deleteUser = async (req, res) => {
-  try {
-    const deleted = await user_manager.deleteUser(req.params.id);
-    if (deleted) {
-      res.json({ message: 'User deleted successfully' });
-    } else {
-      res.status(404).json({ error: 'User not found' });
+    try {
+        const userId = req.params.id;
+        // המידלוויר 'authorizeRoles' בראוטר כבר מוודא שהמשתמש הוא מזכירה או אדמין.
+        // ניתן להוסיף כאן לוגיקה למניעת מחיקת אדמין על ידי מזכירה אם תרצה.
+
+        const deleted = await user_manager.deleteUser(userId);
+        if (deleted) {
+            res.json({ message: 'המשתמש נמחק בהצלחה' });
+        } else {
+            res.status(404).json({ error: 'משתמש לא נמצא' });
+        }
+    } catch (err) {
+        console.error('Error in deleteUser:', err);
+        res.status(500).json({ error: 'נכשל למחוק את המשתמש', details: err.message });
     }
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to delete user' });
-  }
 };
 
+// --- פונקציות חדשות עבור המזכירה ---
 
-// API/controllers/users_controller.js
+// שליפת מתאמנים בלבד (עבור המזכירה)
+exports.getTrainees = async (req, res) => {
+    try {
+        // המידלוויר 'authorizeRoles('secretary')' בראוטר כבר מוודא שהמשתמש הוא מזכירה.
+        // אין צורך בבדיקה נוספת כאן.
+        const trainees = await user_manager.getUsersByRole('client');
+        res.json(trainees);
+    } catch (err) {
+        console.error('Error in getTrainees:', err);
+        res.status(500).json({ error: 'נכשל לשלוף את רשימת המתאמנים', details: err.message });
+    }
+};
 
+// שליפת כל התפקידים (עבור המזכירה/אדמין לצורך ניהול)
+exports.getAllRoles = async (req, res) => {
+    try {
+        // המידלוויר 'authorizeRoles('secretary', 'admin')' בראוטר כבר מוודא הרשאה.
+        const roles = await user_manager.getAllRoles();
+        res.json(roles);
+    } catch (err) {
+        console.error('Error in getAllRoles:', err);
+        res.status(500).json({ error: 'נכשל לשלוף את רשימת התפקידים', details: err.message });
+    }
+};
+
+// רענון טוקן גישה
 exports.refreshToken = async (req, res) => {
-  try {
-    // אם השתמשת ב-HtppOnly cookie:
-    const token = req.cookies.refreshToken;
-    if (!token) return res.status(401).json({ error: 'אין רענון טוקן' });
+    try {
+        const token = req.cookies.refreshToken;
+        if (!token) return res.status(401).json({ error: 'אין רענון טוקן.' });
 
-    // בדיקה ויצירת accessToken חדש
-    const payload = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
-    const accessToken = jwt.sign(
-      { id: payload.id, roles: payload.roles },
-      process.env.TOKEN_SECRET,
-      { expiresIn: '15m' }
-    );
+        // ודא שמשתמש הקיים ב-BL מוגדר לטיפול ברענון טוקן בצורה מאובטחת
+        // זה עדיף על יצירת הטוקן ישירות כאן.
+        const result = await user_manager.refreshAccessToken(token);
 
-    return res.json({ accessToken });
-  } catch (err) {
-    return res.status(403).json({ error: 'refresh token לא תקין' });
-  }
+        if (!result.succeeded) {
+            return res.status(403).json({ error: result.error });
+        }
+
+        const { accessToken, newRefreshToken } = result.data; // אם BL מייצר גם refreshToken חדש
+
+        // אם נוצר refreshToken חדש, יש לעדכן את הקוקי
+        if (newRefreshToken) {
+             res.cookie('refreshToken', newRefreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'Lax',
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            });
+        }
+       
+        return res.json({ accessToken });
+    } catch (err) {
+        console.error('Error in refreshToken:', err);
+        // טפל בשגיאות שונות (טוקן פג תוקף, טוקן לא חוקי וכו')
+        if (err.message.includes('expired')) {
+             return res.status(403).json({ error: 'רענון טוקן פג תוקף, אנא התחבר מחדש.' });
+        }
+        return res.status(403).json({ error: err.message || 'רענון טוקן לא תקין או כשל.' });
+    }
 };
