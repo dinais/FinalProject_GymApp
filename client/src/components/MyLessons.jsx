@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { getRequest, postRequest } from '../Requests'; // וודאי שהנתיב לקובץ Requests נכון
 import { CurrentUser } from './App'; // וודאי שהנתיב לקובץ App נכון
-import './gym-lessons.css'; // נשתמש באותו קובץ CSS
+import '../css/gym-lessons.css'; // נשתמש באותו קובץ CSS
 
 function MyLessons() {
   const { currentUser } = useContext(CurrentUser);

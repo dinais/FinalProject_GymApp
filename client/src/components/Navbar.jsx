@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CurrentUser } from './App';
-import './navbar.css'; // ייבוא קובץ ה-CSS
+import '../css/navbar.css'; // ייבוא קובץ ה-CSS
 
 const Navbar = ({ username, role }) => {
   const { setCurrentUser } = useContext(CurrentUser);

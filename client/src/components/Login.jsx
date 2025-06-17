@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from "react-router-dom";
 import { CurrentUser, Error } from './App';
 import { postRequest } from '../Requests';
-import './login.css'; // הוספת הCSS
+import '../css/login.css'; // הוספת הCSS
 
 function Login() {
     const { setCurrentUser, setCurrentRole } = useContext(CurrentUser);
@@ -14,7 +14,7 @@ const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     try {
-        const requestResult = await postRequest('users/login', userData);
+        const requestResult = await postRequest('auth/login', userData);
         
         if (requestResult.succeeded) {
             const user = requestResult.data.user;

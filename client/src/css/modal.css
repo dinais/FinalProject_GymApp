@@ -1,0 +1,118 @@
+/* src/modal.css */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* וודא שהוא מעל שאר התוכן */
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh; /* גובה מקסימלי */
+    overflow-y: auto; /* גלילה במידת הצורך */
+    position: relative;
+    text-align: right; /* יישור לימין */
+    direction: rtl; /* כיוון כתיבה מימין לשמאל */
+}
+
+.modal-content h3 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 25px;
+    font-size: 1.8em;
+}
+
+.modal-form label {
+    display: block;
+    margin-bottom: 15px;
+    font-weight: bold;
+    color: #555;
+}
+
+.modal-form input[type="text"],
+.modal-form input[type="email"],
+.modal-form input[type="password"],
+.modal-form select {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1em;
+    box-sizing: border-box; /* כולל פאדינג ובורדר ברוחב */
+}
+
+.modal-form input[type="checkbox"] {
+    margin-left: 5px; /* מרווח בין התיבה לטקסט */
+}
+
+.roles-checkboxes {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.roles-checkboxes label {
+    font-weight: normal;
+    display: flex;
+    align-items: center;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.modal-actions button {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.modal-actions button[type="submit"] {
+    background-color: #28a745; /* ירוק */
+    color: white;
+}
+
+.modal-actions button[type="submit"]:hover:not(:disabled) {
+    background-color: #218838;
+}
+
+.modal-actions button.cancel-button {
+    background-color: #6c757d; /* אפור */
+    color: white;
+}
+
+.modal-actions button.cancel-button:hover:not(:disabled) {
+    background-color: #5a6268;
+}
+
+.modal-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.error-message {
+    color: #dc3545;
+    text-align: center;
+    margin-bottom: 15px;
+    font-weight: bold;
+}

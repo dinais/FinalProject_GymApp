@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { getRequest, postRequest } from '../Requests';
 import { CurrentUser } from './App';
-import './gym-lessons.css'; 
+import '../css/gym-lessons.css'; // ייבוא קובץ ה-CSS
 
 function AllLessons() {
   const { currentUser } = useContext(CurrentUser);

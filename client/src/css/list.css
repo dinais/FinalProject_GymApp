@@ -1,0 +1,133 @@
+/* src/list.css */
+.list-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 20px auto;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: right; /* יישור לימין לטקסט בעברית */
+}
+
+/* סגנון הכותרת - מבוסס על gym-lessons.css */
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    position: relative;
+    padding-bottom: 10px;
+}
+
+.main-title {
+    font-size: 2.8em;
+    color: #333;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.subtitle {
+    font-size: 1.2em;
+    color: #666;
+    margin-top: 5px;
+}
+
+.add-button {
+    background-color: #007bff; /* כחול */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1em;
+    margin-bottom: 20px;
+    transition: background-color 0.3s ease;
+    display: block; /* כדי לקבל רוחב מלא לכפתור */
+    margin-right: auto; /* ליישור לימין */
+    margin-left: 0;
+}
+
+.add-button:hover {
+    background-color: #0056b3;
+}
+
+
+.list-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    direction: rtl; /* כיוון טקסט בטבלה מימין לשמאל */
+}
+
+.list-table th, .list-table td {
+    padding: 12px 15px;
+    border: 1px solid #eee;
+    text-align: right; /* יישור לימין */
+}
+
+.list-table th {
+    background-color: #eef;
+    color: #333;
+    font-weight: bold;
+}
+
+.list-table tbody tr:nth-child(even) {
+    background-color: #f6f6f6;
+}
+
+.list-table tbody tr:hover {
+    background-color: #e0e0e0;
+    cursor: pointer;
+}
+
+.edit-btn, .delete-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-left: 5px; /* מרווח בין כפתורים */
+    transition: background-color 0.3s ease;
+}
+
+.delete-btn {
+    background-color: #dc3545;
+}
+
+.edit-btn:hover {
+    background-color: #0056b3;
+}
+
+.delete-btn:hover {
+    background-color: #c82333;
+}
+
+.loading-message, .unauthorized-message, .no-data-message {
+    text-align: center;
+    padding: 20px;
+    font-size: 1.2em;
+    color: #555;
+    direction: rtl;
+}
+
+.unauthorized-message {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #007bff;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 10px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
