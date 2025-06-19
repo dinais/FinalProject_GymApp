@@ -35,7 +35,7 @@ const TraineesList = () => {
             return;
         }
         setLoading(true);
-        const result = await getRequest('users/secretary/role/client');
+        const result = await getRequest('users/secretary/role/client');;
         if (result.succeeded) {
             setTrainees(result.data);
             setErrorMessage('');
@@ -64,15 +64,15 @@ const TraineesList = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleRoleChange = (e) => {
-        const { value, checked } = e.target;
-        setFormData(prev => {
-            const newRoles = checked
-                ? [...prev.roles, value]
-                : prev.roles.filter(role => role !== value);
-            return { ...prev, roles: newRoles };
-        });
-    };
+    // const handleRoleChange = (e) => {
+    //     const { value, checked } = e.target;
+    //     setFormData(prev => {
+    //         const newRoles = checked
+    //             ? [...prev.roles, value]
+    //             : prev.roles.filter(role => role !== value);
+    //         return { ...prev, roles: newRoles };
+    //     });
+    // };
 
     const handleAddClick = () => {
         setCurrentTrainee(null);
@@ -118,11 +118,11 @@ const TraineesList = () => {
         let result;
 
         if (currentTrainee) { // עריכה
-            result = await putRequest(`secretary/users/${currentTrainee.id}`, formData);
+            result = await putRequest(`users/${currentTrainee.id}`, formData);
         } else { // הוספה (ללא סיסמה מצד הלקוח)
             // שימו לב: אנחנו כבר לא שולחים plainPassword כאן.
             // ה-Backend יהיה אחראי ליצור סיסמה זמנית או לסמן את המשתמש כדורש איפוס.
-            result = await postRequest('secretary/users', formData);
+            result = await postRequest('users/register', formData);
         }
 
         if (result.succeeded) {
@@ -138,7 +138,7 @@ const TraineesList = () => {
     const handleDeleteClick = async (traineeId) => {
         if (window.confirm('האם אתה בטוח שברצונך למחוק מתאמן זה? פעולה זו בלתי הפיכה.')) {
             setLoading(true);
-            const result = await deleteRequest(`secretary/users/${traineeId}`);
+            const result = await deleteRequest(`users/${traineeId}`);
             if (result.succeeded) {
                 setErrorMessage('');
                 fetchTrainees();
@@ -182,7 +182,6 @@ const TraineesList = () => {
                             <th>אימייל</th>
                             <th>טלפון</th>
                             <th>כתובת</th>
-                            <th>תפקידים</th>
                             <th>פעולות</th>
                         </tr>
                     </thead>
@@ -195,7 +194,6 @@ const TraineesList = () => {
                                 <td>{trainee.email}</td>
                                 <td>{trainee.phone}</td>
                                 <td>{`${trainee.street_name || ''} ${trainee.house_number || ''}${trainee.apartment_number ? ', דירה ' + trainee.apartment_number : ''}, ${trainee.city || ''} ${trainee.zip_code || ''} ${trainee.country || ''}`}</td>
-                                <td>{trainee.roles ? trainee.roles.join(', ') : 'אין'}</td>
                                 <td>
                                     <button className="edit-btn" onClick={() => handleEditClick(trainee)}>ערוך</button>
                                     <button className="delete-btn" onClick={() => handleDeleteClick(trainee.id)}>מחק</button>
@@ -258,17 +256,8 @@ const TraineesList = () => {
                                 מדינה:
                                 <input type="text" name="country" value={formData.country} onChange={handleChange} />
                             </label>
-
-                            {/* שדה הסיסמה הוסר ממצב הוספה */}
-                            {/* {!currentTrainee && (
-                                <label>
-                                    סיסמה (ליצירת משתמש חדש):
-                                    <input type="password" name="plainPassword" value={formData.plainPassword} onChange={handleChange} required={!currentTrainee} />
-                                </label>
-                            )} */}
-
-                            <h4>תפקידים:</h4>
-                            <div className="roles-checkboxes">
+                            {/* <h4>תפקידים:</h4> */}
+                            {/* <div className="roles-checkboxes">
                                 {allRoles.map(roleName => (
                                     <label key={roleName}>
                                         <input
@@ -281,7 +270,7 @@ const TraineesList = () => {
                                         {roleName === 'client' ? 'לקוח' : roleName === 'coach' ? 'מאמן' : 'מזכיר'}
                                     </label>
                                 ))}
-                            </div>
+                            </div> */}
 
                             <div className="modal-actions">
                                 <button type="submit" disabled={loading}>

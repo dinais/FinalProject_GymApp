@@ -1,27 +1,32 @@
-const user_manager = require('../../BL/user_manager'); // ודא שהנתיב נכון
-const jwt = require('jsonwebtoken'); // נשאר לייבוא כי הוא משמש ב-refreshToken
-
-// ודא שמשתני הסביבה זמינים כאן
+// api/controllers/users_controller.js
+const user_manager = require('../../BL/user_manager');
+const jwt = require('jsonwebtoken');
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../../.env') });
 
 // הרשמת משתמש חדש
 exports.registerUser = async (req, res) => {
     try {
         const userData = req.body;
-        // שינוי: עכשיו מצפים ל-roleName במקום roleId
-        // אם לא נשלח roleName, ניתן ברירת מחדל ל"client" (מתאמן)
         if (!userData.roleName) {
-            userData.roleName = 'client'; // ברירת מחדל: מתאמן
+            userData.roleName = 'client';
             console.warn('roleName לא צוין ברישום, הוגדר כברירת מחדל: "client"');
         }
 
         const newUser = await user_manager.registerUser(userData);
-        res.status(201).json({ message: 'המשתמש נרשם בהצלחה', user: newUser });
+
+        if (newUser.isReactivated) {
+            res.status(200).json({ message: 'המשתמש הופעל מחדש בהצלחה', user: newUser });
+        } else {
+            res.status(201).json({ message: 'המשתמש נרשם בהצלחה', user: newUser });
+        }
     } catch (err) {
         console.error('Error in registerUser:', err);
         // שגיאות ספציפיות מה-BL
-        if (err.message.includes('קיים כבר')) {
-            return res.status(409).json({ error: err.message });
+        if (err.message.includes('קיים כבר') && err.message.includes('פעיל')) {
+            return res.status(409).json({ error: err.message }); // 409 Conflict
+        }
+        if (err.message.includes('תפקיד')) {
+            return res.status(400).json({ error: err.message }); // 400 Bad Request
         }
         res.status(500).json({ error: 'נכשל לרשום את המשתמש', details: err.message });
     }
@@ -35,7 +40,11 @@ exports.loginUser = async (req, res) => {
         const result = await user_manager.login({ email, password });
 
         if (!result.succeeded) {
-            return res.status(401).json({ message: result.error });
+            // טיפול בהודעת "החשבון אינו פעיל" בצורה ספציפית
+            if (result.error.includes('אינו פעיל')) {
+                return res.status(403).json({ message: result.error }); // 403 Forbidden
+            }
+            return res.status(401).json({ message: result.error }); // 401 Unauthorized
         }
 
         const { accessToken, refreshToken, user } = result.data;
@@ -50,7 +59,7 @@ exports.loginUser = async (req, res) => {
         res.json({ accessToken, user }); // החזר גם את ה-user ל־React אם צריך
     } catch (err) {
         console.error('Error in loginUser:', err);
-        res.status(401).json({ message: err.message || 'Login failed' });
+        res.status(500).json({ message: err.message || 'Login failed' }); // שגיאת שרת כללית במקרה של תקלה לא צפויה
     }
 };
 
@@ -59,7 +68,9 @@ exports.getAllUsers = async (req, res) => {
     try {
         // המידלוויר 'protect' כבר העלה את המשתמש המאומת ופרטיו (כולל תפקידים) ל-req.user.
         // אין צורך לבצע כאן בדיקת הרשאות נוספת, היא כבר נעשתה בראוטר.
-        const users = await user_manager.getAllUsers();
+        // NEW: קבלת פרמטר includeInactive מהקווארי, כברירת מחדל false (רק פעילים)
+        const includeInactive = req.query.includeInactive === 'true'; // req.query מחזיר מחרוזת
+        const users = await user_manager.getAllUsers(includeInactive);
         res.json(users);
     } catch (err) {
         console.error('Error in getAllUsers:', err);
@@ -72,17 +83,19 @@ exports.getUserById = async (req, res) => {
     try {
         const userId = req.params.id;
         const requestingUser = req.user; // המשתמש המאומת מהטוקן
+        // NEW: קבלת פרמטר includeInactive מהקווארי, כברירת מחדל false (רק פעילים)
+        const includeInactive = req.query.includeInactive === 'true';
 
         // לוגיקה לבדיקה האם המשתמש המבקש רשאי לצפות בפרופיל:
-        // 1. אם המשתמש המבקש הוא מזכירה או אדמין - מורשה לראות כל פרופיל.
-        // 2. אם המשתמש המבקש אינו מזכירה/אדמין, הוא מורשה לראות רק את הפרופיל של עצמו.
+        // 1. אם המשתמש המבקש הוא מזכירה או אדמין - מורשה לראות כל פרופיל (כולל לא פעילים אם requested).
+        // 2. אם המשתמש המבקש אינו מזכירה/אדמין, הוא מורשה לראות רק את הפרופיל של עצמו, ורק אם הוא פעיל.
         if (!requestingUser.roles.includes('secretary') && !requestingUser.roles.includes('admin')) {
             if (requestingUser.id.toString() !== userId.toString()) { // השוואת ID (string vs. number)
                 return res.status(403).json({ error: 'אין לך הרשאה לצפות בפרופיל של משתמש אחר.' });
             }
         }
 
-        const user = await user_manager.getUserById(userId);
+        const user = await user_manager.getUserById(userId, includeInactive);
         if (user) {
             res.json(user);
         } else {
@@ -99,12 +112,8 @@ exports.updateUser = async (req, res) => {
     try {
         const userId = req.params.id;
         const updateData = req.body;
-        const requestingUser = req.user; // המשתמש המאומת
-
-        // אכיפת הרשאה: משתמש רגיל לא יכול לעדכן תפקידים או משתמשים אחרים.
-        // מכיוון שהראוטר כבר מגביל את זה למזכירה/אדמין, אין צורך בבדיקת תפקידים מפורשת כאן
-        // אלא אם כן תרצה לאפשר ללקוח לעדכן את הפרופיל שלו (ואז צריך להתאים את הראוטר)
-        // אם מזכירה/אדמין מעדכנים את עצמם, הם יכולים לשנות הכל.
+        // המידלוויר 'authorizeRoles' כבר מטפל בהרשאות (מזכירה/אדמין).
+        // אין צורך בבדיקות נוספות כאן.
 
         const updated = await user_manager.updateUser(userId, updateData);
         if (updated) {
@@ -118,33 +127,52 @@ exports.updateUser = async (req, res) => {
     }
 };
 
-// מחיקת משתמש (נגיש רק למזכירה/אדמין דרך הראוטר)
-exports.deleteUser = async (req, res) => {
+// **שינוי: פונקציית מחיקה רכה (soft delete)**
+exports.softDeleteUser = async (req, res) => {
     try {
         const userId = req.params.id;
         // המידלוויר 'authorizeRoles' בראוטר כבר מוודא שהמשתמש הוא מזכירה או אדמין.
         // ניתן להוסיף כאן לוגיקה למניעת מחיקת אדמין על ידי מזכירה אם תרצה.
 
-        const deleted = await user_manager.deleteUser(userId);
-        if (deleted) {
-            res.json({ message: 'המשתמש נמחק בהצלחה' });
+        const deactivated = await user_manager.softDeleteUser(userId);
+        if (deactivated) {
+            res.json({ message: 'המשתמש הושבת בהצלחה (מחיקה רכה)' });
         } else {
-            res.status(404).json({ error: 'משתמש לא נמצא' });
+            res.status(404).json({ error: 'משתמש לא נמצא או כבר אינו פעיל' });
         }
     } catch (err) {
-        console.error('Error in deleteUser:', err);
-        res.status(500).json({ error: 'נכשל למחוק את המשתמש', details: err.message });
+        console.error('Error in softDeleteUser:', err);
+        res.status(500).json({ error: 'נכשל להשבית את המשתמש', details: err.message });
     }
 };
 
-// --- פונקציות חדשות עבור המזכירה ---
+// **פונקציה חדשה: הפעלת משתמש מחדש**
+exports.activateUser = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        // המידלוויר 'authorizeRoles' בראוטר כבר מוודא שהמשתמש הוא מזכירה או אדמין.
+
+        const activated = await user_manager.activateUser(userId);
+        if (activated) {
+            res.json({ message: 'המשתמש הופעל מחדש בהצלחה' });
+        } else {
+            res.status(404).json({ error: 'משתמש לא נמצא או כבר פעיל' });
+        }
+    } catch (err) {
+        console.error('Error in activateUser:', err);
+        res.status(500).json({ error: 'נכשל להפעיל את המשתמש מחדש', details: err.message });
+    }
+};
+
 
 // שליפת מתאמנים בלבד (עבור המזכירה)
 exports.getTrainees = async (req, res) => {
     try {
         // המידלוויר 'authorizeRoles('secretary')' בראוטר כבר מוודא שהמשתמש הוא מזכירה.
         // אין צורך בבדיקה נוספת כאן.
-        const trainees = await user_manager.getUsersByRole('client');
+        // NEW: קבלת פרמטר includeInactive מהקווארי
+        const includeInactive = req.query.includeInactive === 'true';
+        const trainees = await user_manager.getUsersByRole('client', includeInactive);
         res.json(trainees);
     } catch (err) {
         console.error('Error in getTrainees:', err);
@@ -168,35 +196,48 @@ exports.getAllRoles = async (req, res) => {
 exports.refreshToken = async (req, res) => {
     try {
         const token = req.cookies.refreshToken;
-        if (!token) return res.status(401).json({ error: 'אין רענון טוקן.' });
+        if (!token) {
+            console.warn('Refresh token missing from cookies.');
+            return res.status(401).json({ error: 'אין רענון טוקן.' });
+        }
 
-        // ודא שמשתמש הקיים ב-BL מוגדר לטיפול ברענון טוקן בצורה מאובטחת
-        // זה עדיף על יצירת הטוקן ישירות כאן.
         const result = await user_manager.refreshAccessToken(token);
 
         if (!result.succeeded) {
-            return res.status(403).json({ error: result.error });
+            // טיפול בהודעה ספציפית אם המשתמש לא פעיל, או שטוקן פג תוקף
+            if (result.error.includes('אינו פעיל') || result.error.includes('פג תוקף')) {
+                 // ננקה את הקוקי במקרה של טוקן פג תוקף/לא פעיל כדי למנוע ניסיונות חוזרים
+                res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Lax' });
+                return res.status(403).json({ error: result.error }); // 403 Forbidden
+            }
+            return res.status(403).json({ error: result.error || 'רענון טוקן לא תקין או כשל.' }); // 403 Forbidden
         }
 
-        const { accessToken, newRefreshToken } = result.data; // אם BL מייצר גם refreshToken חדש
+        const { accessToken } = result.data; // ה-BL לא מחזיר newRefreshToken כרגע, אז נוריד אותו מ-destructuring
+                                             // אם user_manager.refreshAccessToken יוחזר newRefreshToken, יש להוסיף אותו כאן.
 
-        // אם נוצר refreshToken חדש, יש לעדכן את הקוקי
-        if (newRefreshToken) {
-             res.cookie('refreshToken', newRefreshToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'Lax',
-                maxAge: 7 * 24 * 60 * 60 * 1000
-            });
-        }
-       
+        // אם נוצר refreshToken חדש, יש לעדכן את הקוקי - כרגע ה-BL לא מייצר חדש, אז השארנו את הקוד מוקומנט.
+        // if (newRefreshToken) {
+        //     res.cookie('refreshToken', newRefreshToken, {
+        //         httpOnly: true,
+        //         secure: process.env.NODE_ENV === 'production',
+        //         sameSite: 'Lax',
+        //         maxAge: 7 * 24 * 60 * 60 * 1000
+        //     });
+        // }
+
         return res.json({ accessToken });
     } catch (err) {
         console.error('Error in refreshToken:', err);
         // טפל בשגיאות שונות (טוקן פג תוקף, טוקן לא חוקי וכו')
-        if (err.message.includes('expired')) {
-             return res.status(403).json({ error: 'רענון טוקן פג תוקף, אנא התחבר מחדש.' });
+        if (err.name === 'TokenExpiredError') { // שם שגיאה ספציפי מ-jsonwebtoken
+            res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Lax' });
+            return res.status(403).json({ error: 'רענון טוקן פג תוקף, אנא התחבר מחדש.' });
         }
-        return res.status(403).json({ error: err.message || 'רענון טוקן לא תקין או כשל.' });
+        if (err.name === 'JsonWebTokenError') { // טוקן לא חוקי (signature)
+            res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Lax' });
+            return res.status(403).json({ error: 'רענון טוקן לא חוקי.' });
+        }
+        return res.status(500).json({ error: err.message || 'שגיאה פנימית בשרת בעת רענון טוקן.' });
     }
 };

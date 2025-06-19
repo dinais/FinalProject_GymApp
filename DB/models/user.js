@@ -40,6 +40,11 @@ const user = sequelize.define('user', {
         defaultValue: 'ישראל',
         allowNull: true
     },
+    is_active: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true // כברירת מחדל, משתמש חדש פעיל
+    },
     // *** סוף שדות כתובת חדשים ***
     phone: DataTypes.STRING,
     email: DataTypes.STRING
