@@ -33,7 +33,12 @@ router.put('/:id/activate', authorizeRoles('secretary', 'admin'), userController
 // מסלולים ייעודיים עבור המזכירה
 // שליפת מתאמנים בלבד - רק למזכירה
 // ניתן להוסיף Query Paramter לשליפת לא פעילים: /api/users/secretary/role/client?includeInactive=true
-router.get('/secretary/role/client', authorizeRoles('secretary'), userController.getTrainees);
+router.get('/secretary/role/client', authorizeRoles('secretary', 'admin'), userController.getTrainees); // שיניתי את ההרשאה לכלול אדמין גם כאן, אם זה לא היה קיים, זה הגיוני.
+
+// **הוספה חדשה: שליפת מאמנים בלבד - רק למזכירה/אדמין**
+// ניתן להוסיף Query Paramter לשליפת לא פעילים: /api/users/secretary/role/coach?includeInactive=true
+router.get('/secretary/role/coach', authorizeRoles('secretary', 'admin'), userController.getCoaches);
+
 
 // שליפת כל התפקידים - רק למזכירה/אדמין
 router.get('/roles', authorizeRoles('secretary', 'admin'), userController.getAllRoles);
