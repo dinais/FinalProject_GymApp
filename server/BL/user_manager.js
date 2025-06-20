@@ -1,7 +1,8 @@
 // BL/user_manager.js
-const { user, role: RoleModel, password: PasswordModel, sequelize } = require('../../DB/models');
+const { user, role: RoleModel, password: PasswordModel, user_role, sequelize } = require('../../DB/models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { Op } = require('sequelize');
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../../.env') });
 
 const DAL = require('../DAL/dal');
@@ -10,86 +11,88 @@ const user_manager = {
     /**
      * רישום משתמש חדש על ידי מזכירה. המשתמש נוצר ללא סיסמה ראשונית.
      * הסיסמה תוגדר על ידי המשתמש בנפרד (דרך קישור שנשלח אליו).
+     * מטפל במצבים:
+     * 1. משתמש חדש לחלוטין.
+     * 2. משתמש קיים ולא פעיל (מפעיל אותו מחדש ומעדכן פרטים ותפקיד).
+     * 3. משתמש קיים ופעיל (מוסיף לו את התפקיד החדש אם אינו קיים כבר).
      * @param {object} userData - נתוני המשתמש לרישום (ללא סיסמה)
-     * @returns {object} - פרטי המשתמש החדש או המשתמש שהופעל מחדש
+     * @returns {object} - פרטי המשתמש החדש או המשתמש שהופעל מחדש/עודכן תפקיד
      */
     async registerUser(userData) {
-        const {
-            first_name, last_name, id_number,
-            street_name, house_number, apartment_number,
-            city, zip_code, country, phone, email,
-            roleName
-        } = userData;
+        try {
+            console.log('[UserManager] Attempting to register or update user:', userData.id_number);
 
-        // 1. בדוק אם התפקיד קיים לפי roleName
-        const foundRole = await DAL.findAll(RoleModel, { where: { role: roleName } });
-        if (!foundRole || foundRole.length === 0) {
-            throw new Error(`תפקיד '${roleName}' לא קיים`);
-        }
-        const roleInstance = foundRole[0];
+            let newUser = null;
+            let isExistingUserUpdated = false;
 
-        // 2. בדוק אם האימייל כבר בשימוש
-        // NEW: נטפל בתרחיש של משתמש לא פעיל
-        const existingUserArray = await DAL.findAll(user, {
-            where: { email },
-            include: [{ model: RoleModel, as: 'roles' }] // טען תפקידים קיימים
-        });
-        const existingUser = existingUserArray[0]; // קח את המשתמש הראשון אם נמצא
+            // בדיקה אם המשתמש כבר קיים לפי ת"ז או אימייל
+            let existingUser = await DAL.findOne(user, {
+                where: {
+                    [Op.or]: [
+                        { id_number: userData.id_number },
+                        { email: userData.email }
+                    ]
+                },
+                include: [{
+                    model: RoleModel,
+                    as: 'roles',
+                    attributes: ['id', 'role'], // וודא ש-ID כלול
+                    through: { attributes: ['is_active'] }
+                }]
+            });
 
-        if (existingUser) {
-            // אם המשתמש קיים
-            if (existingUser.is_active) {
-                // אם המשתמש קיים ופעיל - זרוק שגיאה
-                throw new Error('האימייל כבר קיים במערכת ופעיל.');
+            if (existingUser) {
+                console.log(`[UserManager] User ${existingUser.id_number} already exists. Updating details.`);
+                await DAL.update(user, existingUser.id, userData);
+                newUser = existingUser;
+                isExistingUserUpdated = true;
             } else {
-                // אם המשתמש קיים אבל לא פעיל - הפעל אותו מחדש ועדכן פרטים
-                console.log(`משתמש עם אימייל ${email} נמצא ולא פעיל. מפעיל אותו מחדש.`);
-
-                // עדכן את השדות הרלוונטיים (מלבד סיסמה שזה תהליך נפרד)
-                await DAL.update(user, existingUser.id, {
-                    first_name, last_name, id_number,
-                    street_name, house_number, apartment_number,
-                    city, zip_code, country, phone, email,
-                    is_active: true // הפעל מחדש
-                });
-
-                // ודא שהתפקיד הנכון משויך (setRoles יחליף תפקידים קיימים)
-                await existingUser.setRoles([roleInstance]);
-
-                // החזר את פרטי המשתמש המעודכנים
-                const updatedUser = await DAL.findById(user, existingUser.id, {
-                    include: [{ model: RoleModel, as: 'roles', attributes: ['role'] }]
-                });
-
-                return {
-                    id: updatedUser.id,
-                    first_name: updatedUser.first_name,
-                    email: updatedUser.email,
-                    role: updatedUser.roles ? updatedUser.roles.map(r => r.role)[0] : null, // קח את התפקיד הראשון
-                    isReactivated: true // אינדיקטור שהמשתמש הופעל מחדש
-                };
+                console.log('[UserManager] Creating new user.');
+                newUser = await DAL.create(user, userData);
             }
+
+            const roleObject = await DAL.findOne(RoleModel, { where: { role: userData.roleName } });
+            if (!roleObject) {
+                throw new Error(`תפקיד '${userData.roleName}' לא נמצא במערכת.`);
+            }
+
+            const [userRoleEntry, created] = await user_role.findOrCreate({
+                where: { user_id: newUser.id, role_id: roleObject.id },
+                defaults: { is_active: true }
+            });
+
+            if (!created && !userRoleEntry.is_active) {
+                console.log(`[UserManager] Reactivating role '${userData.roleName}' for user ${newUser.id}.`);
+                await userRoleEntry.update({ is_active: true });
+            } else if (created) {
+                console.log(`[UserManager] Created new user-role link for user ${newUser.id} with role '${userData.roleName}'.`);
+            } else {
+                console.log(`[UserManager] User ${newUser.id} already has active role '${userData.roleName}'.`);
+            }
+
+            if (!newUser.is_active) {
+                console.log(`[UserManager] Activating user ${newUser.id} globally as a new role was added/activated.`);
+                await DAL.update(user, newUser.id, { is_active: true });
+                newUser.is_active = true;
+            }
+
+            const finalUser = await DAL.findById(user, newUser.id, {
+                include: [{
+                    model: RoleModel,
+                    as: 'roles',
+                    attributes: ['id', 'role'], // וודא ש-ID כלול
+                    through: { attributes: ['is_active'] }
+                }]
+            });
+
+            return { message: isExistingUserUpdated ? 'המשתמש עודכן בהצלחה.' : 'המשתמש נרשם בהצלחה.', user: finalUser, isExistingUserUpdated };
+
+        } catch (error) {
+            console.error('🚨 Error in BL/user_manager.js registerUser:', error);
+            throw error;
         }
-
-        // 3. אם המשתמש לא קיים כלל, צור משתמש חדש
-        const newUser = await DAL.create(user, {
-            first_name, last_name, id_number,
-            street_name, house_number, apartment_number,
-            city, zip_code, country, phone, email,
-            is_active: true // ברירת מחדל
-        });
-
-        // 4. שייך תפקיד למשתמש החדש
-        await newUser.addRole(roleInstance);
-
-        return {
-            id: newUser.id,
-            first_name: newUser.first_name,
-            email: newUser.email,
-            role: roleInstance.role,
-            isReactivated: false // אינדיקטור שהמשתמש נוצר לראשונה
-        };
     },
+
 
     /**
      * כניסת משתמש למערכת.
@@ -98,13 +101,15 @@ const user_manager = {
      */
     async login({ email, password: enteredPassword }) {
         try {
-            const foundUser = await DAL.findAll(user, {
+            console.log('--- Starting login process for:', email, '---');
+            const foundUser = await DAL.findOne(user, {
                 where: { email },
                 include: [
                     {
                         model: RoleModel,
                         as: 'roles',
-                        attributes: ['role']
+                        attributes: ['id', 'role'], // וודא ש-ID כלול
+                        through: { attributes: ['is_active'] }
                     },
                     {
                         model: PasswordModel,
@@ -114,9 +119,10 @@ const user_manager = {
                 ]
             });
 
-            const userInstance = foundUser[0];
+            console.log('Found User (before filtering roles):', JSON.stringify(foundUser, null, 2));
 
-            if (!userInstance) { // אם המשתמש בכלל לא נמצא
+            if (!foundUser) {
+                console.log('Login failed: User not found with this email.');
                 return {
                     succeeded: false,
                     error: 'אימייל או סיסמה שגויים.',
@@ -124,18 +130,17 @@ const user_manager = {
                 };
             }
 
-            // אם המשתמש קיים אבל אין לו סיסמה, אולי כדאי להחזיר הודעה אחרת:
-            // 'החשבון קיים אך לא הוגדרה סיסמה. אנא קבע/אפס סיסמה.'
-            if (!userInstance.password || !userInstance.password.hash) {
+            if (!foundUser.password || !foundUser.password.hash) {
+                console.log('Login failed: Password not set for user ID', foundUser.id);
                 return {
                     succeeded: false,
-                    error: 'החשבון קיים אך לא הוגדרה סיסמה. אנא קבע סיסמה.', // הודעה ספציפית
+                    error: 'החשבון קיים אך לא הוגדרה סיסמה. אנא קבע סיסמה.',
                     data: null
                 };
             }
 
-            // בדיקת סטטוס פעיל
-            if (!userInstance.is_active) {
+            if (!foundUser.is_active) {
+                console.log('Login failed: Account inactive globally for user ID', foundUser.id);
                 return {
                     succeeded: false,
                     error: 'החשבון שלך אינו פעיל. אנא צור קשר עם ההנהלה.',
@@ -143,10 +148,10 @@ const user_manager = {
                 };
             }
 
-            // השוואת סיסמאות
-            const isValid = await bcrypt.compare(enteredPassword, userInstance.password.hash);
+            const isValid = await bcrypt.compare(enteredPassword, foundUser.password.hash);
 
             if (!isValid) {
+                console.log('Login failed: Incorrect password for user ID', foundUser.id);
                 return {
                     succeeded: false,
                     error: 'אימייל או סיסמה שגויים',
@@ -154,24 +159,43 @@ const user_manager = {
                 };
             }
 
-            const userRoles = userInstance.roles ? userInstance.roles.map(r => r.role) : [];
+            // 💡 חשוב: שליפת תפקידים פעילים בלבד. גישה ל-UserRole (עם 'U' גדולה)
+            const activeUserRoles = foundUser.roles
+                ? foundUser.roles.filter(r => {
+                    // **התיקון כאן:** גישה ל-r.UserRole ולא ל-r.user_role
+                    console.log(`Checking role: ${r.role} (ID: ${r.id}), UserRole object: ${JSON.stringify(r.UserRole)}`);
+                    return r.UserRole && r.UserRole.is_active;
+                }).map(r => r.role)
+                : [];
 
-            // יצירת Access Token
+            console.log('Active Roles after filter:', activeUserRoles);
+
+            if (activeUserRoles.length === 0) {
+                console.log('Login failed: No active roles found for user ID', foundUser.id);
+                return {
+                    succeeded: false,
+                    error: 'אין לך תפקידים פעילים במערכת. אנא צור קשר עם ההנהלה.',
+                    data: null
+                };
+            }
+
             const accessToken = jwt.sign(
                 {
-                    id: userInstance.id,
-                    roles: userRoles
+                    id: foundUser.id,
+                    roles: activeUserRoles
                 },
                 process.env.JWT_SECRET,
                 { expiresIn: '1h' }
             );
 
-            // יצירת Refresh Token
             const refreshToken = jwt.sign(
-                { id: userInstance.id },
+                { id: foundUser.id },
                 process.env.REFRESH_TOKEN_SECRET,
                 { expiresIn: '7d' }
             );
+
+            console.log('Login succeeded for user ID:', foundUser.id);
+            console.log('--- End login process ---');
 
             return {
                 succeeded: true,
@@ -180,26 +204,26 @@ const user_manager = {
                     accessToken,
                     refreshToken,
                     user: {
-                        id: userInstance.id,
-                        first_name: userInstance.first_name,
-                        last_name: userInstance.last_name,
-                        email: userInstance.email,
-                        phone: userInstance.phone,
-                        roles: userRoles,
-                        street_name: userInstance.street_name,
-                        house_number: userInstance.house_number,
-                        apartment_number: userInstance.apartment_number,
-                        city: userInstance.city,
-                        zip_code: userInstance.zip_code,
-                        country: userInstance.country,
-                        id_number: userInstance.id_number,
-                        is_active: userInstance.is_active
+                        id: foundUser.id,
+                        first_name: foundUser.first_name,
+                        last_name: foundUser.last_name,
+                        email: foundUser.email,
+                        phone: foundUser.phone,
+                        roles: activeUserRoles,
+                        street_name: foundUser.street_name,
+                        house_number: foundUser.house_number,
+                        apartment_number: foundUser.apartment_number,
+                        city: foundUser.city,
+                        zip_code: foundUser.zip_code,
+                        country: foundUser.country,
+                        id_number: foundUser.id_number,
+                        is_active: foundUser.is_active
                     }
                 }
             };
 
         } catch (err) {
-            console.error('Login failed in user_manager:', err);
+            console.error('Login failed in user_manager (catch block):', err);
             return {
                 succeeded: false,
                 error: err.message || 'שגיאה כללית בהתחברות',
@@ -210,35 +234,61 @@ const user_manager = {
 
     /**
      * שליפת כל המשתמשים.
-     * @param {boolean} includeInactive - האם לכלול משתמשים לא פעילים (ברירת מחדל: false).
+     * @param {boolean} includeInactive - האם לכלול משתמשים לא פעילים גלובלית (ברירת מחדל: false).
      * @returns {Array<object>} - מערך של אובייקטי משתמשים.
      */
     async getAllUsers(includeInactive = false) {
         const whereClause = includeInactive ? {} : { is_active: true };
-        return await DAL.findAll(user, {
+        const users = await DAL.findAll(user, {
             where: whereClause,
-            include: [{ model: RoleModel, as: 'roles', attributes: ['role'] }]
+            include: [{
+                model: RoleModel,
+                as: 'roles',
+                attributes: ['id', 'role'], // וודא ש-ID כלול
+                through: { attributes: ['is_active'] }
+            }]
+        });
+
+        return users.map(userInstance => {
+            const roles = userInstance.roles || [];
+            const activeRoles = userInstance.is_active
+                ? roles.filter(r => r.UserRole?.is_active).map(r => r.role) // **התיקון כאן:** גישה ל-r.UserRole
+                : [];
+            return { ...userInstance.dataValues, roles: activeRoles, is_active: userInstance.is_active };
         });
     },
 
     /**
      * שליפת משתמש לפי ID.
      * @param {number} id - מזהה המשתמש.
-     * @param {boolean} includeInactive - האם לאפשר שליפת משתמש לא פעיל (ברירת מחדל: false).
-     * @returns {object|null} - אובייקט המשתמש או null אם לא נמצא או לא פעיל.
+     * @param {boolean} includeInactive - האם לאפשר שליפת משתמש לא פעיל גלובלית (ברירת מחדל: false).
+     * @returns {object|null} - אובייקט המשתמש או null אם לא נמצא או לא פעיל גלובלית.
      */
     async getUserById(id, includeInactive = false) {
-        const whereClause = includeInactive ? { id } : { id, is_active: true };
-        const foundUser = await DAL.findAll(user, {
-            where: whereClause,
-            include: [{ model: RoleModel, as: 'roles', attributes: ['role'] }]
+        const userInstance = await DAL.findOne(user, {
+            where: { id },
+            include: [{
+                model: RoleModel,
+                as: 'roles',
+                attributes: ['id', 'role'], // וודא ש-ID כלול
+                through: { attributes: ['is_active'] }
+            }]
         });
-        const userInstance = foundUser[0] || null;
 
-        if (userInstance && userInstance.roles) {
-            userInstance.dataValues.roles = userInstance.roles.map(r => r.role);
+        if (!userInstance) {
+            return null;
         }
-        return userInstance;
+
+        if (!includeInactive && !userInstance.is_active) {
+            return null;
+        }
+
+        const roles = userInstance.roles || [];
+        const activeRoles = userInstance.is_active
+            ? roles.filter(r => r.UserRole?.is_active).map(r => r.role) // **התיקון כאן:** גישה ל-r.UserRole
+            : [];
+
+        return { ...userInstance.dataValues, roles: activeRoles, is_active: userInstance.is_active };
     },
 
     /**
@@ -249,8 +299,12 @@ const user_manager = {
      */
     async updateUser(id, updateData) {
         const userInstance = await DAL.findById(user, id, {
-            include: [{ model: PasswordModel, as: 'password', attributes: ['id', 'hash'] }]
+            include: [
+                { model: PasswordModel, as: 'password', attributes: ['id', 'hash'] },
+                { model: RoleModel, as: 'roles', through: { attributes: ['is_active'] } }
+            ]
         });
+
         if (!userInstance) {
             return false;
         }
@@ -266,12 +320,20 @@ const user_manager = {
         }
 
         if (updateData.roleName) {
-            const newRole = await DAL.findAll(RoleModel, { where: { role: updateData.roleName } });
-            if (!newRole || newRole.length === 0) {
+            const roleToUpdate = await DAL.findOne(RoleModel, { where: { role: updateData.roleName } });
+            if (!roleToUpdate) {
                 throw new Error(`תפקיד '${updateData.roleName}' לא קיים`);
             }
-            await userInstance.setRoles([newRole[0]]);
+            await userInstance.addRole(roleToUpdate, { through: { is_active: true } });
             delete updateData.roleName;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(updateData, 'is_active')) {
+            const newIsActiveStatus = updateData.is_active;
+            const allCurrentRoles = await userInstance.getRoles();
+            for (const role of allCurrentRoles) {
+                await userInstance.addRole(role, { through: { is_active: newIsActiveStatus } });
+            }
         }
 
         const updated = await DAL.update(user, id, updateData);
@@ -280,76 +342,184 @@ const user_manager = {
 
     /**
      * ביצוע "מחיקה רכה" למשתמש (שינוי סטטוס is_active ל-false).
+     * בנוסף, כל התפקידים של המשתמש בטבלת ה-join (user_roles) יסומנו כלא פעילים.
      * @param {number} id - מזהה המשתמש ל"מחיקה".
      * @returns {boolean} - true אם הסטטוס שונה בהצלחה, false אחרת.
      */
-    async softDeleteUser(id) {
+     async softDeleteUser(userId, roleName) {
         try {
-            const userToDeactivate = await DAL.findById(user, id);
-            if (!userToDeactivate) {
+            console.log(`[UserManager] Attempting soft delete for user ${userId}, role: ${roleName}`);
+
+            const existingUser = await DAL.findById(user, userId, {
+                include: [{
+                    model: RoleModel,
+                    as: 'roles',
+                    attributes: ['id', 'role'], // וודא ש-ID כלול
+                    through: { attributes: ['is_active', 'user_id', 'role_id'] }
+                }]
+            });
+
+            if (!existingUser) {
+                console.warn(`[UserManager] User ${userId} not found.`);
+                throw new Error('משתמש לא נמצא.');
+            }
+
+            if (!roleName) {
+                console.warn(`[UserManager] roleName is undefined or null.`);
+                throw new Error('שם התפקיד חסר עבור פעולת המחיקה הרכה.');
+            }
+            const roleToDeactivateObj = await DAL.findOne(RoleModel, { where: { role: roleName } });
+            if (!roleToDeactivateObj) {
+                console.warn(`[UserManager] Role '${roleName}' not found in roles table.`);
+                throw new Error(`תפקיד '${roleName}' לא קיים במערכת.`);
+            }
+
+            const userRoleEntry = existingUser.roles.find(r =>
+                r.id === roleToDeactivateObj.id && r.UserRole // **התיקון כאן:** גישה ל-r.UserRole
+            );
+
+            if (!userRoleEntry) {
+                console.warn(`[UserManager] User ${userId} does not have role '${roleName}'.`);
                 return false;
             }
-            // ודא שהמשתמש פעיל לפני שמנסים להשבית אותו
-            if (!userToDeactivate.is_active) {
-                console.log(`User ${id} is already inactive.`);
-                return false; // כבר לא פעיל
+
+            if (!userRoleEntry.UserRole.is_active) { // **התיקון כאן:** גישה ל-UserRole
+                console.log(`[UserManager] Role '${roleName}' for user ${userId} is already inactive.`);
+                return true;
             }
-            const updated = await DAL.update(user, id, { is_active: false });
-            return updated;
+
+            console.log(`[UserManager] Deactivating role '${roleName}' for user ${userId} in user_role table.`);
+            await user_role.update(
+                { is_active: false },
+                { where: { user_id: userId, role_id: roleToDeactivateObj.id } }
+            );
+
+            const remainingActiveRolesCount = await user_role.count({
+                where: {
+                    user_id: userId,
+                    is_active: true
+                }
+            });
+
+            if (remainingActiveRolesCount === 0) {
+                if (existingUser.is_active) {
+                    console.log(`[UserManager] User ${userId} has no active roles left. Deactivating user globally.`);
+                    await DAL.update(user, userId, { is_active: false });
+                } else {
+                    console.log(`[UserManager] User ${userId} already inactive globally and has no active roles.`);
+                }
+            } else {
+                if (!existingUser.is_active) {
+                    console.log(`[UserManager] User ${userId} still has active roles. Activating user globally.`);
+                    await DAL.update(user, userId, { is_active: true });
+                } else {
+                    console.log(`[UserManager] User ${userId} still has active roles. Global status remains active.`);
+                }
+            }
+
+            console.log(`[UserManager] Soft delete of role '${roleName}' for user ${userId} successful.`);
+            return true;
+
         } catch (error) {
-            console.error('Error in user_manager.softDeleteUser:', error);
+            console.error('🚨 Error in BL/user_manager.js softDeleteUser:', error);
             throw error;
         }
     },
 
     /**
      * הפעלת משתמש מחדש (שינוי סטטוס is_active ל-true).
+     * בנוסף, כל התפקידים של המשתמש בטבלת ה-join (user_roles) יסומנו כפעילים.
      * @param {number} id - מזהה המשתמש להפעלה מחדש.
      * @returns {boolean} - true אם הסטטוס שונה בהצלחה, false אחרת.
      */
-    async activateUser(id) {
+    async activateUser(userId) {
         try {
-            const userToActivate = await DAL.findById(user, id);
-            if (!userToActivate) {
+            console.log(`[activateUser Debug] - Attempting to activate user ${userId}.`);
+            const existingUser = await DAL.findById(user, userId, {
+                include: [{
+                    model: RoleModel,
+                    as: 'roles',
+                    attributes: ['id', 'role'], // וודא ש-ID כלול
+                    through: { attributes: ['is_active'] }
+                }]
+            });
+
+            if (!existingUser) {
+                console.warn(`[activateUser Debug] - User ${userId} not found for activation.`);
                 return false;
             }
-            // ודא שהמשתמש לא פעיל לפני שמנסים להפעיל אותו
-            if (userToActivate.is_active) {
-                console.log(`User ${id} is already active.`);
-                return false; // כבר פעיל
+
+            if (existingUser.is_active) {
+                console.log(`[activateUser Debug] - User ${userId} is already active globally.`);
+                return true;
             }
-            const updated = await DAL.update(user, id, { is_active: true });
-            return updated;
+
+            await DAL.update(user, userId, { is_active: true });
+            console.log(`[activateUser Debug] - User ${userId} activated globally.`);
+
+            const allUserRoles = await user_role.findAll({ where: { user_id: userId } });
+            for (const ur of allUserRoles) {
+                if (!ur.is_active) {
+                    await user_role.update({ is_active: true }, { where: { user_id: userId, role_id: ur.role_id } });
+                    console.log(`[activateUser Debug] - Role ${ur.role_id} for user ${userId} activated.`);
+                }
+            }
+            console.log(`[activateUser Debug] - All roles for user ${userId} activated.`);
+            return true;
         } catch (error) {
-            console.error('Error in user_manager.activateUser:', error);
+            console.error('🚨 Error in BL/user_manager.js activateUser:', error);
             throw error;
         }
     },
 
     /**
-     * שליפת מתאמנים בלבד (משתמשים עם תפקיד 'client').
-     * @param {boolean} includeInactive - האם לכלול מתאמנים לא פעילים (ברירת מחדל: false).
-     * @returns {Array<object>} - מערך של אובייקטי מתאמנים.
+     * שליפת משתמשים לפי תפקיד ספציפי (לדוגמה, 'client' או 'coach').
+     * @param {string} roleName - שם התפקיד.
+     * @param {boolean} includeInactiveGlobalUsers - האם לכלול משתמשים לא פעילים גלובלית (ברירת מחדל: false).
+     * @returns {Array<object>} - מערך של אובייקטי משתמשים עם התפקיד הנבחר.
      */
-    async getUsersByRole(roleName, includeInactive = false) {
-        const foundRole = await DAL.findAll(RoleModel, { where: { role: roleName } });
-        if (!foundRole || foundRole.length === 0) {
+    async getUsersByRole(roleName, includeInactiveGlobalUsers = false) {
+        const foundRole = await DAL.findOne(RoleModel, { where: { role: roleName } });
+        if (!foundRole) {
+            console.log(`Error: Role '${roleName}' not found.`);
             return [];
         }
-        const roleId = foundRole[0].id;
 
-        const whereClause = includeInactive ? {} : { is_active: true };
+        const globalUserWhereClause = includeInactiveGlobalUsers ? {} : { is_active: true };
 
-        return await DAL.findAll(user, {
-            where: whereClause,
+        const usersWithRole = await DAL.findAll(user, {
+            where: globalUserWhereClause,
             include: [{
                 model: RoleModel,
                 as: 'roles',
-                where: { id: roleId },
-                attributes: ['role']
+                where: { id: foundRole.id },
+                attributes: ['id', 'role'], // וודא ש-ID כלול
+                through: {
+                    model: user_role,
+                    attributes: ['is_active']
+                }
             }]
         });
+
+        console.log(`--- Debugging getUsersByRole for role: ${roleName} ---`);
+        console.log('Raw usersWithRole from DAL (before final filter):', JSON.stringify(usersWithRole, null, 2));
+
+        const filteredUsers = usersWithRole.filter(userInstance => {
+            const hasActiveSpecificRole = userInstance.roles.some(r =>
+                r.id === foundRole.id && r.UserRole?.is_active // **התיקון כאן:** גישה ל-r.UserRole
+            );
+            return hasActiveSpecificRole;
+        }).map(userInstance => {
+            const roles = userInstance.roles.filter(r => r.UserRole?.is_active).map(r => r.role); // **התיקון כאן:** גישה ל-r.UserRole
+            return { ...userInstance.dataValues, roles, is_active: userInstance.is_active };
+        });
+
+        console.log('Number of users found (after filter, before returning):', filteredUsers.length);
+        console.log('First user in list (if exists):', filteredUsers[0] ? JSON.stringify(filteredUsers[0], null, 2) : 'No users');
+        console.log('--- End Debugging getUsersByRole ---');
+        return filteredUsers;
     },
+
 
     /**
      * שליפת כל התפקידים הזמינים במערכת.
@@ -372,7 +542,8 @@ const user_manager = {
                 include: [{
                     model: RoleModel,
                     as: 'roles',
-                    attributes: ['role']
+                    attributes: ['id', 'role'], // וודא ש-ID כלול
+                    through: { attributes: ['is_active'] }
                 }]
             });
 
@@ -384,11 +555,17 @@ const user_manager = {
                 return { succeeded: false, error: 'החשבון שלך אינו פעיל. לא ניתן לרענן טוקן.' };
             }
 
+            // 💡 שליפת תפקידים פעילים בלבד. גישה ל-UserRole (עם 'U' גדולה)
+            const activeUserRoles = foundUser.roles
+                ? foundUser.roles.filter(r => r.UserRole?.is_active).map(r => r.role) // **התיקון כאן:** גישה ל-r.UserRole
+                : [];
 
-            const userRoles = foundUser.roles ? foundUser.roles.map(r => r.role) : [];
+            if (activeUserRoles.length === 0) {
+                return { succeeded: false, error: 'אין לך תפקידים פעילים במערכת. לא ניתן לרענן טוקן.' };
+            }
 
             const newAccessToken = jwt.sign(
-                { id: foundUser.id, roles: userRoles },
+                { id: foundUser.id, roles: activeUserRoles },
                 process.env.JWT_SECRET,
                 { expiresIn: '15m' }
             );
@@ -403,7 +580,7 @@ const user_manager = {
 
         } catch (err) {
             console.error('Error in refreshAccessToken BL:', err);
-            throw err;
+            return { succeeded: false, error: 'טוקן רענון לא חוקי או פג תוקף.' };
         }
     },
 

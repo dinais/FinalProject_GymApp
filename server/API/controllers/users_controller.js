@@ -5,30 +5,70 @@ require('dotenv').config({ path: require('path').resolve(__dirname, '../../../.e
 
 // הרשמת משתמש חדש
 exports.registerUser = async (req, res) => {
+    console.log('--- Debugging registerUser Controller ---');
+    console.log('Request body received in controller:', JSON.stringify(req.body, null, 2));
+
     try {
         const userData = req.body;
-        if (!userData.roleName) {
-            userData.roleName = 'client';
-            console.warn('roleName לא צוין ברישום, הוגדר כברירת מחדל: "client"');
+        
+        let actualRoleName = null;
+
+        // ✅ שינוי כאן: קודם כל בדוק אם roleName קיים, אם לא, בדוק roles.
+        if (userData.roleName) { // אם ה-Frontend שלח roleName (כפי שנראה בלוג המקורי)
+            actualRoleName = userData.roleName;
+        } else if (userData.roles && Array.isArray(userData.roles) && userData.roles.length > 0) {
+            // אם ה-Frontend שלח roles (מערך)
+            actualRoleName = userData.roles[0];
+        } 
+        // הערה: אם ה-Frontend יכול לשלוח roles שהוא מחרוזת בודדת, הוסף כאן בדיקה:
+        // else if (userData.roles && typeof userData.roles === 'string') {
+        //     actualRoleName = userData.roles;
+        // }
+
+        // וודא ש-actualRoleName אכן קיים
+        if (!actualRoleName) {
+            console.warn('role (roleName or roles array) is missing or empty.');
+            return res.status(400).json({ error: 'חובה לציין את התפקיד עבור המשתמש החדש (roleName או roles).' });
         }
+        
+        // הגדר את roleName ב-userData עבור ה-user_manager, שמצפה לשם השדה הספציפי הזה
+        // זה גם יחליף את 'roles' אם הוא נשלח במקור, כדי שה-BL תמיד תקבל 'roleName'
+        userData.roleName = actualRoleName; 
 
-        const newUser = await user_manager.registerUser(userData);
+        const newUserResult = await user_manager.registerUser(userData);
 
-        if (newUser.isReactivated) {
-            res.status(200).json({ message: 'המשתמש הופעל מחדש בהצלחה', user: newUser });
+        if (newUserResult.isExistingUserUpdated) {
+            console.log('Existing user updated. Responding with 200.');
+            res.status(200).json({ message: newUserResult.message, user: newUserResult });
         } else {
-            res.status(201).json({ message: 'המשתמש נרשם בהצלחה', user: newUser });
+            console.log('New user created. Responding with 201.');
+            res.status(201).json({ message: newUserResult.message, user: newUserResult });
         }
     } catch (err) {
-        console.error('Error in registerUser:', err);
-        // שגיאות ספציפיות מה-BL
-        if (err.message.includes('קיים כבר') && err.message.includes('פעיל')) {
-            return res.status(409).json({ error: err.message }); // 409 Conflict
+        console.error('🚨 Error caught in registerUser Controller:', err);
+        console.error('Error name:', err.name);
+        console.error('Error message:', err.message);
+        
+        let statusCode = 500;
+        let errorMessage = 'שגיאה פנימית בשרת בעת רישום משתמש.';
+
+        if (err.name === 'SequelizeUniqueConstraintError') {
+            statusCode = 400;
+            const field = err.errors && err.errors.length > 0 ? err.errors[0].path : 'שדה כלשהו';
+            errorMessage = `שגיאת רישום: ${field} כבר קיים במערכת.`;
+        } else if (err.name === 'SequelizeValidationError') {
+            statusCode = 400;
+            errorMessage = `שגיאת אימות נתונים: ${err.message}`;
+        } else if (err.message.includes('תפקיד') || err.message.includes('כבר קיים')) {
+            statusCode = 400;
+            errorMessage = err.message;
+        } else {
+            errorMessage = err.message || errorMessage;
         }
-        if (err.message.includes('תפקיד')) {
-            return res.status(400).json({ error: err.message }); // 400 Bad Request
-        }
-        res.status(500).json({ error: 'נכשל לרשום את המשתמש', details: err.message });
+
+        res.status(statusCode).json({ error: errorMessage, details: err.message });
+    } finally {
+        console.log('--- End registerUser Controller Debug ---');
     }
 };
 
@@ -40,11 +80,15 @@ exports.loginUser = async (req, res) => {
         const result = await user_manager.login({ email, password });
 
         if (!result.succeeded) {
-            // טיפול בהודעת "החשבון אינו פעיל" בצורה ספציפית
-            if (result.error.includes('אינו פעיל')) {
+            // טיפול בהודעות שגיאה ספציפיות מה-BL
+            if (result.error.includes('אינו פעיל') || result.error.includes('אין לך תפקידים פעילים')) {
                 return res.status(403).json({ message: result.error }); // 403 Forbidden
             }
-            return res.status(401).json({ message: result.error }); // 401 Unauthorized
+            if (result.error.includes('הוגדרה סיסמה') || result.error.includes('אימייל או סיסמה שגויים')) {
+                return res.status(401).json({ message: result.error }); // 401 Unauthorized
+            }
+            // שגיאות אחרות מה-BL
+            return res.status(400).json({ message: result.error }); // 400 Bad Request
         }
 
         const { accessToken, refreshToken, user } = result.data;
@@ -66,10 +110,7 @@ exports.loginUser = async (req, res) => {
 // שליפת כל המשתמשים (נגיש רק למזכירה/אדמין דרך הראוטר)
 exports.getAllUsers = async (req, res) => {
     try {
-        // המידלוויר 'protect' כבר העלה את המשתמש המאומת ופרטיו (כולל תפקידים) ל-req.user.
-        // אין צורך לבצע כאן בדיקת הרשאות נוספת, היא כבר נעשתה בראוטר.
-        // NEW: קבלת פרמטר includeInactive מהקווארי, כברירת מחדל false (רק פעילים)
-        const includeInactive = req.query.includeInactive === 'true'; // req.query מחזיר מחרוזת
+        const includeInactive = req.query.includeInactive === 'true';
         const users = await user_manager.getAllUsers(includeInactive);
         res.json(users);
     } catch (err) {
@@ -83,23 +124,25 @@ exports.getUserById = async (req, res) => {
     try {
         const userId = req.params.id;
         const requestingUser = req.user; // המשתמש המאומת מהטוקן
-        // NEW: קבלת פרמטר includeInactive מהקווארי, כברירת מחדל false (רק פעילים)
         const includeInactive = req.query.includeInactive === 'true';
 
         // לוגיקה לבדיקה האם המשתמש המבקש רשאי לצפות בפרופיל:
         // 1. אם המשתמש המבקש הוא מזכירה או אדמין - מורשה לראות כל פרופיל (כולל לא פעילים אם requested).
-        // 2. אם המשתמש המבקש אינו מזכירה/אדמין, הוא מורשה לראות רק את הפרופיל של עצמו, ורק אם הוא פעיל.
+        // 2. אם המשתמש המבקש אינו מזכירה/אדמין, הוא מורשה לראות רק את הפרופיל של עצמו.
+        //    הבדיקה האם המשתמש פעיל כבר נעשית ב-BL (getUserById יחזיר null אם לא פעיל ולא includeInactive).
         if (!requestingUser.roles.includes('secretary') && !requestingUser.roles.includes('admin')) {
             if (requestingUser.id.toString() !== userId.toString()) { // השוואת ID (string vs. number)
                 return res.status(403).json({ error: 'אין לך הרשאה לצפות בפרופיל של משתמש אחר.' });
             }
+            // אם זה הפרופיל של עצמו, ו-includeInactive הוא true, עדיין נשלוף אותו.
+            // ה-BL כבר מטפל בזה, אז פשוט נקרא לו עם includeInactive.
         }
 
         const user = await user_manager.getUserById(userId, includeInactive);
         if (user) {
             res.json(user);
         } else {
-            res.status(404).json({ error: 'משתמש לא נמצא' });
+            res.status(404).json({ error: 'משתמש לא נמצא או אינו פעיל.' }); // עדכון הודעה
         }
     } catch (err) {
         console.error('Error in getUserById:', err);
@@ -112,8 +155,6 @@ exports.updateUser = async (req, res) => {
     try {
         const userId = req.params.id;
         const updateData = req.body;
-        // המידלוויר 'authorizeRoles' כבר מטפל בהרשאות (מזכירה/אדמין).
-        // אין צורך בבדיקות נוספות כאן.
 
         const updated = await user_manager.updateUser(userId, updateData);
         if (updated) {
@@ -123,6 +164,10 @@ exports.updateUser = async (req, res) => {
         }
     } catch (err) {
         console.error('Error in updateUser:', err);
+        // טיפול בשגיאות ספציפיות מ-BL (לדוגמה, תפקיד לא קיים)
+        if (err.message.includes('תפקיד')) {
+            return res.status(400).json({ error: err.message });
+        }
         res.status(500).json({ error: 'נכשל לעדכן את המשתמש', details: err.message });
     }
 };
@@ -131,18 +176,34 @@ exports.updateUser = async (req, res) => {
 exports.softDeleteUser = async (req, res) => {
     try {
         const userId = req.params.id;
-        // המידלוויר 'authorizeRoles' בראוטר כבר מוודא שהמשתמש הוא מזכירה או אדמין.
-        // ניתן להוסיף כאן לוגיקה למניעת מחיקת אדמין על ידי מזכירה אם תרצה.
+        // 💡 שינוי כאן: קבל את roleName מ-req.query
+        const { roleName } = req.query; 
 
-        const deactivated = await user_manager.softDeleteUser(userId);
-        if (deactivated) {
-            res.json({ message: 'המשתמש הושבת בהצלחה (מחיקה רכה)' });
+        console.log(`[UserController] Request to soft delete role '${roleName}' for user ${userId} using query parameter.`);
+
+        if (!roleName) {
+            console.warn(`[UserController] roleName is missing in request query for user ${userId}.`);
+            return res.status(400).json({ error: 'חובה לציין את התפקיד (roleName) למחיקה רכה כ-Query Parameter.' });
+        }
+
+        const success = await user_manager.softDeleteUser(userId, roleName); 
+
+        if (success) {
+            res.json({ message: `תפקיד '${roleName}' של המשתמש הושבת בהצלחה.` });
         } else {
-            res.status(404).json({ error: 'משתמש לא נמצא או כבר אינו פעיל' });
+            res.status(404).json({ error: `תפקיד '${roleName}' לא נמצא עבור משתמש ${userId} או כבר אינו פעיל.` });
         }
     } catch (err) {
-        console.error('Error in softDeleteUser:', err);
-        res.status(500).json({ error: 'נכשל להשבית את המשתמש', details: err.message });
+        console.error('🚨 Error in softDeleteUser (controller):', err);
+        let statusCode = 500;
+        let errorMessage = 'נכשל להשבית את התפקיד של המשתמש.';
+
+        if (err.message.includes('משתמש לא נמצא') || err.message.includes('תפקיד לא קיים') || err.message.includes('שם התפקיד חסר')) {
+            statusCode = 404; 
+        } else if (err.name === 'SequelizeUniqueConstraintError' || err.name === 'SequelizeValidationError') {
+            statusCode = 400; 
+        }
+        res.status(statusCode).json({ error: errorMessage, details: err.message });
     }
 };
 
@@ -150,12 +211,11 @@ exports.softDeleteUser = async (req, res) => {
 exports.activateUser = async (req, res) => {
     try {
         const userId = req.params.id;
-        // המידלוויר 'authorizeRoles' בראוטר כבר מוודא שהמשתמש הוא מזכירה או אדמין.
-
         const activated = await user_manager.activateUser(userId);
         if (activated) {
             res.json({ message: 'המשתמש הופעל מחדש בהצלחה' });
         } else {
+            // ה-BL כבר יחזיר false אם המשתמש לא נמצא או כבר פעיל
             res.status(404).json({ error: 'משתמש לא נמצא או כבר פעיל' });
         }
     } catch (err) {
@@ -168,9 +228,6 @@ exports.activateUser = async (req, res) => {
 // שליפת מתאמנים בלבד (עבור המזכירה)
 exports.getTrainees = async (req, res) => {
     try {
-        // המידלוויר 'authorizeRoles('secretary')' בראוטר כבר מוודא שהמשתמש הוא מזכירה.
-        // אין צורך בבדיקה נוספת כאן.
-        // NEW: קבלת פרמטר includeInactive מהקווארי
         const includeInactive = req.query.includeInactive === 'true';
         const trainees = await user_manager.getUsersByRole('client', includeInactive);
         res.json(trainees);
@@ -180,10 +237,22 @@ exports.getTrainees = async (req, res) => {
     }
 };
 
+// **פונקציה חדשה: שליפת מאמנים בלבד (עבור המזכירה/אדמין)**
+exports.getCoaches = async (req, res) => {
+    try {
+        const includeInactive = req.query.includeInactive === 'true';
+        const coaches = await user_manager.getUsersByRole('coach', includeInactive);
+        res.json(coaches);
+    } catch (err) {
+        console.error('Error in getCoaches:', err);
+        res.status(500).json({ error: 'נכשל לשלוף את רשימת המאמנים', details: err.message });
+    }
+};
+
+
 // שליפת כל התפקידים (עבור המזכירה/אדמין לצורך ניהול)
 exports.getAllRoles = async (req, res) => {
     try {
-        // המידלוויר 'authorizeRoles('secretary', 'admin')' בראוטר כבר מוודא הרשאה.
         const roles = await user_manager.getAllRoles();
         res.json(roles);
     } catch (err) {
@@ -204,37 +273,28 @@ exports.refreshToken = async (req, res) => {
         const result = await user_manager.refreshAccessToken(token);
 
         if (!result.succeeded) {
-            // טיפול בהודעה ספציפית אם המשתמש לא פעיל, או שטוקן פג תוקף
-            if (result.error.includes('אינו פעיל') || result.error.includes('פג תוקף')) {
-                 // ננקה את הקוקי במקרה של טוקן פג תוקף/לא פעיל כדי למנוע ניסיונות חוזרים
-                res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Lax' });
-                return res.status(403).json({ error: result.error }); // 403 Forbidden
+            // כל השגיאות מה-BL הן שגיאות הרשאה (403) או אימות (401),
+            // כולל טוקן פג תוקף, לא פעיל, או ללא תפקידים.
+            // במקרה של שגיאה, ננקה את הקוקי כדי למנוע לולאה אינסופית של ניסיונות רענון כושלים.
+            res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Lax' });
+            // בדיקת סוג השגיאה לקבלת קוד סטטוס מדויק יותר
+            if (result.error.includes('משתמש לא נמצא')) {
+                return res.status(404).json({ error: result.error }); // Not Found
             }
-            return res.status(403).json({ error: result.error || 'רענון טוקן לא תקין או כשל.' }); // 403 Forbidden
+            return res.status(403).json({ error: result.error || 'רענון טוקן לא תקין או כשל.' }); // Forbidden
         }
 
-        const { accessToken } = result.data; // ה-BL לא מחזיר newRefreshToken כרגע, אז נוריד אותו מ-destructuring
-                                             // אם user_manager.refreshAccessToken יוחזר newRefreshToken, יש להוסיף אותו כאן.
-
-        // אם נוצר refreshToken חדש, יש לעדכן את הקוקי - כרגע ה-BL לא מייצר חדש, אז השארנו את הקוד מוקומנט.
-        // if (newRefreshToken) {
-        //     res.cookie('refreshToken', newRefreshToken, {
-        //         httpOnly: true,
-        //         secure: process.env.NODE_ENV === 'production',
-        //         sameSite: 'Lax',
-        //         maxAge: 7 * 24 * 60 * 60 * 1000
-        //     });
-        // }
+        const { accessToken } = result.data;
 
         return res.json({ accessToken });
     } catch (err) {
         console.error('Error in refreshToken:', err);
-        // טפל בשגיאות שונות (טוקן פג תוקף, טוקן לא חוקי וכו')
-        if (err.name === 'TokenExpiredError') { // שם שגיאה ספציפי מ-jsonwebtoken
+        // טיפול בשגיאות מ-jsonwebtoken עצמו (לדוגמה, אם ה-verify נכשל)
+        if (err.name === 'TokenExpiredError') {
             res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Lax' });
             return res.status(403).json({ error: 'רענון טוקן פג תוקף, אנא התחבר מחדש.' });
         }
-        if (err.name === 'JsonWebTokenError') { // טוקן לא חוקי (signature)
+        if (err.name === 'JsonWebTokenError') {
             res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Lax' });
             return res.status(403).json({ error: 'רענון טוקן לא חוקי.' });
         }
