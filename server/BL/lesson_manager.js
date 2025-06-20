@@ -5,7 +5,7 @@ const { sendEmail } = require('../services/mailer'); // תעדכן לפי הנת
 
 /**
  * Retrieves all lessons for a given week.
- * Lessons are filtered by their 'start_date' falling within the specified week.
+ * Lessons are filtered by their 'scheduled_at' falling within the specified week.
  * @param {string} weekStart - The ISO string representing the start of the week (e.g., '2025-06-01T00:00:00.000Z').
  * @returns {Promise<Array>} A promise that resolves to an array of lesson objects.
  */
@@ -14,11 +14,11 @@ exports.getLessonsForWeek = async (weekStart) => {
   const end = new Date(start);
   end.setDate(start.getDate() + 7); // Calculate the end of the week (7 days from start)
 
-  console.log(`Manager: Fetching lessons where start_date is between ${start.toISOString()} and ${end.toISOString()}`);
+  console.log(`Manager: Fetching lessons where scheduled_at is between ${start.toISOString()} and ${end.toISOString()}`);
 
   return dal.findAll(lesson, {
     where: {
-      start_date: {
+      scheduled_at: {
         [Op.between]: [start, end]
       }
     }
@@ -44,18 +44,19 @@ exports.getUserRegisteredAndWaitlistedLessons = async (userId, weekStart) => {
   const registeredLessons = await dal.findAll(lesson, {
     include: [{
       model: lesson_registrations,
+      as: 'LessonRegistrations',  // חייב להתאים למודל
       where: {
         user_id: userId
       },
       attributes: [] // לא רוצים להחזיר שדות מטבלת הרישומים עצמה
     }],
     where: {
-      start_date: {
+      scheduled_at: {
         [Op.between]: [start, end]
       }
     },
     attributes: [ // נבחר במפורש את השדות שאנחנו רוצים
-      'id', 'lesson_type', 'hours', 'day', 'room_number', 'max_participants', 'start_date',
+      'id', 'lesson_type', 'hours', 'day', 'room_number', 'max_participants', 'scheduled_at',
       // נוסיף שדה סטטוס קבוע עבור רישומים
       // *** תיקון כאן: שימוש ב-lesson.sequelize.literal ***
       [lesson.sequelize.literal("'joined'"), 'status'] 
@@ -65,18 +66,19 @@ exports.getUserRegisteredAndWaitlistedLessons = async (userId, weekStart) => {
   const waitlistedLessons = await dal.findAll(lesson, {
     include: [{
       model: waiting_list,
+      as: 'WaitingLists',  // חייב להתאים למודל
       where: {
         user_id: userId
       },
       attributes: [] // לא רוצים להחזיר שדות מטבלת רשימת ההמתנה
     }],
     where: {
-      start_date: {
+      scheduled_at: {
         [Op.between]: [start, end]
       }
     },
     attributes: [ // נבחר במפורש את השדות שאנחנו רוצים
-      'id', 'lesson_type', 'hours', 'day', 'room_number', 'max_participants', 'start_date',
+      'id', 'lesson_type', 'hours', 'day', 'room_number', 'max_participants', 'scheduled_at',
       // נוסיף שדה סטטוס קבוע עבור רשימת המתנה
       // *** תיקון כאן: שימוש ב-lesson.sequelize.literal ***
       [lesson.sequelize.literal("'waitlist'"), 'status']
@@ -117,12 +119,13 @@ exports.getUserLessons = async (userId, weekStart) => {
   return dal.findAll(lesson, {
     include: [{
       model: lesson_registrations,
+      as: 'LessonRegistrations',  // חייב להתאים למודל
       where: {
         user_id: userId
       }
     }],
     where: {
-      start_date: {
+      scheduled_at: {
         [Op.between]: [start, end]
       }
     }
@@ -145,12 +148,13 @@ exports.getUserWaitlistedLessons = async (userId, weekStart) => {
   return dal.findAll(lesson, {
     include: [{
       model: waiting_list,
+      as: 'WaitingLists',  // חייב להתאים למודל
       where: {
         user_id: userId
       }
     }],
     where: {
-      start_date: {
+      scheduled_at: {
         [Op.between]: [start, end]
       }
     }
@@ -165,7 +169,7 @@ exports.getUserWaitlistedLessons = async (userId, weekStart) => {
  */
 exports.getRegisteredCounts = async (weekStart) => {
   console.log(`Manager: Calculating registered counts for lessons starting week of ${weekStart}`);
-  const lessonsInWeek = await exports.getLessonsForWeek(weekStart); // This now correctly uses start_date
+  const lessonsInWeek = await exports.getLessonsForWeek(weekStart); // This now correctly uses scheduled_at
   const counts = {};
 
   for (const lessonItem of lessonsInWeek) {

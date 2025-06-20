@@ -17,11 +17,26 @@ function AllLessons() {
     sunday.setHours(0, 0, 0, 0);
     return sunday.toISOString();
   };
+  const getRegistrationStatus = (lessonStartDateStr) => {
+    const now = new Date();
+    const startDate = new Date(lessonStartDateStr);
+    const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    if (startDate < now) {
+      return 'closed'; // סגור להרשמה
+    } else if (startDate > oneWeekFromNow) {
+      return 'not_open_yet'; // עוד לא נפתח
+    } else {
+      return 'open'; // פתוח
+    }
+  };
+
 
   const fetchLessons = async () => {
     try {
       const weekStart = getStartOfWeek(weekOffset);
       const res = await getRequest(`lessons/week?weekStart=${weekStart}`);
+
       setLessons(res.data || []);
 
       const myRes = await getRequest(`lessons/user/${currentUser.id}/week?weekStart=${weekStart}`);
@@ -176,7 +191,7 @@ function AllLessons() {
                                   <circle cx="12" cy="12" r="10" />
                                   <polyline points="12,6 12,12 16,14" />
                                 </svg>
-                                <span>{lesson.hours}</span>
+                                <span>{new Date(lesson.scheduled_at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}</span>
                               </div>
 
                               <div className="lesson-info-item">
@@ -206,69 +221,86 @@ function AllLessons() {
 
                             {/* סטטוס ופעולות */}
                             <div className="lesson-actions">
-                              {isJoined ? (
-                                <>
-                                  <div className="status-joined">
-                                    <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                                      <polyline points="22,4 12,14.01 9,11.01" />
-                                    </svg>
-                                    <span>רשום לאימון</span>
-                                  </div>
-                                  <button className="btn btn-danger" onClick={() => handleCancel(lesson.id)}>
-                                    <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                      <line x1="18" y1="6" x2="6" y2="18" />
-                                      <line x1="6" y1="6" x2="18" y2="18" />
-                                    </svg>
-                                    ביטול
-                                  </button>
-                                </>
-                              ) : isFull ? (
-                                onWaitlist ? (
-                                  <>
-                                    <div className="status-waitlist">
-                                      <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <circle cx="12" cy="12" r="10" />
-                                        <polyline points="10,8 16,12 10,16" />
-                                      </svg>
-                                      <span>ברשימת המתנה</span>
-                                    </div>
-                                    <button className="btn btn-danger" onClick={() => handleCancel(lesson.id)}>
-                                      <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <line x1="18" y1="6" x2="6" y2="18" />
-                                        <line x1="6" y1="6" x2="18" y2="18" />
-                                      </svg>
-                                      ביטול המתנה
-                                    </button>
-                                  </>
-                                ) : (
-                                  <button
-                                    className="btn btn-secondary"
-                                    onClick={() => handleJoin(lesson.id)}
-                                  >
-                                    <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                      <circle cx="12" cy="12" r="10" />
-                                      <polyline points="10,8 16,12 10,16" />
-                                    </svg>
-                                    הרשמה להמתנה
-                                  </button>
-                                )
-                              ) : (
-                                <button
-                                  className="btn btn-primary"
-                                  onClick={() => handleJoin(lesson.id)}
-                                >
-                                  <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                                    <circle cx="9" cy="7" r="4" />
-                                    <line x1="19" y1="8" x2="19" y2="14" />
-                                    <line x1="22" y1="11" x2="16" y2="11" />
-                                  </svg>
-                                  הרשמה
-                                </button>
-                              )}
-
+                              {
+                                (() => {
+                                  const regStatus = getRegistrationStatus(lesson.scheduled_at);
+                                  if (regStatus === 'closed') {
+                                    return (
+                                      <div className="status-closed">
+                                        🔒 סגור להרשמה
+                                      </div>
+                                    );
+                                  } else if (regStatus === 'not_open_yet') {
+                                    return (
+                                      <div className="status-not-open">
+                                        ⏳ עוד לא פתוח להרשמה
+                                      </div>
+                                    );
+                                  } else {
+                                    if (isJoined) {
+                                      return (
+                                        <>
+                                          <div className="status-joined">
+                                            <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                              <polyline points="22,4 12,14.01 9,11.01" />
+                                            </svg>
+                                            <span>רשום לאימון</span>
+                                          </div>
+                                          <button className="btn btn-danger" onClick={() => handleCancel(lesson.id)}>
+                                            <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                              <line x1="18" y1="6" x2="6" y2="18" />
+                                              <line x1="6" y1="6" x2="18" y2="18" />
+                                            </svg>
+                                            ביטול
+                                          </button>
+                                        </>
+                                      );
+                                    } else if (isFull) {
+                                      return onWaitlist ? (
+                                        <>
+                                          <div className="status-waitlist">
+                                            <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                              <circle cx="12" cy="12" r="10" />
+                                              <polyline points="10,8 16,12 10,16" />
+                                            </svg>
+                                            <span>ברשימת המתנה</span>
+                                          </div>
+                                          <button className="btn btn-danger" onClick={() => handleCancel(lesson.id)}>
+                                            <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                              <line x1="18" y1="6" x2="6" y2="18" />
+                                              <line x1="6" y1="6" x2="18" y2="18" />
+                                            </svg>
+                                            ביטול המתנה
+                                          </button>
+                                        </>
+                                      ) : (
+                                        <button className="btn btn-secondary" onClick={() => handleJoin(lesson.id)}>
+                                          <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <polyline points="10,8 16,12 10,16" />
+                                          </svg>
+                                          הרשמה להמתנה
+                                        </button>
+                                      );
+                                    } else {
+                                      return (
+                                        <button className="btn btn-primary" onClick={() => handleJoin(lesson.id)}>
+                                          <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                            <circle cx="9" cy="7" r="4" />
+                                            <line x1="19" y1="8" x2="19" y2="14" />
+                                            <line x1="22" y1="11" x2="16" y2="11" />
+                                          </svg>
+                                          הרשמה
+                                        </button>
+                                      );
+                                    }
+                                  }
+                                })()
+                              }
                             </div>
+
                           </div>
                         </div>
                       );

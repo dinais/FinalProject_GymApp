@@ -4,7 +4,6 @@ const sequelize = require('../config');
 const lesson = sequelize.define('lessons', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     lesson_type: DataTypes.STRING,
-    hours: DataTypes.INTEGER,
     day: DataTypes.STRING,
     instructor_id: {
         type: DataTypes.INTEGER,
@@ -16,11 +15,10 @@ const lesson = sequelize.define('lessons', {
     room_number: DataTypes.STRING,
     max_participants: DataTypes.INTEGER,
     current_participants: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0
+        type: DataTypes.INTEGER,
+        defaultValue: 0
     },
-    start_date: DataTypes.DATE,
-    end_date: DataTypes.DATE
+    scheduled_at: DataTypes.DATE 
 }, {
     tableName: 'lessons',
     timestamps: false

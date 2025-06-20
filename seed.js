@@ -75,66 +75,126 @@ async function seed() {
         ]);
 
         console.log('✅ User roles created successfully.');
+                // ההגדרה של השיעורים לפי יום ושעה
+        const weeklySchedule = {
+            Sunday: [
+                { time: "08:00", lesson_type: "Pilates" },
+                { time: "09:00", lesson_type: "Dynamic Design" },
+                { time: "19:00", lesson_type: "Dynamic Design" },
+                { time: "20:00", lesson_type: "Moderate Pilates" },
+                { time: "21:00", lesson_type: "Pilates" }
+            ],
+            Monday: [
+                { time: "17:00", lesson_type: "Yoga" },
+                { time: "18:30", lesson_type: "Senior Design" },
+                { time: "19:30", lesson_type: "Core Strength" },
+                { time: "20:30", lesson_type: "Aerobic & Dynamic Design" },
+                { time: "21:30", lesson_type: "Zumba" }
+            ],
+            Tuesday: [
+                { time: "08:00", lesson_type: "Pilates" },
+                { time: "09:00", lesson_type: "Moderate Pilates" },
+                { time: "10:00", lesson_type: "Aerobic & Design" },
+                { time: "11:00", lesson_type: "Dynamic Design" },
+                { time: "11:55", lesson_type: "Abdominal Rehab" },
+                { time: "20:15", lesson_type: "Strength & Fat Burn" }
+            ],
+            Wednesday: [
+                { time: "17:30", lesson_type: "Pilates" },
+                { time: "18:30", lesson_type: "Kickboxing / HIT" },
+                { time: "19:30", lesson_type: "Design & Sculpt" },
+                { time: "20:30", lesson_type: "Aerobic & Design" },
+                { time: "21:30", lesson_type: "Zumba" }
+            ],
+            Thursday: [
+                { time: "08:00", lesson_type: "Pilates" },
+                { time: "09:00", lesson_type: "Feldenkrais" },
+                { time: "10:10", lesson_type: "Feldenkrais" },
+                { time: "11:20", lesson_type: "Pilates Rehab" },
+                { time: "12:15", lesson_type: "Pilates & Stretch" },
+                { time: "20:30", lesson_type: "Kung Fu" }
+            ],
+            Friday: [
+                { time: "08:00", lesson_type: "Design & Pilates" },
+                { time: "09:00", lesson_type: "Design & Sculpt" },
+                { time: "10:00", lesson_type: "Design HIT" }
+            ],
+            Saturday: [
+                { time: "22:00", lesson_type: "Weight Training" }
+            ]
+        };
+
+        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const createdLessons = await createLessonsForRange([coach1, coach2, client3]);
 
         // 4. צור שיעורים
-        const startDates = [
-            new Date('2025-06-01'), // שבוע 1
-            new Date('2025-06-08'), // שבוע 2
-            new Date('2025-06-15')  // שבוע 3 - יום ראשון הקרוב הוא ה-15 ביוני 2025
-        ];
 
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
-        const lessonTypes = ['Yoga', 'Pilates', 'Zumba', 'Spinning'];
-        const rooms = ['Room A', 'Room B', 'Room C', 'Room D'];
 
-        let lessonsToCreate = [];
+        // הפונקציה שמייצרת את כל השיעורים לפי הטווח והלוח
+      async function createLessonsForRange(instructorsList) {
+    const lessonsToCreate = [];
 
-        for (let week = 0; week < 3; week++) {
-            const weekStart = new Date(startDates[week]);
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekStart.getDate() + 6); // סוף השבוע, 6 ימים מההתחלה
+    function getSunday(date) {
+        const day = date.getDay();
+        const diff = (day === 0) ? 0 : -day;
+        const sunday = new Date(date);
+        sunday.setHours(0, 0, 0, 0);
+        sunday.setDate(date.getDate() + diff);
+        return sunday;
+    }
 
-            for (let i = 0; i < days.length; i++) {
-                for (let j = 0; j < lessonTypes.length; j++) {
-                    const instructor = j % 2 === 0 ? coach1 : coach2;
-                    
-                    // תאריך וזמן ספציפיים יותר לשיעורים
-                    const lessonDate = new Date(weekStart);
-                    lessonDate.setDate(weekStart.getDate() + i); // התאריך הספציפי ליום בשבוע
-                    lessonDate.setHours(10 + j, 0, 0, 0); // שעות שונות לכל סוג שיעור
+    const today = new Date();
+    const baseSunday = getSunday(today);
 
-                    lessonsToCreate.push({
-                        lesson_type: lessonTypes[j],
-                        hours: j % 2 === 0 ? 1 : 2,
-                        day: days[i],
-                        instructor_id: instructor.id,
-                        room_number: rooms[j],
-                        max_participants: 10 + j * 2,
-                        current_participants: 0,
-                        start_date: lessonDate, // שימוש בתאריך הספציפי
-                        end_date: new Date(lessonDate.getTime() + (j % 2 === 0 ? 1 : 2) * 60 * 60 * 1000), // סוף השיעור
-                    });
-                }
+    for (let weekOffset = -3; weekOffset <= 3; weekOffset++) {
+        const currentSunday = new Date(baseSunday);
+        currentSunday.setDate(baseSunday.getDate() + weekOffset * 7);
+
+        for (const dayName of daysOfWeek) {
+            const dayIndex = daysOfWeek.indexOf(dayName);
+            const lessons = weeklySchedule[dayName];
+            if (!lessons) continue;
+
+            for (let i = 0; i < lessons.length; i++) {
+                const lesson = lessons[i];
+                const lessonDate = new Date(currentSunday);
+                lessonDate.setDate(currentSunday.getDate() + dayIndex);
+                const [hour, minute] = lesson.time.split(':').map(Number);
+                lessonDate.setHours(hour, minute, 0, 0);
+
+                const instructor = instructorsList[(i + dayIndex + weekOffset + instructorsList.length) % instructorsList.length];
+
+                lessonsToCreate.push({
+                    lesson_type: lesson.lesson_type,
+                    day: dayName,
+                    instructor_id: instructor.id,
+                    room_number: `Room ${String.fromCharCode(65 + (i % 26))}`,
+                    max_participants: 15,
+                    current_participants: 0,
+                    scheduled_at: lessonDate
+                });
             }
         }
+    }
 
-        const createdLessons = await lesson.bulkCreate(lessonsToCreate, { returning: true });
+    const created = await lesson.bulkCreate(lessonsToCreate, { returning: true });
+    console.log(`✅ Created ${created.length} lessons for 7 weeks range`);
+    return created;
+}
 
-        console.log('✅ Lessons created successfully.');
+
 
         // 🔥 הוספת שיעור מלא (ידני) - נבחר שיעור בשבוע הנוכחי
         const fullLessonDate = new Date('2025-06-17'); // היום!
         fullLessonDate.setHours(18, 0, 0, 0); // בשעה 18:00
         const fullLesson = await lesson.create({
             lesson_type: 'Spinning',
-            hours: 1,
             day: 'Tuesday', // היום
             instructor_id: coach1.id,
             room_number: 'Room X',
             max_participants: 3,
             current_participants: 3, // נגדיר אותו מלא כבר בהתחלה
-            start_date: fullLessonDate,
-            end_date: new Date(fullLessonDate.getTime() + 60 * 60 * 1000),
+            scheduled_at: fullLessonDate
         });
         console.log('✅ Full lesson created.');
 
