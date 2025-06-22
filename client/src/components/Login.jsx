@@ -24,9 +24,16 @@ const handleSubmit = async (e) => {
                 first_name: user.first_name,
                 last_name: user.last_name,
                 email: user.email,
-                address: user.address,
                 phone: user.phone,
                 id: user.id,
+                id_number: user.id_number, 
+                street_name: user.street_name,
+                house_number: user.house_number,
+                apartment_number: user.apartment_number,
+                city: user.city,
+                zip_code: user.zip_code,
+                country: user.country,
+                is_active: user.is_active, 
                 roles: user.roles || []
             };
 

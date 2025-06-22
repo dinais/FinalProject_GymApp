@@ -8,6 +8,7 @@ const { protect, authorizeRoles } = require('../middleware/auth_middleware');
 router.post('/register', userController.registerUser);
 router.post('/login', userController.loginUser);
 router.get('/refresh-token', userController.refreshToken); // ראוט לרענון טוקן
+router.post('/initial-login-or-password-setup', userController.initialLoginOrPasswordSetup); // 👈 שינוי כאן
 
 // ראוטים הדורשים הגנה (כניסה למערכת)
 router.use(protect); // כל הראוטים מתחת לשורה זו דורשים טוקן גישה תקף

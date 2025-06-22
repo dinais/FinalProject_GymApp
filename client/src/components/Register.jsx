@@ -4,88 +4,75 @@ import { CurrentUser, Error } from './App';
 import { postRequest } from '../Requests';
 
 function RegistrationPermission() {
-    const { setCurrentUser } = useContext(CurrentUser);
+    const { setCurrentUser, setCurrentRole } = useContext(CurrentUser); // הוסף setCurrentRole
     const { errorMessage, setErrorMessage } = useContext(Error);
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
-        first_name: "",
-        last_name: "",
         email: '',
-        address: "",
-        phone: '',
-        password: "",
+        password: '',
+        confirmPassword: '',
     });
 
-    const submitFullForm = async () => {
-        setErrorMessage('');  // נקה הודעות שגיאה לפני שליחה
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setErrorMessage('');
+
+        if (!formData.email || !formData.password || !formData.confirmPassword) {
+            setErrorMessage('All fields are required.');
+            return;
+        }
+
+        if (formData.password !== formData.confirmPassword) {
+            setErrorMessage('Passwords do not match.');
+            return;
+        }
+
         try {
-            // שליחת הנתונים עם שמות שדות מדויקים לשרת
-            const requestResult = await postRequest('register', {
-                first_name: formData.first_name,
-                last_name: formData.last_name,
+            const requestResult = await postRequest('users/initial-login-or-password-setup', {
                 email: formData.email,
-                address: formData.address,
-                phone: formData.phone,
                 password: formData.password,
             });
 
             if (requestResult.succeeded) {
-                // יוצרים אובייקט משתמש עם השדות הנכונים
-                const { first_name, last_name, email, address, phone } = formData;
-                const userObject = {
-                    first_name,
-                    last_name,
-                    email,
-                    address,
-                    phone,
-                    id: requestResult.data.user.id,
-                    roles: []
-                };
+                // 1. קח גם את ה-refreshToken מהתגובה!
+                const { accessToken, refreshToken, user } = requestResult.data; // 👈 שינוי כאן
 
-                localStorage.setItem("currentUser", JSON.stringify(userObject));
-                setCurrentUser(userObject);
+                // 2. שמור את כל הנתונים ב-localStorage
+                localStorage.setItem("currentUser", JSON.stringify(user));
+                setCurrentUser(user);
+                localStorage.setItem("token", accessToken);
+                localStorage.setItem("refreshToken", refreshToken); // 👈 שמור את ה-Refresh Token
 
-                localStorage.setItem("token", requestResult.data.accessToken);
+                // 3. לוגיקת ניווט זהה לזו שב-Login.jsx
+                if (user.roles && user.roles.length === 1) {
+                    const role = user.roles[0];
+                    setCurrentRole(role);
+                    localStorage.setItem("selectedRole", role);
+                    navigate('/'); // נווט לדף הבית או לבחירת תפקיד אם יש רק אחד
+                } else {
+                    navigate('/RoleSelector'); // נווט לבחירת תפקיד אם יש יותר מאחד או אפס
+                }
 
-                navigate(`/users/${requestResult.data.user.id}/home`);
             } else {
-                setErrorMessage(requestResult.error || 'Registration failed');
+                // 4. טיפול בהפניה למסך לוגין אם המשתמש כבר רשום (מגיע מה-BL דרך הקונטרולר)
+                if (requestResult.error && requestResult.error.includes('כבר רשום') && requestResult.redirectToLogin) {
+                    setErrorMessage(requestResult.error);
+                    navigate('/login'); // הפנה למסך לוגין
+                } else {
+                    setErrorMessage(requestResult.error || 'Operation failed. Please try again.');
+                }
             }
         } catch (error) {
-            setErrorMessage(error.message || 'Unexpected error during registration');
+            console.error('Error during password setup/login:', error);
+            setErrorMessage(error.message || 'An unexpected error occurred.');
         }
-    };
-
-    const handleFullFormSubmit = (e) => {
-        e.preventDefault();
-        submitFullForm();
     };
 
     return (
         <div className="login-container">
-            <h2>Registration</h2>
-            <form className="form-container" onSubmit={handleFullFormSubmit}>
-                <div className="form-group">
-                    <label>First Name:</label>
-                    <input
-                        required
-                        type="text"
-                        value={formData.first_name}
-                        onChange={e => setFormData(prev => ({ ...prev, first_name: e.target.value }))}
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>Last Name:</label>
-                    <input
-                        required
-                        type="text"
-                        value={formData.last_name}
-                        onChange={e => setFormData(prev => ({ ...prev, last_name: e.target.value }))}
-                    />
-                </div>
-
+            <h2>Set Your Password or Login</h2> {/* כותרת מעודכנת */}
+            <form className="form-container" onSubmit={handleSubmit}>
                 <div className="form-group">
                     <label>Email:</label>
                     <input
@@ -93,26 +80,6 @@ function RegistrationPermission() {
                         type="email"
                         value={formData.email}
                         onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>Address:</label>
-                    <input
-                        required
-                        type="text"
-                        value={formData.address}
-                        onChange={e => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>Phone:</label>
-                    <input
-                        required
-                        type="tel"
-                        value={formData.phone}
-                        onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                     />
                 </div>
 
@@ -126,13 +93,21 @@ function RegistrationPermission() {
                     />
                 </div>
 
-                <button className="form-button" type="submit">Register</button>
+                <div className="form-group">
+                    <label>Confirm Password:</label>
+                    <input
+                        required
+                        type="password"
+                        value={formData.confirmPassword}
+                        onChange={e => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    />
+                </div>
+
+                <button className="form-button" type="submit">Submit</button>
             </form>
 
             <Link to="/login">Already have an account? Login</Link>
             {errorMessage && <div className="error-message">{errorMessage}</div>}
-
-
         </div>
     );
 }

@@ -433,15 +433,115 @@ const refreshAccessToken = async (refreshToken) => {
     }
 };
 
-const setPassword = async (userId, newPassword) => {
-    const userToUpdate = await findUserByIdDetailed(userId, false); // קריאה לפונקציית DAL
-    if (!userToUpdate) {
-        throw new Error('משתמש לא נמצא');
-    }
+const handleInitialLoginOrPasswordSetup = async ({ email, password: enteredPassword }) => {
+    try {
+        console.log(`[UserManager] Starting handleInitialLoginOrPasswordSetup process for email: ${email}`);
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    const success = await upsertUserPassword(userId, hashedPassword); // קריאה לפונקציית DAL
-    return success;
+        // 1. קרא למשתמש באמצעות DAL.findUserByEmailForLogin, שכבר כולל את פרטי הסיסמה
+        const foundUser = await findUserByEmailForLogin(email); // 👈 שינוי כאן
+
+        if (!foundUser) {
+            console.log(`[UserManager] User with email ${email} not found.`);
+            return {
+                succeeded: false,
+                error: 'משתמש עם אימייל זה אינו קיים במערכת.',
+                data: null
+            };
+        }
+
+        // 2. במקום לקרוא ל-findPasswordByUserId (שלא קיימת), בדוק את foundUser.password.hash
+        // אם למשתמש יש כבר רשומת סיסמה פעילה
+        if (foundUser.password && foundUser.password.hash) { // 👈 שינוי כאן
+            // משתמש קיים ועם סיסמה - צריך להתחבר דרך מסך לוגין
+            console.log(`[UserManager] User ${foundUser.id} already has a password. Redirecting to login.`);
+            return {
+                succeeded: false,
+                error: 'משתמש זה כבר רשום במערכת. אנא התחבר דרך מסך ההתחברות.', // הודעה ל-UI
+                data: null
+            };
+        } else {
+            // משתמש קיים וללא סיסמה (או רשומת סיסמה ריקה) - קובעים סיסמה ומכניסים אותו לאתר
+            console.log(`[UserManager] No password found for user ${foundUser.id}. Setting new password and logging in.`);
+
+            const hashedPassword = await bcrypt.hash(enteredPassword, 10);
+            await upsertUserPassword(foundUser.id, hashedPassword); // קריאה לפונקציית DAL
+
+            // נפעיל את המשתמש אם הוא לא פעיל
+            if (!foundUser.is_active) {
+                await updateUserGlobalStatus(foundUser.id, true); // קריאה לפונקציית DAL
+                console.log(`[UserManager] User ${foundUser.id} activated globally after setting password.`);
+            }
+
+            // נפעיל גם את התפקידים שלו אם לא פעילים (במידה ויש לו תפקידים)
+            const allUserRoles = await findAllUserRoles(foundUser.id); // קריאה לפונקציית DAL
+            for (const ur of allUserRoles) {
+                if (!ur.is_active) {
+                    await updateUserRoleStatus(foundUser.id, ur.role_id, true); // קריאה לפונקציית DAL
+                    console.log(`[UserManager] Role ${ur.role_id} for user ${foundUser.id} activated.`);
+                }
+            }
+
+            // *** חשוב: מבצעים לוגין מלא ומחזירים טוקנים ופרטי משתמש ***
+            // נשלוף את המשתמש שוב כדי לקבל את כל התפקידים והפרטים המעודכנים לאחר ההפעלה
+            // findUserByIdDetailed כולל את התפקידים ואת הסיסמה
+            const userWithDetails = await findUserByIdDetailed(foundUser.id); // 👈 שינוי כאן: וודא שזה מביא את ה-roles
+
+            // נשלח רק תפקידים פעילים ב-token ובאובייקט המשתמש המוחזר
+            const activeUserRolesForToken = userWithDetails.roles
+                ? userWithDetails.roles.filter(r => r.UserRole && r.UserRole.is_active).map(r => r.role)
+                : [];
+
+            const accessToken = jwt.sign(
+                { id: userWithDetails.id, roles: activeUserRolesForToken }, // 👈 חשוב: לשלוח מערך תפקידים
+                process.env.JWT_SECRET || process.env.ACCESS_TOKEN_SECRET, // השתמש ב-JWT_SECRET כברירת מחדל
+                { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '1h' } // השתמש ב-JWT_ACCESS_EXPIRES_IN כברירת מחדל
+            );
+
+            const refreshToken = jwt.sign(
+                { id: userWithDetails.id },
+                process.env.REFRESH_TOKEN_SECRET,
+                { expiresIn: process.env.REFRESH_TOKEN_EXPIRY || '7d' } // השתמש ב-REFRESH_TOKEN_EXPIRY כברירת מחדל
+            );
+
+            // שמירת ה-refreshToken בדאטה בייס
+            // וודא שיש לך פונקציה upsertRefreshToken ב-DAL שלך, ואם לא, הוסף אותה.
+            // (נראה שחסר ב-DAL ששלחת, אבל הוא חייב להיות אם אתה קורא לו)
+            // אם אתה שומר רענון טוקן בבסיס הנתונים:
+            // await upsertRefreshToken(userWithDetails.id, refreshToken); // אם קיים ב-DAL
+
+            console.log(`[UserManager] Password set and user ${foundUser.id} logged in successfully.`);
+
+            return {
+                succeeded: true,
+                message: 'הסיסמה נקבעה והתחברת בהצלחה.',
+                accessToken,
+                refreshToken,
+                user: {
+                    id: userWithDetails.id,
+                    first_name: userWithDetails.first_name,
+                    last_name: userWithDetails.last_name,
+                    email: userWithDetails.email,
+                    phone: userWithDetails.phone,
+                    roles: activeUserRolesForToken, // 👈 מחזירים רק תפקידים פעילים
+                    street_name: userWithDetails.street_name,
+                    house_number: userWithDetails.house_number,
+                    apartment_number: userWithDetails.apartment_number,
+                    city: userWithDetails.city,
+                    zip_code: userWithDetails.zip_code,
+                    country: userWithDetails.country,
+                    id_number: userWithDetails.id_number,
+                    is_active: userWithDetails.is_active
+                }
+            };
+        }
+    } catch (err) {
+        console.error('🚨 Error in BL/user_manager.js handleInitialLoginOrPasswordSetup:', err);
+        return {
+            succeeded: false,
+            error: err.message || 'שגיאה פנימית בשרת בעת הטיפול בכניסה/קביעת סיסמה.',
+            data: null
+        };
+    }
 };
 
 module.exports = {
@@ -455,5 +555,5 @@ module.exports = {
     getUsersByRole,
     getAllRoles: getAllRolesLogic, 
     refreshAccessToken,
-    setPassword
+    handleInitialLoginOrPasswordSetup
 };

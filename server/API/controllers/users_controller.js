@@ -301,3 +301,40 @@ exports.refreshToken = async (req, res) => {
         return res.status(500).json({ error: err.message || 'שגיאה פנימית בשרת בעת רענון טוקן.' });
     }
 };
+
+// **שינוי: פונקציה לכניסה ראשונה/קביעת סיסמה/הפניה ללוגין**
+exports.initialLoginOrPasswordSetup = async (req, res) => { // 👈 שינוי שם הפונקציה
+    try {
+        const { email, password } = req.body;
+        console.log(`[Controller] Received request to initialLoginOrPasswordSetup for email: ${email}`);
+        
+        if (!email || !password) {
+            return res.status(400).json({ message: 'חובה למלא אימייל וסיסמה.' });
+        }
+
+        const result = await user_manager.handleInitialLoginOrPasswordSetup({ email, password }); // 👈 שינוי שם המתודה ב-BL
+
+        if (!result.succeeded) {
+            // טיפול בהודעות שגיאה מה-BL
+            if (result.error.includes('אינו קיים')) {
+                return res.status(404).json({ message: result.error }); // 404 Not Found
+            }
+            if (result.error.includes('כבר רשום')) { // הודעה למשתמש שכבר יש לו סיסמה
+                 return res.status(409).json({ message: result.error, redirectToLogin: true }); // 409 Conflict, עם דגל להפניה
+            }
+            
+            return res.status(500).json({ message: result.error || 'שגיאה פנימית בשרת.' }); // שגיאות כלליות
+        }
+
+        // הצלחה - הוגדרה סיסמה והמשתמש התחבר אוטומטית
+        res.status(200).json({
+            message: result.message,
+            accessToken: result.accessToken, 
+            refreshToken: result.refreshToken,
+            user: result.user // 👈 מחזירים פרטי משתמש
+        });
+    } catch (err) {
+        console.error('Error in initialLoginOrPasswordSetup Controller:', err); // 👈 שינוי שם
+        res.status(500).json({ message: err.message || 'שגיאה פנימית בשרת.' });
+    }
+};
