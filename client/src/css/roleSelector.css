@@ -1,0 +1,110 @@
+/* src/css/roleSelector.css */
+
+/* Important: The global body styles (background image, overlay, fonts)
+   are expected to be defined in login.css or a global CSS file that's loaded on this page.
+   This file focuses on the specific styles for the role selector container and buttons.
+*/
+
+.role-selector-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh; /* Takes up most of the viewport height */
+    padding: 30px;
+    
+    background: rgba(255, 255, 255, 0.9); /* White with slight transparency */
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px; /* Max width for the container */
+    text-align: center;
+    animation: fadeInScale 0.8s ease-out; /* Animation on load */
+    direction: ltr; /* Ensure text direction is left-to-right for English content */
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.role-selector-container h2 {
+    font-family: 'Montserrat', sans-serif;
+    color: #1A1A1A;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 40px; /* More space below the heading */
+    position: relative;
+    padding-bottom: 15px;
+}
+
+.role-selector-container h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background-color: #C1A492; /* Accent color */
+    border-radius: 2px;
+}
+
+.role-buttons-wrapper {
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    gap: 20px; /* Space between buttons */
+    width: 100%; /* Make buttons take full width of container */
+    max-width: 300px; /* Limit button width for aesthetics */
+}
+
+.role-button {
+    font-family: 'Open Sans', sans-serif;
+    background-color: #8B735E; /* Main button color */
+    color: white;
+    border: none;
+    padding: 15px 25px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(139, 115, 94, 0.3);
+    text-transform: capitalize; /* Capitalize role names */
+}
+
+.role-button:hover {
+    background-color: #6C5544; /* Darker on hover */
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(139, 115, 94, 0.4);
+}
+
+.role-button:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 10px rgba(139, 115, 94, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .role-selector-container {
+        padding: 25px 20px;
+        margin: 15px;
+        min-height: unset; /* Allow height to adjust */
+    }
+
+    .role-selector-container h2 {
+        font-size: 1.8rem;
+        margin-bottom: 30px;
+    }
+
+    .role-button {
+        padding: 12px 20px;
+        font-size: 1rem;
+    }
+}

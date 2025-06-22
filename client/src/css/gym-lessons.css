@@ -1,441 +1,549 @@
-* {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+/* General Styles */
+body {
+    margin: 0;
+    font-family: 'Open Sans', sans-serif;
+    color: #333;
+    background-color: #f8f8f8; /* Light background for the overall page */
+    direction: ltr; /* Set direction to LTR for English/left-to-right */
+}
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #7c3aed 50%, #0f172a 100%);
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
-        }
+/* Base Font Definitions */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', sans-serif;
+    color: #1A1A1A;
+}
 
-        /* Animated Background Elements */
-        .background-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
-        }
+p, span, div, button, input, textarea {
+    font-family: 'Open Sans', sans-serif;
+    color: #333;
+}
 
-        .background-blob {
-            position: absolute;
-            border-radius: 50%;
-            mix-blend-mode: multiply;
-            filter: blur(60px);
-            opacity: 0.2;
-            animation: blob 7s infinite;
-        }
+/* Background Elements */
+.background-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: -2;
+    /* Updated image path based on your uploaded file. Please ensure this path is correct */
+    background: url('../../public/img/room5.jpg') no-repeat center center fixed;
+    background-size: cover;
+    filter: brightness(0.4) grayscale(0.2); /* Darken and desaturate slightly */
+}
 
-        .blob-1 {
-            top: -10rem;
-            right: -10rem;
-            width: 20rem;
-            height: 20rem;
-            background: #7c3aed;
-            animation-delay: 0s;
-        }
+.grid-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(rgba(255, 255, 255) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255, 255, 255) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: -1;
+    opacity: 0.8;
+}
 
-        .blob-2 {
-            bottom: -10rem;
-            left: -10rem;
-            width: 20rem;
-            height: 20rem;
-            background: #06b6d4;
-            animation-delay: 2s;
-        }
+/* Main Content Container - BLUR REMOVED */
+.container {
+    max-width: 1800px;
+    width: 95%;
+    margin: 40px auto;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.45); /* Adjusted for more transparency */
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    z-index: 1;
+    position: relative;
+    backdrop-filter: blur(0px); /* --- BLUR EFFECT REMOVED / SET TO 0 --- */
+    -webkit-backdrop-filter: blur(0px); /* --- BLUR EFFECT REMOVED / SET TO 0 --- */
+    box-sizing: border-box;
+}
 
-        .blob-3 {
-            top: 10rem;
-            left: 10rem;
-            width: 20rem;
-            height: 20rem;
-            background: #ec4899;
-            animation-delay: 4s;
-        }
+/* Header Section */
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+}
 
-        .grid-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.2);
-            background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-        }
+.main-title {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #1A1A1A;
+    margin-bottom: 10px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+}
 
-        /* Container and Layout */
-        .container {
-            position: relative;
-            z-index: 10;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
-        }
+.subtitle {
+    font-size: 1.2rem;
+    color: #555;
+    font-weight: 400;
+}
 
-        /* Header Styles */
-        .header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
+/* Week Navigation */
+.week-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 40px;
+    background-color: #F5EFE6;
+    padding: 15px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
 
-        .main-title {
-            font-size: 3.5rem;
-            font-weight: 900;
-            background: linear-gradient(to right, #ffffff, #c4b5fd, #a5f3fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 1rem;
-            letter-spacing: -0.05em;
-        }
+.nav-button {
+    background-color: #C1A492;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 
-        .subtitle {
-            font-size: 1.25rem;
-            color: rgba(255, 255, 255, 0.8);
-            font-weight: 300;
-        }
+.nav-button:hover {
+    background-color: #8B735E;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
 
-        /* Week Navigation */
-        .week-nav {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-            flex-wrap: wrap;
-        }
+.nav-button:active {
+    transform: translateY(0);
+}
 
-        .nav-button {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 0.75rem;
-            color: white;
-            font-weight: 500;
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
+.week-display {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1A1A1A;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
-        .nav-button:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.05);
-            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.25);
-        }
+.calendar-icon {
+    font-size: 1.6rem;
+    color: #8B735E;
+}
 
-        .nav-button span {
-            transition: transform 0.3s ease;
-        }
+/* Days Grid - Optimized for all days in one row on large screens */
+.days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(170px, 1fr));
+    gap: 20px;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    direction: ltr;
+    padding-bottom: 0;
+    min-width: 1310px;
+}
 
-        .nav-button:hover .arrow-left {
-            transform: translateX(-0.25rem);
-        }
+.day-column {
+    background-color: #F5EFE6;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 15px;
+    flex-shrink: 0;
+}
 
-        .nav-button:hover .arrow-right {
-            transform: translateX(0.25rem);
-        }
+.day-header {
+    background-color: #8B735E;
+    color: white;
+    padding: 12px 15px;
+    text-align: center;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    margin-bottom: 10px;
+}
 
-        .week-display {
-            padding: 1rem 2rem;
-            background: linear-gradient(to right, rgba(124, 58, 237, 0.3), rgba(6, 182, 212, 0.3));
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 1rem;
-            color: white;
-            font-weight: 600;
-            font-size: 1.125rem;
-            min-width: 16rem;
-            text-align: center;
-        }
+.day-title {
+    font-size: 1.6rem;
+    margin: 0;
+    font-weight: 700;
+}
 
-        .calendar-icon {
-            display: inline-block;
-            margin-left: 0.5rem;
-        }
+.day-subtitle {
+    font-size: 0.9rem;
+    margin: 0;
+    opacity: 0.9;
+}
 
-        /* Days Grid */
-        .days-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-        }
+.lessons-container {
+    padding: 0 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
 
-        @media (min-width: 1024px) {
-            .days-grid {
-                grid-template-columns: repeat(7, 1fr);
-            }
-        }
+.lessons-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
 
-        /* Day Column */
-        .day-column {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1rem;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
+/* Lesson Card - Optimized for smaller size */
+.lesson-card {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    border: 1px solid #eee;
+}
 
-        .day-column:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
+.lesson-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
 
-        .day-header {
-            background: linear-gradient(to right, rgba(124, 58, 237, 0.5), rgba(6, 182, 212, 0.5));
-            padding: 1rem;
-            text-align: center;
-        }
+/* Lesson Type Header */
+.lesson-type-header {
+    padding: 8px 12px;
+    color: white;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
 
-        .day-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 0.25rem;
-        }
+/* Specific lesson type colors (unchanged) */
+.lesson-type-crossfit { background-color: #F44336; }
+.lesson-type-yoga { background-color: #4CAF50; }
+.lesson-type-hiit { background-color: #FF9800; }
+.lesson-type-pilates { background-color: #2196F3; }
+.lesson-type-boxing { background-color: #673AB7; }
+.lesson-type-spinning { background-color: #00BCD4; }
+.lesson-type-zumba { background-color: #E91E63; }
+.lesson-type-powerlifting { background-color: #795548; }
+.lesson-type-default { background-color: #9E9E9E; }
 
-        .day-subtitle {
-            font-size: 0.875rem;
-            color: rgba(255, 255, 255, 0.7);
-        }
+/* Lesson Basic Details (for non-expanded state) */
+.lesson-basic-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    gap: 8px;
+    flex-wrap: wrap;
+}
 
-        /* Lessons Container */
-        .lessons-container {
-            padding: 1rem;
-            min-height: 20rem;
-        }
+.lesson-info-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: #444;
+}
 
-        .lessons-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
+.lesson-info-item .icon {
+    width: 18px;
+    height: 18px;
+    color: #8B735E;
+}
 
-        /* Lesson Card */
-        .lesson-card {
-            position: relative;
-            border-radius: 0.75rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.05);
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
+.lesson-action-compact {
+    flex-grow: 1;
+    text-align: left;
+}
+.lesson-action-compact .btn {
+    width: auto;
+    min-width: 100px;
+    font-size: 0.85rem;
+    padding: 7px 12px;
+    border-radius: 6px;
+}
 
-        .lesson-card:hover {
-            transform: scale(1.05);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
+/* Lesson Expanded Details */
+.lesson-expanded-details {
+    padding: 0 10px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: slideDown 0.3s ease-out;
+}
 
-        .lesson-card.joined {
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.2));
-            border-color: rgba(34, 197, 94, 0.3);
-            box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
-        }
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
-        .lesson-card.waitlist {
-            background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(245, 158, 11, 0.2));
-            border-color: rgba(249, 115, 22, 0.3);
-            box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);
-        }
+.lesson-expanded-details .lesson-info-item {
+    padding: 4px 0;
+}
 
-        /* Lesson Type Header */
-        .lesson-type-header {
-            padding: 0.75rem;
-            font-weight: 700;
-            color: white;
-            font-size: 1.125rem;
-        }
+.capacity-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: #444;
+    width: 100%;
+}
 
-        .lesson-type-crossfit { background: linear-gradient(to right, #ef4444, #f97316); }
-        .lesson-type-yoga { background: linear-gradient(to right, #10b981, #059669); }
-        .lesson-type-hiit { background: linear-gradient(to right, #8b5cf6, #ec4899); }
-        .lesson-type-pilates { background: linear-gradient(to right, #3b82f6, #06b6d4); }
-        .lesson-type-boxing { background: linear-gradient(to right, #374151, #dc2626); }
-        .lesson-type-spinning { background: linear-gradient(to right, #eab308, #f97316); }
-        .lesson-type-zumba { background: linear-gradient(to right, #ec4899, #8b5cf6); }
-        .lesson-type-powerlifting { background: linear-gradient(to right, #1f2937, #4b5563); }
+.capacity-bar {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    height: 7px;
+    overflow: hidden;
+    margin-top: 4px;
+}
 
-        /* Lesson Details */
-        .lesson-details {
-            padding: 1rem;
-        }
+.capacity-fill {
+    height: 100%;
+    background-color: #4CAF50;
+    border-radius: 5px;
+    transition: width 0.5s ease-out;
+}
 
-        .lesson-info {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
+.capacity-fill.full {
+    background-color: #F44336;
+}
 
-        .lesson-info-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.875rem;
-        }
+.lesson-actions-expanded {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+    width: 100%;
+}
+.lesson-actions-expanded .btn {
+    width: 90%;
+    max-width: 220px;
+    padding: 10px 18px;
+    font-size: 0.95rem;
+    border-radius: 8px;
+}
 
-        .lesson-info-item .icon {
-            width: 1rem;
-            height: 1rem;
-        }
+.btn {
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+}
 
-        /* Capacity Bar */
-        .capacity-info {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
+.btn .icon {
+    width: 16px;
+    height: 16px;
+}
 
-        .capacity-bar {
-            flex: 1;
-            height: 0.5rem;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 0.25rem;
-            overflow: hidden;
-        }
+.btn-primary {
+    background-color: #8B735E;
+    color: white;
+}
 
-        .capacity-fill {
-            height: 100%;
-            background: linear-gradient(to right, #10b981, #059669);
-            transition: all 0.5s ease;
-        }
+.btn-primary:hover {
+    background-color: #6C5544;
+    transform: translateY(-1px);
+}
 
-        .capacity-fill.full {
-            background: #ef4444;
-        }
+.btn-secondary {
+    background-color: #C1A492;
+    color: white;
+}
 
-        /* Status and Actions */
-        .lesson-actions {
-            padding-top: 0.75rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
+.btn-secondary:hover {
+    background-color: #A38A7A;
+    transform: translateY(-1px);
+}
 
-        .status-joined {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #10b981;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
+.btn-cancel, .btn-cancel-waitlist {
+    background-color: #F44336;
+    color: white;
+}
 
-        .status-waitlist {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #f59e0b;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
+.btn-cancel:hover, .btn-cancel-waitlist:hover {
+    background-color: #D32F2F;
+    transform: translateY(-1px);
+}
 
-        /* Buttons */
-        .btn {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 0.75rem;
-            border: none;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-        }
+.btn-close-card {
+    background-color: #E0E0E0;
+    color: #555;
+    margin-top: 8px;
+    padding: 7px 12px;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    width: auto;
+    align-self: flex-start;
+}
+.btn-close-card:hover {
+    background-color: #C0C0C0;
+}
 
-        .btn:hover {
-            transform: scale(1.05);
-        }
+/* Status indicators */
+.status-joined, .status-waitlist, .status-closed, .status-not-open {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 5px;
+    white-space: nowrap;
+}
 
-        .btn-primary {
-            background: linear-gradient(to right, #7c3aed, #06b6d4);
-            color: white;
-        }
+.status-joined { background-color: #E8F5E9; color: #388E3C; }
+.status-waitlist { background-color: #FFF3E0; color: #F57C00; }
+.status-closed { background-color: #FFEBEE; color: #D32F2F; }
+.status-not-open { background-color: #E3F2FD; color: #1976D2; }
 
-        .btn-primary:hover {
-            background: linear-gradient(to right, #6d28d9, #0891b2);
-            box-shadow: 0 10px 20px rgba(124, 58, 237, 0.3);
-        }
+.status-joined .icon, .status-waitlist .icon, .status-closed .icon, .status-not-open .icon {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2.5;
+}
 
-        .btn-danger {
-            background: rgba(239, 68, 68, 0.2);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #fca5a5;
-        }
+/* No Lessons Message */
+.no-lessons {
+    text-align: center;
+    padding: 40px 15px;
+    background-color: #f0f0f0;
+    border-radius: 12px;
+    color: #666;
+    font-size: 1.1rem;
+    margin-top: 15px;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+}
 
-        .btn-danger:hover {
-            background: rgba(239, 68, 68, 0.3);
-        }
+.no-lessons-icon {
+    width: 40px;
+    height: 40px;
+    color: #8B735E;
+    margin-bottom: 10px;
+}
 
-        .btn-disabled {
-            background: rgba(107, 114, 128, 0.3);
-            border: 1px solid rgba(107, 114, 128, 0.3);
-            color: #9ca3af;
-            cursor: not-allowed;
-        }
+/* Responsive Design */
+@media (min-width: 1350px) {
+    .days-grid {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 20px;
+        min-width: unset;
+    }
+}
 
-        .btn-disabled:hover {
-            transform: none;
-        }
+@media (max-width: 1349px) {
+    .days-grid {
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 20px;
+        overflow-x: hidden;
+        min-width: unset;
+    }
+}
 
-        /* No Lessons Message */
-        .no-lessons {
-            text-align: center;
-            padding: 2rem;
-            color: rgba(255, 255, 255, 0.5);
-        }
+@media (max-width: 1024px) {
+    .container {
+        margin: 20px auto;
+        padding: 15px;
+        width: 98%;
+    }
 
-        .no-lessons-icon {
-            width: 3rem;
-            height: 3rem;
-            margin: 0 auto 0.5rem;
-            opacity: 0.5;
-        }
+    .main-title {
+        font-size: 2.5rem;
+    }
 
-        /* Icons */
-        .icon {
-            width: 1.25rem;
-            height: 1.25rem;
-            fill: currentColor;
-        }
+    .subtitle {
+        font-size: 1.1rem;
+    }
 
-        /* Animations */
-        @keyframes blob {
-            0% { transform: translate(0px, 0px) scale(1); }
-            33% { transform: translate(30px, -50px) scale(1.1); }
-            66% { transform: translate(-20px, 20px) scale(0.9); }
-            100% { transform: translate(0px, 0px) scale(1); }
-        }
+    .week-nav {
+        gap: 20px;
+        padding: 10px 20px;
+    }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-            
-            .main-title {
-                font-size: 2.5rem;
-            }
-            
-            .week-nav {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .days-grid {
-                grid-template-columns: 1fr;
-            }
-        }
+    .nav-button {
+        padding: 10px 20px;
+        font-size: 1rem;
+    }
+
+    .week-display {
+        font-size: 1.2rem;
+    }
+
+    .days-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        overflow-x: hidden;
+    }
+
+    .day-title {
+        font-size: 1.6rem;
+    }
+    .lesson-basic-details {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .lesson-action-compact {
+        width: 100%;
+        text-align: left;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        margin: 15px;
+        padding: 15px;
+    }
+
+    .main-title {
+        font-size: 2.2rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .week-nav {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .days-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        overflow-x: hidden;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-title {
+        font-size: 1.8rem;
+    }
+    .nav-button {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+    }
+    .week-display {
+        font-size: 1rem;
+    }
+    .day-title {
+        font-size: 1.4rem;
+    }
+    .lesson-card {
+        padding: 0;
+    }
+}

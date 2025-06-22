@@ -2,9 +2,10 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from "react-router-dom";
 import { CurrentUser, Error } from './App';
 import { postRequest } from '../Requests';
+import '../css/login.css'; // Import the same CSS file
 
 function RegistrationPermission() {
-    const { setCurrentUser, setCurrentRole } = useContext(CurrentUser); // הוסף setCurrentRole
+    const { setCurrentUser, setCurrentRole } = useContext(CurrentUser);
     const { errorMessage, setErrorMessage } = useContext(Error);
     const navigate = useNavigate();
 
@@ -13,18 +14,22 @@ function RegistrationPermission() {
         password: '',
         confirmPassword: '',
     });
+    const [isLoading, setIsLoading] = useState(false); // Loading state for button
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setErrorMessage('');
+        setIsLoading(true); // Start loading
 
         if (!formData.email || !formData.password || !formData.confirmPassword) {
-            setErrorMessage('All fields are required.');
+            setErrorMessage('All fields are required.'); // Message in English
+            setIsLoading(false);
             return;
         }
 
         if (formData.password !== formData.confirmPassword) {
-            setErrorMessage('Passwords do not match.');
+            setErrorMessage('Passwords do not match.'); // Message in English
+            setIsLoading(false);
             return;
         }
 
@@ -35,47 +40,46 @@ function RegistrationPermission() {
             });
 
             if (requestResult.succeeded) {
-                // 1. קח גם את ה-refreshToken מהתגובה!
-                const { accessToken, refreshToken, user } = requestResult.data; // 👈 שינוי כאן
+                const { accessToken, refreshToken, user } = requestResult.data; 
 
-                // 2. שמור את כל הנתונים ב-localStorage
                 localStorage.setItem("currentUser", JSON.stringify(user));
                 setCurrentUser(user);
                 localStorage.setItem("token", accessToken);
-                localStorage.setItem("refreshToken", refreshToken); // 👈 שמור את ה-Refresh Token
+                localStorage.setItem("refreshToken", refreshToken); 
 
-                // 3. לוגיקת ניווט זהה לזו שב-Login.jsx
                 if (user.roles && user.roles.length === 1) {
                     const role = user.roles[0];
                     setCurrentRole(role);
                     localStorage.setItem("selectedRole", role);
-                    navigate('/'); // נווט לדף הבית או לבחירת תפקיד אם יש רק אחד
+                    navigate('/');
                 } else {
-                    navigate('/RoleSelector'); // נווט לבחירת תפקיד אם יש יותר מאחד או אפס
+                    navigate('/RoleSelector');
                 }
 
             } else {
-                // 4. טיפול בהפניה למסך לוגין אם המשתמש כבר רשום (מגיע מה-BL דרך הקונטרולר)
                 if (requestResult.error && requestResult.error.includes('כבר רשום') && requestResult.redirectToLogin) {
                     setErrorMessage(requestResult.error);
-                    navigate('/login'); // הפנה למסך לוגין
+                    navigate('/login');
                 } else {
-                    setErrorMessage(requestResult.error || 'Operation failed. Please try again.');
+                    setErrorMessage(requestResult.error || 'Operation failed. Please try again.'); // Message in English
                 }
             }
         } catch (error) {
             console.error('Error during password setup/login:', error);
-            setErrorMessage(error.message || 'An unexpected error occurred.');
+            setErrorMessage(error.message || 'An unexpected error occurred.'); // Message in English
+        } finally {
+            setIsLoading(false); // End loading
         }
     };
 
     return (
-        <div className="login-container">
-            <h2>Set Your Password or Login</h2> {/* כותרת מעודכנת */}
-            <form className="form-container" onSubmit={handleSubmit}>
+        <div className="auth-container">
+            <h2>Set Your Password</h2> {/* Title in English */}
+            <form className="auth-form" onSubmit={handleSubmit}>
                 <div className="form-group">
-                    <label>Email:</label>
+                    <label htmlFor="email">Email:</label> {/* Label in English */}
                     <input
+                        id="email"
                         required
                         type="email"
                         value={formData.email}
@@ -84,8 +88,9 @@ function RegistrationPermission() {
                 </div>
 
                 <div className="form-group">
-                    <label>Password:</label>
+                    <label htmlFor="password">Password:</label> {/* Label in English */}
                     <input
+                        id="password"
                         required
                         type="password"
                         value={formData.password}
@@ -94,8 +99,9 @@ function RegistrationPermission() {
                 </div>
 
                 <div className="form-group">
-                    <label>Confirm Password:</label>
+                    <label htmlFor="confirmPassword">Confirm Password:</label> {/* Label in English */}
                     <input
+                        id="confirmPassword"
                         required
                         type="password"
                         value={formData.confirmPassword}
@@ -103,10 +109,16 @@ function RegistrationPermission() {
                     />
                 </div>
 
-                <button className="form-button" type="submit">Submit</button>
+                <button 
+                    className={`submit-button ${isLoading ? 'loading' : ''}`}
+                    type="submit"
+                    disabled={isLoading}
+                >
+                    {isLoading ? '' : 'Submit'} {/* Button text in English */}
+                </button>
             </form>
 
-            <Link to="/login">Already have an account? Login</Link>
+            <Link to="/login" className="link-text">Already have an account? Login</Link> {/* Link text in English */}
             {errorMessage && <div className="error-message">{errorMessage}</div>}
         </div>
     );

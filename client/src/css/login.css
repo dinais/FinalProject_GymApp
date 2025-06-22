@@ -1,185 +1,191 @@
-/* Login Page Styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* src/css/login.css */
+
+/* שינויים גלובליים, וודא שלא מתנגשים עם index.css או App.css */
+/* אם כן, העבר ל-index.css או למקם במקום רצוי */
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: 'Open Sans', sans-serif;
+    color: #333333;
+    /* הגדרת תמונת רקע עבור ה-body */
+    background-image: url('../../public/img/room1.jpg'); /* <-- כאן */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
+    margin: 0;
 }
 
-.login-container {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-    padding: 40px;
-    width: 100%;
-    max-width: 420px;
-    position: relative;
-    overflow: hidden;
-    animation: slideIn 0.6s ease-out;
-}
-
-.login-container::before {
+/* שכבת אובליי עדינה על הרקע */
+body::before {
     content: '';
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
-    border-radius: 20px 20px 0 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(245, 239, 230, 0.4); /* צבע קרם בהיר עם שקיפות */
+    backdrop-filter: blur(3px); /* טשטוש קל מאוד לתמונה שמאחור */
+    z-index: -1; /* שיהיה מתחת לתוכן */
 }
 
-@keyframes slideIn {
+
+/* קונטיינר הטופס הראשי (לוגין/רישום) */
+.auth-container { /* שיניתי מ-login-container ל-auth-container */
+    background: rgba(255, 255, 255, 0.9); /* לבן כמעט מלא עם שקיפות עדינה */
+    border-radius: 12px; /* פינות עדינות */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* צל עדין ונעים */
+    padding: 40px 30px; /* ריווח פנימי נדיב */
+    width: 100%;
+    max-width: 450px; /* קצת יותר רחב לטובת מראה מודרני */
+    text-align: center;
+    direction: rtl; /* כיווניות מימין לשמאל */
+    animation: fadeIn 0.8s ease-out; /* אנימציה עדינה */
+}
+
+@keyframes fadeIn {
     from {
-        transform: translateY(-30px);
         opacity: 0;
+        transform: translateY(20px);
     }
     to {
-        transform: translateY(0);
         opacity: 1;
+        transform: translateY(0);
     }
 }
 
-.login-container h2 {
-    text-align: center;
-    color: #2c3e50;
-    font-size: 2.5rem;
+/* כותרת הטופס */
+.auth-container h2 {
+    font-family: 'Montserrat', sans-serif;
+    color: #1A1A1A; /* צבע כהה וחזק */
+    font-size: 2.2rem; /* גודל כותרת */
     font-weight: 700;
     margin-bottom: 30px;
     position: relative;
+    padding-bottom: 15px; /* רווח לתחתית הקו */
 }
 
-.login-container h2::after {
+.auth-container h2::after {
     content: '';
     position: absolute;
-    bottom: -10px;
+    bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 60px;
-    height: 3px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    width: 80px; /* קו הדגשה מתחת לכותרת */
+    height: 4px;
+    background-color: #C1A492; /* צבע הדגשה מהפלטה */
     border-radius: 2px;
 }
 
-.login-form {
+/* פורם - שדות קלט וכפתורים */
+.auth-form { /* שיניתי מ-login-form ל-auth-form */
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 20px; /* רווח בין שדות */
+    margin-bottom: 25px; /* רווח מתחת לטופס */
 }
 
 .form-group {
-    position: relative;
+    text-align: right; /* יישור טקסט לימין בגלל RTL */
 }
 
 .form-group label {
+    font-family: 'Open Sans', sans-serif;
     display: block;
     margin-bottom: 8px;
-    color: #34495e;
+    color: #4A4A4A; /* צבע תווית */
     font-weight: 600;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-size: 0.95rem;
 }
 
 .form-group input {
+    font-family: 'Open Sans', sans-serif;
     width: 100%;
-    padding: 15px 20px;
-    border: 2px solid #e0e6ed;
-    border-radius: 12px;
+    padding: 14px 18px; /* ריווח פנימי גדול יותר */
+    border: 1px solid #D6C6B7; /* צבע גבול עדין */
+    border-radius: 8px; /* פינות מעוגלות עדינות */
     font-size: 1rem;
     transition: all 0.3s ease;
-    background: #fff;
-    color: #2c3e50;
+    background-color: #FFFFFF; /* רקע לבן */
+    color: #333333;
+    text-align: right; /* יישור קלט לימין */
 }
 
 .form-group input:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    transform: translateY(-2px);
+    border-color: #C1A492; /* צבע הדגשה בפוקוס */
+    box-shadow: 0 0 0 3px rgba(193, 164, 146, 0.15); /* צל עדין בפוקוס */
+    transform: translateY(-1px); /* אפקט קל בפוקוס */
 }
 
 .form-group input:hover {
-    border-color: #bdc3c7;
+    border-color: #B0A090; /* גוון מעט כהה יותר במעבר עכבר */
 }
 
-.login-button {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+/* כפתור שליחה */
+.submit-button { /* שיניתי מ-login-button ל-submit-button */
+    font-family: 'Montserrat', sans-serif; /* גופן לכפתור ראשי */
+    background-color: #8B735E; /* צבע כפתור ראשי מהפלטה */
     color: white;
     border: none;
-    padding: 16px 24px;
-    border-radius: 12px;
+    padding: 16px 25px;
+    border-radius: 8px;
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: 700; /* מודגש יותר */
     cursor: pointer;
     transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(139, 115, 94, 0.3); /* צל עדין */
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 10px;
-    position: relative;
-    overflow: hidden;
+    letter-spacing: 0.8px;
+    margin-top: 20px; /* רווח מעל הכפתור */
 }
 
-.login-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
+.submit-button:hover {
+    background-color: #6C5544; /* גוון כהה יותר במעבר עכבר */
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(139, 115, 94, 0.4);
 }
 
-.login-button:hover::before {
-    left: 100%;
+.submit-button:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 10px rgba(139, 115, 94, 0.2);
 }
 
-.login-button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
-}
-
-.login-button:active {
-    transform: translateY(-1px);
-}
-
-.login-container a {
+/* קישורי עזר (כבר יש לך חשבון, אין לך חשבון) */
+.auth-container .link-text { /* קלאס ייחודי לקישורי עזר */
+    font-family: 'Open Sans', sans-serif;
     display: block;
     text-align: center;
-    color: #667eea;
+    color: #8B735E; /* צבע הקישור מהפלטה */
     text-decoration: none;
-    margin-top: 25px;
-    font-weight: 500;
+    margin-top: 20px;
+    font-weight: 600;
     padding: 10px;
-    border-radius: 8px;
+    border-radius: 6px;
     transition: all 0.3s ease;
 }
 
-.login-container a:hover {
-    background: rgba(102, 126, 234, 0.1);
+.auth-container .link-text:hover {
+    background: rgba(193, 164, 146, 0.1); /* רקע עדין במעבר עכבר */
+    color: #6C5544; /* צבע טקסט כהה יותר במעבר עכבר */
     transform: translateY(-1px);
 }
 
+/* הודעות שגיאה/הצלחה */
 .error-message {
-    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    background-color: #FF7070; /* אדום בהיר יותר מהפלטה */
     color: white;
-    padding: 15px 20px;
-    border-radius: 12px;
+    padding: 12px 15px;
+    border-radius: 8px;
     margin-top: 20px;
     text-align: center;
     font-weight: 500;
-    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+    font-family: 'Open Sans', sans-serif;
+    box-shadow: 0 4px 12px rgba(255, 112, 112, 0.3);
     animation: shake 0.5s ease-in-out;
 }
 
@@ -189,60 +195,28 @@ body {
     75% { transform: translateX(5px); }
 }
 
-/* Responsive Design */
-@media (max-width: 480px) {
-    .login-container {
-        padding: 30px 25px;
-        margin: 10px;
-    }
-    
-    .login-container h2 {
-        font-size: 2rem;
-    }
-    
-    .form-group input {
-        padding: 12px 16px;
-    }
-    
-    .login-button {
-        padding: 14px 20px;
-        font-size: 1rem;
-    }
-}
-
-/* Success animation for future use */
-@keyframes success {
-    0% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.05);
-    }
-    100% {
-        transform: scale(1);
-    }
-}
-
 .success-message {
-    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    background-color: #7ED957; /* ירוק בהיר יותר */
     color: white;
-    padding: 15px 20px;
-    border-radius: 12px;
+    padding: 12px 15px;
+    border-radius: 8px;
     margin-top: 20px;
     text-align: center;
     font-weight: 500;
-    box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
-    animation: success 0.6s ease-in-out;
+    font-family: 'Open Sans', sans-serif;
+    box-shadow: 0 4px 12px rgba(126, 217, 87, 0.3);
 }
 
 /* Loading state for button */
-.login-button.loading {
-    background: #bdc3c7;
+.submit-button.loading {
+    background-color: #B0A090; /* גוון אפור בז' לטעינה */
     cursor: not-allowed;
+    opacity: 0.8;
     transform: none;
+    box-shadow: none;
 }
 
-.login-button.loading::after {
+.submit-button.loading::after {
     content: '';
     position: absolute;
     top: 50%;
@@ -250,8 +224,8 @@ body {
     transform: translate(-50%, -50%);
     width: 20px;
     height: 20px;
-    border: 2px solid #fff;
-    border-top: 2px solid transparent;
+    border: 3px solid #fff;
+    border-top: 3px solid transparent;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -261,35 +235,25 @@ body {
     100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
-/* Glass morphism effect enhancement */
-.login-container {
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-}
 
-/* Floating labels effect */
-.form-group {
-    position: relative;
-}
-
-.form-group.floating label {
-    position: absolute;
-    top: 50%;
-    left: 20px;
-    transform: translateY(-50%);
-    color: #7f8c8d;
-    pointer-events: none;
-    transition: all 0.3s ease;
-    background: white;
-    padding: 0 5px;
-}
-
-.form-group.floating input:focus + label,
-.form-group.floating input:not(:placeholder-shown) + label {
-    top: 0;
-    left: 15px;
-    font-size: 0.8rem;
-    color: #667eea;
-    font-weight: 600;
+/* Responsive Design */
+@media (max-width: 600px) {
+    .auth-container {
+        padding: 30px 20px;
+        margin: 10px;
+    }
+    
+    .auth-container h2 {
+        font-size: 1.8rem;
+    }
+    
+    .form-group input {
+        padding: 12px 15px;
+        font-size: 0.95rem;
+    }
+    
+    .submit-button {
+        padding: 14px 20px;
+        font-size: 1rem;
+    }
 }

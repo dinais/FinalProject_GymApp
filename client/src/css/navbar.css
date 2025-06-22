@@ -1,153 +1,316 @@
-/* Navbar.css */
+/* src/css/navbar.css */
 
+/* שינוי גופנים כללי לאתר - אפשר להוסיף ל-index.css או להגדיר כאן */
+body {
+    font-family: 'Open Sans', sans-serif; /* גופן ראשי לכל הטקסט */
+    color: #333333; /* צבע טקסט ראשי - אפור כהה */
+    background-color: #F5EFE6; /* צבע רקע כללי בהיר */
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', sans-serif; /* גופן לכותרות */
+    color: #1A1A1A; /* צבע כותרות כהה */
+}
+
+/* איפוס בסיסי - נשאיר את זה בקובץ ה-CSS הראשי שלך אם יש */
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
+/* Navbar */
 .navbar {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  padding: 1rem 2rem;
-  display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
-  align-items: center;
-  gap: 1rem;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  border-bottom: 3px solid #667eea;
-  direction: rtl;
+    background: rgba(245, 239, 230, 0.9); /* צבע קרם בהיר עם שקיפות עדינה */
+    backdrop-filter: blur(8px); /* טשטוש עדין לרקע */
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05); /* צל עדין ויוקרתי */
+    padding: 1.2rem 3rem; /* ריווח מוגדל */
+    display: flex; /* נשתמש בפלקסבוקס לגמישות */
+    justify-content: space-between; /* פריסת אלמנטים בקצוות */
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid rgba(214, 198, 183, 0.5); /* גבול תחתון עדין בהתאם לפלטה */
+    direction: rtl; /* כיווניות מימין לשמאל */
 }
 
-.navbar-left {
-  display: flex;
-  justify-content: flex-start;
+/* לוגו או שם האתר (עכשיו בצד שמאל - בגלל RTL, הוא יהיה הכי ימני) */
+.navbar-brand {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1A1A1A;
+    text-decoration: none;
+    margin-right: 2rem; /* רווח קל מימין הלוגו עצמו */
+    white-space: nowrap;
+    order: 2; /* כדי שיהיה במרכז בפריסה של grid, או לשלוט על מיקום ב-flex */
+}
+
+/* אזור ימין - ברוך הבא, פרופיל, הודעות, והתנתקות */
+.navbar-right {
+    display: flex;
+    justify-content: flex-start; /* יישור לימין, בגלל RTL זה יהיה הצד השמאלי ביותר */
+    align-items: center;
+    gap: 1.5rem; /* רווח בין אלמנטים באזור הימני */
+    order: 1; /* כדי שיהיה ראשון (הכי ימני) בפריסה של grid, או לשלוט על מיקום ב-flex */
+}
+
+.navbar-profile-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* ליישר את האייקון והטקסט במרכז */
+    text-decoration: none; /* כדי שה-Link לא יצייר קו תחתון */
+    color: inherit; /* יורש צבע מהאב */
+    cursor: pointer; /* כדי לציין שזה לחיץ */
+}
+
+.navbar-profile-section:hover .navbar-welcome {
+    color: #C1A492; /* צבע הדגשה במעבר עכבר */
+}
+
+.navbar-profile-icon,
+.navbar-messages-icon {
+    font-size: 1.8rem; /* גודל האייקון */
+    color: #4A4A4A; /* צבע אייקון רגיל */
+    transition: color 0.3s ease;
+    cursor: pointer;
+    margin-bottom: 0.2rem; /* רווח קטן בין אייקון לשלום */
+}
+
+.navbar-profile-icon:hover,
+.navbar-messages-icon:hover {
+    color: #C1A492; /* צבע הדגשה במעבר עכבר */
 }
 
 .navbar-welcome {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #2d3748;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 0.9rem; /* גודל קטן יותר כדי שיתאים מתחת לאייקון */
+    font-weight: 600;
+    color: #333333;
+    white-space: nowrap;
+    margin: 0; /* אפס שוליים */
 }
 
-.navbar-center {
-  display: flex;
-  justify-content: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
+.navbar-welcome span {
+    color: #8B735E; /* הדגשה קלה לשם המשתמש */
 }
 
-.navbar-center a {
-  text-decoration: none;
-  color: #4a5568;
-  font-weight: 500;
-  padding: 0.75rem 1.5rem;
-  border-radius: 25px;
-  transition: all 0.3s ease;
-  background: linear-gradient(135deg, #f7fafc, #edf2f7);
-  border: 2px solid transparent;
-  position: relative;
-  overflow: hidden;
-}
-
-.navbar-center a::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: -1;
-}
-
-.navbar-center a:hover {
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-}
-
-.navbar-center a:hover::before {
-  opacity: 1;
-}
-
-.navbar-right {
-  display: flex;
-  justify-content: flex-end;
-}
-
+/* כפתור התנתקות */
 .logout-btn {
-  background: linear-gradient(135deg, #e53e3e, #c53030);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 25px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(229, 62, 62, 0.3);
-  font-family: inherit;
+    font-family: 'Open Sans', sans-serif;
+    background-color: #8B735E; /* צבע חום אפרפר מהפלטה */
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(139, 115, 94, 0.2); /* צל עדין */
+    white-space: nowrap;
+    margin-left: 1.5rem; /* רווח מהאייקונים מצד ימין (בגלל RTL) */
 }
 
 .logout-btn:hover {
-  background: linear-gradient(135deg, #c53030, #9c2a2a);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(229, 62, 62, 0.4);
+    background-color: #6C5544; /* גוון כהה יותר במעבר עכבר */
+    box-shadow: 0 5px 15px rgba(139, 115, 94, 0.3);
+    transform: translateY(-1px);
 }
 
 .logout-btn:active {
-  transform: translateY(0);
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(139, 115, 94, 0.2);
 }
 
-/* רספונסיביות */
-@media (max-width: 768px) {
-  .navbar {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+/* קישורי ניווט במרכז */
+.navbar-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem; /* רווח גדול יותר בין הקישורים */
+    flex-grow: 1;
+    order: 3; /* סדר שהקישורים יופיעו במרכז */
+}
+
+.navbar-links a {
+    font-family: 'Open Sans', sans-serif;
+    text-decoration: none;
+    color: #4A4A4A; /* אפור כהה יותר מהבסיס */
+    font-weight: 600;
+    padding: 0.6rem 1.2rem;
+    border-radius: 5px; /* פינות מרובעות עדינות */
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.navbar-links a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%; /* מתחיל מהאמצע */
+    transform: translateX(-50%); /* ממורכז */
+    width: 0;
+    height: 3px; /* פס תחתון עדין */
+    background-color: #C1A492; /* צבע הדגשה מהפלטה */
+    transition: width 0.3s ease-out;
+}
+
+.navbar-links a:hover {
+    color: #1A1A1A; /* צבע טקסט כהה יותר במעבר עכבר */
+}
+
+.navbar-links a:hover::after,
+.navbar-links a.active::after { /* הוספת קלאס active לקישור הנוכחי */
+    width: calc(100% - 20px); /* רוחב הפס התחתון במעבר עכבר/אקטיבי */
+}
+
+/* Hamburger menu for mobile */
+.hamburger-menu {
+    display: none; /* נסתר כברירת מחדל */
+    cursor: pointer;
+    font-size: 2rem;
+    color: #333333;
+    padding: 0.5rem;
+    margin-right: 1rem;
+}
+
+.hamburger-menu.open {
+    color: #C1A492; /* צבע הדגשה כשהתפריט פתוח */
+}
+
+/* Mobile Nav Menu */
+.mobile-nav-menu {
+    display: none; /* נסתר כברירת מחדל */
+    flex-direction: column;
+    background: rgba(245, 239, 230, 0.98); /* רקע תפריט מובייל */
+    backdrop-filter: blur(10px);
+    position: absolute;
+    top: 100%; /* מתחת ל-Navbar */
+    left: 0;
+    width: 100%;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem 0;
+    z-index: 99;
+    transform: translateY(-100%); /* מוסתר למעלה */
+    opacity: 0;
+    transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+}
+
+.mobile-nav-menu.open {
+    display: flex; /* מציג כשהוא פתוח */
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.mobile-nav-menu a {
+    font-family: 'Open Sans', sans-serif;
     text-align: center;
-  }
+    padding: 1rem 0;
+    color: #4A4A4A;
+    text-decoration: none;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(214, 198, 183, 0.3);
+    transition: background-color 0.2s ease;
+}
 
-  .navbar-center {
-    order: 3;
+.mobile-nav-menu a:last-child {
+    border-bottom: none;
+}
+
+.mobile-nav-menu a:hover {
+    background-color: rgba(214, 198, 183, 0.2);
+    color: #1A1A1A;
+}
+
+.mobile-nav-menu .nav-item-mobile {
+    display: flex;
+    align-items: center;
     justify-content: center;
-    gap: 1rem;
-  }
+    gap: 10px;
+    padding: 1rem 0;
+}
+.mobile-nav-menu .nav-item-mobile .icon {
+    font-size: 1.2rem;
+}
 
-  .navbar-center a {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-  }
 
-  .navbar-welcome {
-    font-size: 1rem;
-  }
+/* רספונסיביות */
+@media (max-width: 992px) { /* שינוי נקודת השבירה עבור תפריט המבורגר */
+    .navbar {
+        justify-content: space-between; /* שמירה על רווח בין קצוות */
+        padding: 1rem 1.5rem;
+    }
 
-  .navbar-left,
-  .navbar-right {
-    justify-content: center;
-  }
+    .navbar-links {
+        display: none; /* הסתרת קישורים בפריסת דסקטופ */
+    }
+
+    .hamburger-menu {
+        display: block; /* הצגת המבורגר במובייל */
+        order: 1; /* מקם אותו ראשון בצד ימין */
+        margin-right: 0; /* איפוס שוליים */
+    }
+
+    .navbar-brand {
+        flex-grow: 1; /* תופס את שאר המקום באמצע */
+        text-align: center; /* ממורכז */
+        margin-right: 0;
+        margin-left: 0;
+        order: 2;
+    }
+
+    .navbar-right {
+        order: 3; /* כפתור התנתקות בסוף (הכי שמאלי) */
+        justify-content: flex-end;
+        gap: 1rem; /* רווח קטן יותר בין אייקונים וכפתור התנתקות במובייל */
+    }
+
+    .navbar-profile-section {
+        flex-direction: row; /* במובייל, האייקון והטקסט יהיו בשורה */
+        gap: 5px; /* רווח קטן ביניהם */
+    }
+
+    .navbar-welcome {
+        display: block; /* להציג את הודעת ברוך הבא גם במובייל */
+        font-size: 0.8rem;
+    }
+
+    .navbar-profile-icon,
+    .navbar-messages-icon {
+        font-size: 1.5rem; /* גודל קטן יותר לאייקונים במובייל */
+    }
+    
+    .logout-btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+        margin-left: 0.5rem; /* רווח קטן יותר במובייל */
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar {
+        padding: 0.8rem 1rem;
+    }
+
+    .navbar-brand {
+        font-size: 1.6rem;
+        margin-right: 1rem;
+    }
+
+    /* .navbar-welcome {
+        font-size: 0.9rem;
+    } */
 }
 
 @media (max-width: 480px) {
-  .navbar {
-    padding: 1rem;
-  }
+    /* .navbar-welcome {
+        display: none; אם תרצי להסתיר לגמרי במסכים הכי קטנים
+    } */
 
-  .navbar-center {
-    gap: 0.5rem;
-  }
-
-  .navbar-center a {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.8rem;
-  }
+    .navbar-brand {
+        font-size: 1.4rem;
+    }
 }
