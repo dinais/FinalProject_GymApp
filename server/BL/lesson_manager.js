@@ -38,26 +38,33 @@ exports.getUserRegisteredAndWaitlistedLessons = async (userId, weekStart) => {
     const end = new Date(start);
     end.setDate(start.getDate() + 7);
 
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        throw new Error("Invalid weekStart date");
+    }
+
     console.log(`Manager: Fetching registered and waitlisted lessons for user ${userId} for week starting ${weekStart}`);
 
-    const registeredLessons = await findUserRegisteredLessons(userId, start, end); // קריאה ל-DAL
-    const waitlistedLessons = await findUserWaitlistedLessons(userId, start, end); // קריאה ל-DAL
+    const registeredLessons = await findUserRegisteredLessons(userId, start, end);
+    const waitlistedLessons = await findUserWaitlistedLessons(userId, start, end);
 
-    // נאחד את שתי הרשימות ונוודא שאין כפילויות
     const allUserLessonsMap = new Map();
-    registeredLessons.forEach(l => allUserLessonsMap.set(l.id, l.toJSON()));
-    waitlistedLessons.forEach(l => allUserLessonsMap.set(l.id, l.toJSON()));
+    registeredLessons.forEach(l => {
+        if (l) allUserLessonsMap.set(l.id, l.toJSON());
+    });
+    waitlistedLessons.forEach(l => {
+        if (l) allUserLessonsMap.set(l.id, l.toJSON());
+    });
 
     const combinedLessons = Array.from(allUserLessonsMap.values());
 
-    // עבור כל שיעור, נביא את כמות המשתתפים הנוכחית
-    for (const lessonItem of combinedLessons) {
-        const registeredCount = await countLessonRegistrations(lessonItem.id); // קריאה ל-DAL
+    await Promise.all(combinedLessons.map(async (lessonItem) => {
+        const registeredCount = await countLessonRegistrations(lessonItem.id);
         lessonItem.current_participants = registeredCount;
-    }
+    }));
 
     return combinedLessons;
 };
+
 
 exports.getUserLessons = async (userId, weekStart) => {
     const start = new Date(weekStart);

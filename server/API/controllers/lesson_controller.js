@@ -20,6 +20,8 @@ exports.getUserRegisteredLessons = async (req, res) => {
 };
 
 exports.getUserLessonsThisWeek = async (req, res) => {
+  console.log(`Fetching lessons for user ${req.params.userId} starting from week ${req.query.weekStart}`);
+  
   const { userId } = req.params;
   const weekStart = req.query.weekStart;
   const lessons = await lessonManager.getUserLessons(userId, weekStart);
@@ -29,6 +31,8 @@ exports.getUserLessonsThisWeek = async (req, res) => {
 exports.getUserWaitlistedLessons = async (req, res) => {
   const { userId } = req.params;
   const weekStart = req.query.weekStart;
+  console.log(`Fetching waitlisted lessons for user ${userId} starting from ${weekStart}`);
+  
   const lessons = await lessonManager.getUserWaitlistedLessons(userId, weekStart);
   res.json(lessons);
 };

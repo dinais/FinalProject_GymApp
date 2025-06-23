@@ -1,7 +1,7 @@
 // DAL/lesson_dal.js
 const { Op } = require('sequelize');
 const { lesson, lesson_registrations, waiting_list, reserved_spot, user } = require('../../DB/models'); // ייבוא המודלים הרלוונטיים
-const sequelize = require('sequelize'); // ייבוא אובייקט sequelize לשימוש ב-literal
+const { sequelize } = require('../../DB/models'); // ✅
 
 module.exports.findLessonById = async (lessonId) => {
     return await lesson.findByPk(lessonId);
@@ -28,10 +28,9 @@ module.exports.findUserRegisteredLessons = async (userId, startDate, endDate) =>
         where: {
             scheduled_at: { [Op.between]: [startDate, endDate] }
         },
-        attributes: [
-            'id', 'lesson_type', 'hours', 'day', 'room_number', 'max_participants', 'scheduled_at',
-            [sequelize.literal("'joined'"), 'status']
-        ]
+        attributes: {
+            include: [[sequelize.literal(`'joined'`), 'status']]
+        }
     });
 };
 
@@ -46,10 +45,9 @@ module.exports.findUserWaitlistedLessons = async (userId, startDate, endDate) =>
         where: {
             scheduled_at: { [Op.between]: [startDate, endDate] }
         },
-        attributes: [
-            'id', 'lesson_type', 'hours', 'day', 'room_number', 'max_participants', 'scheduled_at',
-            [sequelize.literal("'waitlist'"), 'status']
-        ]
+        attributes: {
+            include: [[sequelize.literal(`'waitlist'`), 'status']]
+        }
     });
 };
 
