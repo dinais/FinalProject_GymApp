@@ -96,7 +96,7 @@ const favorite = require('./favorite');
 const cancellation = require('./cancellation');
 const waiting_list = require('./waiting_list');
 const role = require('./role');
-const system_message = require('./system_message');
+const message = require('./message'); // ✅ ייבוא נכון
 const user_role = require('./user_role'); // מודל טבלת ה-Join
 const reserved_spot = require('./reserved_spot');
 
@@ -144,8 +144,13 @@ user.belongsToMany(role, { through: user_role , foreignKey: 'user_id', as: 'role
 role.belongsToMany(user, { through: user_role , foreignKey: 'role_id', as: 'users' }); // *** חובה להוסיף as: 'users' ***
 
 // System Messages (User to System_Message)
-system_message.belongsTo(user, { foreignKey: 'user_id', as: 'user' }); // הוסף as
-user.hasMany(system_message, { foreignKey: 'user_id', as: 'SystemMessages' }); // הוסף as
+// הודעות - שייך למשתמשים כשולח וכמקבל
+message.belongsTo(user, { foreignKey: 'sender_id', as: 'Sender' });
+message.belongsTo(user, { foreignKey: 'recipient_id', as: 'Recipient' });
+
+user.hasMany(message, { foreignKey: 'sender_id', as: 'MessagesSent' });
+user.hasMany(message, { foreignKey: 'recipient_id', as: 'MessagesReceived' });
+
 
 // Reserved Spot (User to Lesson via Reserved_Spot)
 reserved_spot.belongsTo(lesson, { foreignKey: 'lesson_id', as: 'lesson' }); // הוסף as
@@ -165,7 +170,7 @@ const db = {
     cancellation,
     waiting_list,
     role,
-    system_message,
+    message,
     user_role,
     reserved_spot
 };

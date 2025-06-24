@@ -4,16 +4,18 @@ const { user, role } = require('../../../DB/models'); // ודא נתיב נכו�
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') }); // ודא נתיב נכון ל-.env
 
 const protect = async (req, res, next) => {
+    console.log('Protect Middleware:', req.method, req.path);
     const openPaths = [
         '/api/users/login',
         '/api/users/register',
         '/api/users/refresh-token',
-        '/api/users/initial-login-or-password-setup' // 👈 **נוסף!**
+        '/api/users/initial-login-or-password-setup'
     ];
     
     const isPathOpen = openPaths.some(path => req.path.startsWith(path));
+    console.log('Is path open:', isPathOpen);
     if (isPathOpen) {
-        return next(); 
+        return next();
     }
     let token;
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {

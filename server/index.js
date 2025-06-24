@@ -69,6 +69,9 @@ const cookieParser = require('cookie-parser');
 const userRouter = require('./API/routes/users_router');
 const lessonRouter = require('./API/routes/lesson_router');
 const roleRouter = require('./API/routes/role_router');
+const messagesRouter = require('./API/routes/messages_router');
+
+
 require('dotenv').config();
 
 // **ייבוא המידלוויר protect מהקובץ המעודכן שלך**
@@ -118,6 +121,7 @@ app.use(protect);
 app.use('/api/users', userRouter);
 app.use('/api/lessons', lessonRouter);
 app.use('/api/roles', roleRouter);
+app.use('/api/messages', messagesRouter);
 
 
 // בדיקה
