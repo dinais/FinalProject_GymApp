@@ -106,7 +106,7 @@ useEffect(() => {
                           <Route path="all-trainees" element={<TraineesList />} />
                         </>
                       )}
-                      <Route path="logout" element={<h2>התנתקת מהמערכת</h2>} />
+                      <Route path="logout" element={<h2>logout</h2>} />
                     </Routes>
                   </>
                 ) : (

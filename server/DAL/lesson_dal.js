@@ -1,45 +1,60 @@
 // DAL/lesson_dal.js
 const { Op } = require('sequelize');
-const { lesson, lesson_registrations, waiting_list, reserved_spot, user } = require('../../DB/models'); // Import relevant models
+const { lesson, lesson_registrations, waiting_list, reserved_spot, user, favorite } = require('../../DB/models'); 
 const { sequelize } = require('../../DB/models'); 
+
+// Helper to check if a lesson is a favorite for a given user
+const isLessonFavoriteForUser = async (lessonId, userId) => {
+    if (!userId) return false; 
+    const fav = await favorite.findOne({ where: { lesson_id: lessonId, user_id: userId } });
+    return !!fav; 
+};
 
 const findLessonById = async (lessonId) => {
     return await lesson.findByPk(lessonId, {
         include: [{
-            model: user, // The User model
-            as: 'Instructor', // This alias MUST match the association defined in your lesson model
-            attributes: ['id', 'first_name', 'last_name', 'email'] // Fields to include from the instructor
+            model: user, 
+            as: 'Instructor', 
+            attributes: ['id', 'first_name', 'last_name', 'email'] 
         }]
     });
 };
 
-const findLessonsByDateRange = async (startDate, endDate) => {
-    console.log(`DAL: Querying lessons between ${startDate.toISOString()} and ${endDate.toISOString()}`);
-    return await lesson.findAll({
+const findLessonsByDateRange = async (startDate, endDate, userId = null) => { 
+    console.log(`DAL-findLessonsByDateRange: Querying lessons between ${startDate.toISOString()} and ${endDate.toISOString()} (UTC) for user ${userId || 'N/A'}`);
+    const lessons = await lesson.findAll({
         where: {
             scheduled_at: {
                 [Op.between]: [startDate, endDate]
             }
         },
         include: [{
-            model: user, // The 'user' model imported above
-            as: 'Instructor', // This alias MUST match the association defined in your lesson model
-            attributes: ['id', 'first_name', 'last_name', 'email'] // Fields to include from the instructor
+            model: user, 
+            as: 'Instructor', 
+            attributes: ['id', 'first_name', 'last_name', 'email'] 
         }],
-        order: [['scheduled_at', 'ASC']] // Order by time for consistent display
+        order: [['scheduled_at', 'ASC']] 
     });
+
+    if (userId) {
+        for (let lessonItem of lessons) {
+            lessonItem.dataValues.isFavorite = await isLessonFavoriteForUser(lessonItem.id, userId);
+        }
+    }
+    return lessons;
 };
 
 const findUserRegisteredLessons = async (userId, startDate, endDate) => {
-    return await lesson.findAll({
+    console.log(`DAL-findUserRegisteredLessons: Fetching for user ${userId} between ${startDate.toISOString()} and ${endDate.toISOString()}`);
+    const lessons = await lesson.findAll({
         include: [{
             model: lesson_registrations,
-            as: 'LessonRegistrations', // Ensure this alias matches the association in your model
+            as: 'LessonRegistrations', 
             where: { user_id: userId },
             attributes: []
         }, { 
             model: user,
-            as: 'Instructor', // Use 'Instructor' alias
+            as: 'Instructor', 
             attributes: ['id', 'first_name', 'last_name', 'email']
         }],
         where: {
@@ -49,18 +64,25 @@ const findUserRegisteredLessons = async (userId, startDate, endDate) => {
             include: [[sequelize.literal(`'joined'`), 'status']]
         }
     });
+    if (userId) {
+        for (let lessonItem of lessons) {
+            lessonItem.dataValues.isFavorite = await isLessonFavoriteForUser(lessonItem.id, userId);
+        }
+    }
+    return lessons;
 };
 
 const findUserWaitlistedLessons = async (userId, startDate, endDate) => {
-    return await lesson.findAll({
+    console.log(`DAL-findUserWaitlistedLessons: Fetching for user ${userId} between ${startDate.toISOString()} and ${endDate.toISOString()}`);
+    const lessons = await lesson.findAll({
         include: [{
             model: waiting_list,
-            as: 'WaitingLists', // Ensure this alias matches the association in your model
+            as: 'WaitingLists', 
             where: { user_id: userId },
             attributes: []
         }, { 
             model: user,
-            as: 'Instructor', // Use 'Instructor' alias
+            as: 'Instructor', 
             attributes: ['id', 'first_name', 'last_name', 'email']
         }],
         where: {
@@ -70,6 +92,12 @@ const findUserWaitlistedLessons = async (userId, startDate, endDate) => {
             include: [[sequelize.literal(`'waitlist'`), 'status']]
         }
     });
+    if (userId) {
+        for (let lessonItem of lessons) {
+            lessonItem.dataValues.isFavorite = await isLessonFavoriteForUser(lessonItem.id, userId);
+        }
+    }
+    return lessons;
 };
 
 const countLessonRegistrations = async (lessonId) => {
@@ -145,7 +173,7 @@ const findActiveReservedSpots = async (lessonId) => {
     return await reserved_spot.findAll({
         where: {
             lesson_id: lessonId,
-            expires_at: { [Op.gt]: new Date() } // Greater than current date and time
+            expires_at: { [Op.gt]: new Date() } 
         }
     });
 };
@@ -159,42 +187,97 @@ const updateLessonCurrentParticipants = async (lessonId, change) => {
         by: change,
         where: { id: lessonId }
     });
-    // For increment/decrement, updatedRows often contains the updated instance if found
     return updatedRows && updatedRows.length > 0;
 };
 
-// New: DAL functions for secretary CRUD operations on lessons
-
 const createLesson = async (lessonData) => {
-    console.log('DAL: Creating new lesson with data:', lessonData);
+    console.log('DAL-createLesson: Creating new lesson with data:', lessonData);
     return await lesson.create(lessonData);
 };
 
-// CRITICAL FIX: This function now returns the full updated lesson object.
 const updateLessonData = async (lessonId, updatedData) => {
-    console.log(`DAL: Updating lesson ${lessonId} with data:`, updatedData);
+    console.log(`DAL-updateLessonData: Updating lesson ${lessonId} with data:`, updatedData);
     const [updatedRowsCount] = await lesson.update(updatedData, {
         where: { id: lessonId }
     });
 
     if (updatedRowsCount > 0) {
-        // If the update was successful, fetch the updated lesson including its instructor data
-        // and return the full updated lesson object.
-        const updatedLesson = await findLessonById(lessonId); // findLessonById already includes the Instructor
-        console.log('DAL: Lesson updated and fetched:', updatedLesson.toJSON());
-        return updatedLesson; // Return the Sequelize instance, BL will call toJSON()
+        const updatedLesson = await findLessonById(lessonId);
+        console.log('DAL-updateLessonData: Lesson updated and fetched:', updatedLesson.toJSON());
+        return updatedLesson; 
     }
-    console.warn(`DAL: No rows updated for lesson ID ${lessonId}. Lesson might not exist or no changes were made.`);
-    return null; // Return null if no rows were updated (lesson not found or no changes)
+    console.warn(`DAL-updateLessonData: No rows updated for lesson ID ${lessonId}. Lesson might not exist or no changes were made.`);
+    return null; 
 };
 
 const deleteLessonById = async (lessonId) => {
-    console.log(`DAL: Deleting lesson with ID: ${lessonId}`);
+    console.log(`DAL-deleteLessonById: Deleting lesson with ID: ${lessonId}`);
     const deletedRowsCount = await lesson.destroy({
         where: { id: lessonId }
     });
     return deletedRowsCount > 0;
 };
+
+// --- Favorite DAL Functions ---
+const createFavorite = async (userId, lessonId) => {
+    console.log(`DAL-createFavorite: Adding favorite for user ${userId}, lesson ${lessonId}`);
+    try {
+        const newFavorite = await favorite.create({ user_id: userId, lesson_id: lessonId });
+        return newFavorite.toJSON();
+    } catch (error) {
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            console.warn(`DAL-createFavorite: Favorite already exists for user ${userId}, lesson ${lessonId}`);
+            return { message: 'Favorite already exists' };
+        }
+        throw error; 
+    }
+};
+
+const deleteFavorite = async (userId, lessonId) => {
+    console.log(`DAL-deleteFavorite: Deleting favorite for user ${userId}, lesson ${lessonId}`);
+    const deletedCount = await favorite.destroy({
+        where: { user_id: userId, lesson_id: lessonId }
+    });
+    return deletedCount > 0;
+};
+
+const findUserFavoriteLessons = async (userId, weekStart, weekEnd) => { 
+    if (!userId) {
+        console.warn('DAL-findUserFavoriteLessons: called without userId.');
+        return [];
+    }
+
+    console.log(`DAL-findUserFavoriteLessons: Fetching favorite entries for user ${userId} between ${weekStart.toISOString()} and ${weekEnd.toISOString()}`);
+
+    const favoriteEntries = await favorite.findAll({
+        where: { user_id: userId },
+        include: [{
+            model: lesson, 
+            as: 'lesson', 
+            required: true, 
+            where: { 
+                scheduled_at: {
+                    [Op.between]: [weekStart, weekEnd] 
+                }
+            },
+            include: [{ 
+                model: user,
+                as: 'Instructor',
+                attributes: ['id', 'first_name', 'last_name', 'email']
+            }]
+        }]
+    });
+
+    const lessons = favoriteEntries.map(entry => {
+        const lessonData = entry.lesson.toJSON(); 
+        lessonData.isFavorite = true; 
+        return lessonData;
+    });
+
+    console.log(`DAL-findUserFavoriteLessons: Found ${lessons.length} favorite lessons for user ${userId} in week.`);
+    return lessons;
+};
+
 
 // Export all functions at the end of the file
 module.exports = {
@@ -217,5 +300,9 @@ module.exports = {
     updateLessonCurrentParticipants,
     createLesson,
     updateLessonData,
-    deleteLessonById
+    deleteLessonById,
+    createFavorite,
+    deleteFavorite,
+    isLessonFavoriteForUser, 
+    findUserFavoriteLessons
 };

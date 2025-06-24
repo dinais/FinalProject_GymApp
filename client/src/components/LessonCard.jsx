@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 
-const LessonCard = ({ lesson, onJoin, onCancel, isJoined, isOnWaitlist, registeredCount, maxParticipants, currentRole, onEdit, onDelete }) => {
+const LessonCard = ({ lesson, onJoin, onCancel, isJoined, isOnWaitlist, registeredCount, maxParticipants, currentRole, onEdit, onDelete, isFavorite, onToggleFavorite }) => {
     const [isExpanded, setIsExpanded] = useState(false);
+
+    // Console log to debug favorite status
+    console.log(`LessonCard: Lesson ID ${lesson.id}, Type: ${lesson.lesson_type}, isFavorite (prop): ${isFavorite}`);
 
     // Helper function to get CSS class for lesson type
     const getLessonTypeClass = (type) => {
@@ -32,7 +35,7 @@ const LessonCard = ({ lesson, onJoin, onCancel, isJoined, isOnWaitlist, register
             'Weight Training': 'lesson-type-weight-training',
             'Kickboxing / HIT': 'lesson-type-kickboxing-hit'
         };
-        return typeMap[type] || 'lesson-type-default'; // Added default
+        return typeMap[type] || 'lesson-type-default'; 
     };
 
     // Determine if the lesson is full
@@ -42,7 +45,7 @@ const LessonCard = ({ lesson, onJoin, onCancel, isJoined, isOnWaitlist, register
     // Determine registration status based on lesson time
     const getRegistrationStatus = (lessonScheduledAtStr) => {
         const now = new Date();
-        const scheduledDate = new Date(lessonScheduledAtStr); // This is UTC date from server
+        const scheduledDate = new Date(lessonScheduledAtStr); 
 
         const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
@@ -52,11 +55,11 @@ const LessonCard = ({ lesson, onJoin, onCancel, isJoined, isOnWaitlist, register
         }
 
         if (scheduledDate < now) {
-            return 'closed'; // Lesson has passed (comparing UTC times)
+            return 'closed'; 
         } else if (scheduledDate > oneWeekFromNow) {
-            return 'not_open_yet'; // Registration not open yet (more than a week in advance)
+            return 'not_open_yet'; 
         } else {
-            return 'open'; // Registration is open
+            return 'open'; 
         }
     };
 
@@ -64,7 +67,6 @@ const LessonCard = ({ lesson, onJoin, onCancel, isJoined, isOnWaitlist, register
 
     // Determine which action button/status to display for clients
     const renderActionButton = () => {
-        // Only clients can see join/cancel buttons
         if (currentRole !== 'client') {
             return null;
         }
@@ -83,7 +85,7 @@ const LessonCard = ({ lesson, onJoin, onCancel, isJoined, isOnWaitlist, register
                     <span>Upcoming</span>
                 </div>
             );
-        } else { // Registration is 'open'
+        } else { 
             if (isJoined) {
                 return (
                     <button className="btn btn-cancel" onClick={(e) => { e.stopPropagation(); onCancel(lesson.id); }}>
@@ -119,7 +121,6 @@ const LessonCard = ({ lesson, onJoin, onCancel, isJoined, isOnWaitlist, register
     // Display admin/secretary actions with icon-only buttons
     const renderSecretaryActions = (isExpandedView) => {
         if (currentRole === 'secretary') {
-            // Secretary actions available only for 'open' or 'upcoming' lessons
             if (regStatus === 'closed') {
                 return (
                     <div className="secretary-actions status-closed">
@@ -149,7 +150,27 @@ const LessonCard = ({ lesson, onJoin, onCancel, isJoined, isOnWaitlist, register
             onClick={() => setIsExpanded(!isExpanded)} // Toggle expand state on card click
         >
             <div className={`lesson-type-header ${getLessonTypeClass(lesson.lesson_type)}`}>
-                {lesson.lesson_type} {/* This displays the actual name from DB */}
+                <span className="lesson-type-text">{lesson.lesson_type}</span> {/* Wrap text for flexbox */}
+                {currentRole === 'client' && ( // Only show favorite icon for clients
+                    <button 
+                        className={`favorite-button ${isFavorite ? 'favorited' : ''}`} 
+                        onClick={(e) => { e.stopPropagation(); onToggleFavorite(lesson.id, !isFavorite); }}
+                        title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                        {/* Heart icon (SVG) */}
+                        <svg 
+                            className="favorite-icon" 
+                            viewBox="0 0 24 24" 
+                            fill={isFavorite ? '#ff4d4f' : 'none'} 
+                            stroke={isFavorite ? '#ff4d4f' : 'currentColor'} 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                        >
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                    </button>
+                )}
             </div>
 
             <div className="lesson-basic-details">
@@ -159,19 +180,16 @@ const LessonCard = ({ lesson, onJoin, onCancel, isJoined, isOnWaitlist, register
                         <polyline points="12,6 12,12 16,14" />
                     </svg>
                     <span>
-                        {/* Display time in local timezone for the user */}
-                        {new Date(lesson.scheduled_at).toLocaleTimeString('en-US', { // Using 'en-US' or 'he-IL' is fine, just ensure timeZone is NOT set to 'UTC'
+                        {new Date(lesson.scheduled_at).toLocaleTimeString('en-US', { 
                             hour: '2-digit',
                             minute: '2-digit',
                             hour12: false,
-                            // timeZone: 'UTC' IS INTENTIONALLY OMITTED HERE
                         })}
                     </span>
                 </div>
-                {/* Display role-based actions and expansion state */}
                 <div className="lesson-action-compact">
                     {currentRole === 'client' && renderActionButton()}
-                    {currentRole === 'secretary' && !isExpanded && renderSecretaryActions(false)} {/* Only show secretary actions when not expanded */}
+                    {currentRole === 'secretary' && !isExpanded && renderSecretaryActions(false)} 
                 </div>
             </div>
 
@@ -200,7 +218,6 @@ const LessonCard = ({ lesson, onJoin, onCancel, isJoined, isOnWaitlist, register
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                             <circle cx="9" cy="7" r="4" />
                         </svg>
-                        {/* Access instructor name via lesson.Instructor, which is included from backend */}
                         <span>Coach: {lesson.Instructor ? `${lesson.Instructor.first_name} ${lesson.Instructor.last_name}` : 'N/A'}</span>
                     </div>
 
@@ -213,7 +230,7 @@ const LessonCard = ({ lesson, onJoin, onCancel, isJoined, isOnWaitlist, register
 
                     <div className="lesson-actions-expanded">
                         {currentRole === 'client' && renderActionButton()}
-                        {currentRole === 'secretary' && renderSecretaryActions(true)} {/* Always show secretary actions when expanded */}
+                        {currentRole === 'secretary' && renderSecretaryActions(true)} 
                     </div>
                     <button className="btn btn-close-card" onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}>
                         <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>

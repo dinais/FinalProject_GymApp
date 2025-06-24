@@ -2,7 +2,7 @@
 const { Op } = require('sequelize');
 const { sendEmail } = require('../services/mailer'); 
 
-// ייבוא פונקציות ספציפיות מה-DAL החדש (ודא שכל הפונקציות החדשות מה-DAL מיוצאות שם!)
+// Import all necessary DAL functions, including new favorite ones
 const {
     findLessonById,
     findLessonsByDateRange,
@@ -21,9 +21,13 @@ const {
     findActiveReservedSpots,
     findUserById,
     updateLessonCurrentParticipants,
-    createLesson,      // חדש
-    updateLessonData,  // חדש
-    deleteLessonById   // חדש
+    createLesson,
+    updateLessonData,
+    deleteLessonById,
+    // --- New Favorite DAL Functions ---
+    createFavorite,
+    deleteFavorite,
+    findUserFavoriteLessons // New DAL function for favorites list
 } = require('../DAL/lesson_dal');
 
 // Helper function to get day of the week name based on UTC date
@@ -39,19 +43,19 @@ const getDayOfWeekName = (dateString) => {
     
     // Use getUTCDay() to get the day of the week in UTC, which matches the UTC storage.
     // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    console.log(`getDayOfWeekName: Input dateString: ${dateString}, Date object (UTC): ${date.toUTCString()}, Calculated UTCDay: ${date.getUTCDay()} (${days[date.getUTCDay()]})`);
     return days[date.getUTCDay()];
 };
 
-const getLessonsForWeek = async (weekStart) => {
+const getLessonsForWeek = async (weekStart, userId = null) => { // Added userId parameter
     const start = new Date(weekStart); // weekStart should be UTC ISO string from frontend
     const end = new Date(start);
-    end.setDate(start.getDate() + 7); // Calculate 7 days from UTC start
+    end.setDate(start.getDate() + 7);
 
-    console.log(`Manager: Fetching lessons where scheduled_at is between ${start.toISOString()} and ${end.toISOString()} (UTC)`);
+    console.log(`Manager: Fetching lessons where scheduled_at is between ${start.toISOString()} and ${end.toISOString()} (UTC) for user ${userId || 'N/A'}`);
     
-    const lessons = await findLessonsByDateRange(start, end);
-    return lessons.map(lesson => lesson.toJSON()); // Ensure all Sequelize instances are converted to plain JS objects
+    // Pass userId to DAL to get isFavorite flag
+    const lessons = await findLessonsByDateRange(start, end, userId); 
+    return lessons.map(lesson => lesson.toJSON()); 
 };
 
 const getUserRegisteredAndWaitlistedLessons = async (userId, weekStart) => {
@@ -65,6 +69,7 @@ const getUserRegisteredAndWaitlistedLessons = async (userId, weekStart) => {
 
     console.log(`Manager: Fetching registered and waitlisted lessons for user ${userId} for week starting ${weekStart}`);
 
+    // DAL functions already modified to include isFavorite
     const registeredLessons = (await findUserRegisteredLessons(userId, start, end)).map(l => l.toJSON());
     const waitlistedLessons = (await findUserWaitlistedLessons(userId, start, end)).map(l => l.toJSON());
 
@@ -90,6 +95,7 @@ const getUserLessons = async (userId, weekStart) => {
     const start = new Date(weekStart);
     const end = new Date(start);
     end.setDate(start.getDate() + 7);
+    // DAL function already modified to include isFavorite
     return (await findUserRegisteredLessons(userId, start, end)).map(l => l.toJSON());
 };
 
@@ -97,12 +103,14 @@ const getUserWaitlistedLessons = async (userId, weekStart) => {
     const start = new Date(weekStart);
     const end = new Date(start);
     end.setDate(start.getDate() + 7);
+    // DAL function already modified to include isFavorite
     return (await findUserWaitlistedLessons(userId, start, end)).map(l => l.toJSON());
 };
 
 const getRegisteredCounts = async (weekStart) => {
     console.log(`Manager: Calculating registered counts for lessons starting week of ${weekStart}`);
-    const lessonsInWeek = await getLessonsForWeek(weekStart); // lessonsInWeek now contains plain JS objects
+    // Pass null for userId as this function doesn't need favorite status
+    const lessonsInWeek = await getLessonsForWeek(weekStart, null); 
     const counts = {};
 
     for (const lessonItem of lessonsInWeek) {
@@ -137,7 +145,7 @@ const joinLesson = async (userId, lessonId) => {
 
     const existingWaitlist = await findWaitingListItem(userId, lessonId);
     const registeredCount = await countLessonRegistrations(lessonId);
-    const maxParticipants = theLesson.max_participants; // Access max_participants directly
+    const maxParticipants = theLesson.max_participants; 
     const reservedCount = reservedSpots.length;
     const userHasReservation = reservedSpots.some(rs => rs.user_id === userId);
     const totalSpotsLeft = maxParticipants - registeredCount;
@@ -219,7 +227,7 @@ const cancelLesson = async (userId, lessonId) => {
             await createReservedSpot(firstInLine.user_id, lessonId, expiresAt);
 
             const user_model = await findUserById(firstInLine.user_id);
-            const lessonObj = await findLessonById(lessonId); // Ensure this returns an object with lesson data
+            const lessonObj = await findLessonById(lessonId); 
             
             const lessonData = lessonObj ? lessonObj.toJSON() : null;
 
@@ -245,36 +253,31 @@ const cancelLesson = async (userId, lessonId) => {
 // New: Add, Update, Delete lesson functions for secretary
 const addLesson = async (lessonData) => {
     console.log('Manager: Adding new lesson with data:', lessonData);
-    // lessonData now contains instructor_id as mapped in frontend
     const lessonToCreate = {
         lesson_type: lessonData.lesson_type,
-        scheduled_at: lessonData.scheduled_at, // This should be UTC ISO string
+        scheduled_at: lessonData.scheduled_at, 
         room_number: lessonData.room_number,
         max_participants: lessonData.max_participants,
-        instructor_id: lessonData.instructor_id, // Use instructor_id
+        instructor_id: lessonData.instructor_id, 
         day: getDayOfWeekName(lessonData.scheduled_at), // Calculate day from UTC scheduled_at
-        current_participants: 0 // Always starts at 0
+        current_participants: 0 
     };
     console.log('Manager: Final lesson data to create in DB:', lessonToCreate);
-    const newLesson = await createLesson(lessonToCreate); // Call DAL
-    return newLesson.toJSON(); // Convert to JSON if you want this function to return a plain object
+    const newLesson = await createLesson(lessonToCreate); 
+    return newLesson.toJSON(); 
 };
 
 const updateLesson = async (lessonId, updatedData) => {
     console.log(`Manager: Updating lesson ${lessonId} with received data:`, updatedData);
     const dataToUpdate = { ...updatedData };
     if (dataToUpdate.scheduled_at) {
-        // Recalculate 'day' based on the (UTC) scheduled_at if it's being updated
         dataToUpdate.day = getDayOfWeekName(dataToUpdate.scheduled_at);
         console.log(`Manager: Recalculated day for update: ${dataToUpdate.day}`);
     }
-    // Frontend sends 'instructor_id', so no need to map from 'coachId' here
-    // The received updatedData should already have 'instructor_id' if changed.
     
     console.log('Manager: Final data to update in DB:', dataToUpdate);
-    const updatedLesson = await updateLessonData(lessonId, dataToUpdate); // Call DAL
+    const updatedLesson = await updateLessonData(lessonId, dataToUpdate);
     
-    // updateLessonData now returns the full updated lesson object or null
     if (updatedLesson) {
         console.log('Manager: Lesson updated successfully, returning updated lesson object:', updatedLesson.toJSON());
         return updatedLesson.toJSON();
@@ -286,20 +289,60 @@ const updateLesson = async (lessonId, updatedData) => {
 
 const deleteLesson = async (lessonId) => {
     console.log(`Manager: Deleting lesson ${lessonId}`);
-    // Important: Before deleting a lesson, you might want to delete related registrations, waitlist, and reservations.
-    // If you have foreign key constraints in your DB, this is essential.
-    // Otherwise, the deletion might fail. Example:
-    // await lesson_registrations.destroy({ where: { lesson_id: lessonId } });
-    // await waiting_list.destroy({ where: { lesson_id: lessonId } });
-    // await reserved_spot.destroy({ where: { lesson_id: lessonId } });
-    const deleted = await deleteLessonById(lessonId); // Call DAL
+    // You might want to add cascading deletes for registrations, waitlist, favorites here
+    const deleted = await deleteLessonById(lessonId); 
     if (deleted) {
         console.log(`Manager: Lesson ${lessonId} deleted successfully.`);
     } else {
         console.warn(`Manager: Lesson ${lessonId} was not found or not deleted.`);
     }
-    return deleted; // DAL returns boolean
+    return deleted; 
 };
+
+// --- New Favorite BL Functions ---
+const addFavoriteLesson = async (userId, lessonId) => {
+    console.log(`Manager: Adding lesson ${lessonId} to favorites for user ${userId}`);
+    // Check if lesson exists
+    const lessonExists = await findLessonById(lessonId);
+    if (!lessonExists) {
+        throw new Error('Lesson not found.');
+    }
+    // Check if user exists (though auth middleware should handle this)
+    const userExists = await findUserById(userId);
+    if (!userExists) {
+        throw new Error('User not found.');
+    }
+
+    const result = await createFavorite(userId, lessonId);
+    if (result && result.message === 'Favorite already exists') {
+        return { success: false, message: 'Lesson is already a favorite.' };
+    }
+    return { success: true, message: 'Lesson added to favorites.' };
+};
+
+const removeFavoriteLesson = async (userId, lessonId) => {
+    console.log(`Manager: Removing lesson ${lessonId} from favorites for user ${userId}`);
+    const deleted = await deleteFavorite(userId, lessonId);
+    if (!deleted) {
+        throw new Error('Favorite not found.');
+    }
+    return { success: true, message: 'Lesson removed from favorites.' };
+};
+
+const getFavoriteLessonsForUser = async (userId, weekStart) => {
+    const start = new Date(weekStart);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 7);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        throw new Error("Invalid weekly start date for favorites.");
+    }
+    console.log(`Manager: Fetching favorite lessons for user ${userId} for week starting ${weekStart}`);
+    const favoriteLessons = await findUserFavoriteLessons(userId, start, end);
+    // The DAL function already adds isFavorite = true and converts to JSON
+    return favoriteLessons; 
+};
+
 
 // Export all functions at the end of the file
 module.exports = {
@@ -312,5 +355,8 @@ module.exports = {
     cancelLesson,
     addLesson,
     updateLesson,
-    deleteLesson
+    deleteLesson,
+    addFavoriteLesson,
+    removeFavoriteLesson,
+    getFavoriteLessonsForUser
 };

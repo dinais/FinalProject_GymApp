@@ -16,6 +16,7 @@ function AllLessons() {
     const [waitlistIds, setWaitlistIds] = useState([]);
     const [registeredCounts, setRegisteredCounts] = useState({});
     const [weekOffset, setWeekOffset] = useState(0);
+    // Removed showFavoritesOnly state from AllLessons
 
     // New state for LessonFormModal
     const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
@@ -24,18 +25,13 @@ function AllLessons() {
 
     const getStartOfWeek = (offset = 0) => {
         const now = new Date();
-        // Calculate Sunday of the current local week (getDay() gives 0 for Sunday)
         const localToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const localSunday = new Date(localToday.setDate(localToday.getDate() - localToday.getDay()));
         
-        // Apply week offset
         localSunday.setDate(localSunday.getDate() + offset * 7);
+        localSunday.setHours(0, 0, 0, 0); // Set to local midnight
         
-        // Set to local midnight
-        localSunday.setHours(0, 0, 0, 0);
-        
-        // Convert this local Sunday midnight to UTC ISO string for backend query
-        return localSunday.toISOString();
+        return localSunday.toISOString(); // Convert this local Sunday midnight to UTC ISO string for backend query
     };
 
     const fetchLessons = async () => {
@@ -46,18 +42,18 @@ function AllLessons() {
 
         try {
             const weekStart = getStartOfWeek(weekOffset);
-            
-            // Fetch all lessons for the week, including instructor data
+            // Always fetch all lessons for this page, with favorite status
             const lessonsRes = await getRequest(`lessons/week?weekStart=${weekStart}`);
+            
             if (lessonsRes.succeeded) {
                 setLessons(lessonsRes.data);
-                setErrorMessage(''); // Clear previous errors if lessons fetched successfully
+                setErrorMessage(''); 
             } else {
                 setLessons([]);
                 setErrorMessage(lessonsRes.error);
             }
 
-            // Fetch user-specific lesson data only for clients
+            // Fetch user-specific lesson data only for clients (registered/waitlist)
             if (currentRole === 'client') {
                 const myRes = await getRequest(`lessons/user/${currentUser.id}/week?weekStart=${weekStart}`);
                 setMyLessonIds(myRes.succeeded && myRes.data ? myRes.data.map(lesson => lesson.id) : []);
@@ -86,7 +82,7 @@ function AllLessons() {
     // Fetch instructors for the form (only for secretary role)
     const fetchCoaches = async () => {
         if (currentRole === 'secretary') {
-            const result = await getRequest('users/secretary/role/coach'); // Assuming this endpoint returns users with 'coach' role
+            const result = await getRequest('users/secretary/role/coach'); 
             if (result.succeeded) {
                 setAllCoaches(result.data);
             } else {
@@ -98,25 +94,25 @@ function AllLessons() {
     // Fetch data when component mounts or dependencies change
     useEffect(() => {
         fetchLessons();
-        fetchCoaches(); // Fetch coaches when component mounts or role changes
-    }, [weekOffset, currentUser?.id, currentRole]); // Dependency array: re-run on changes
+        fetchCoaches(); 
+    }, [weekOffset, currentUser?.id, currentRole]); 
 
     const handleJoin = async (lessonId) => {
         if (currentRole !== 'client') {
             setErrorMessage('Only clients can join lessons.');
             return;
         }
-        setErrorMessage(''); // Clear previous error
+        setErrorMessage(''); 
         try {
             const res = await postRequest(`lessons/${lessonId}/join`, { userId: currentUser.id });
             if (res.succeeded) {
                 if (res.data.status === 'joined') {
                     setMyLessonIds(prev => [...prev, lessonId]);
-                    setWaitlistIds(prev => prev.filter(id => id !== lessonId)); // Remove from waitlist if joined
+                    setWaitlistIds(prev => prev.filter(id => id !== lessonId)); 
                 } else if (res.data.status === 'waitlist') {
                     setWaitlistIds(prev => [...prev, lessonId]);
                 }
-                fetchLessons(); // Refresh data to update counts and statuses
+                fetchLessons(); 
             } else {
                 setErrorMessage(res.error);
             }
@@ -131,11 +127,11 @@ function AllLessons() {
             setErrorMessage('Only clients can cancel lesson registrations.');
             return;
         }
-        setErrorMessage(''); // Clear previous error
+        setErrorMessage(''); 
         try {
             const res = await postRequest(`lessons/${lessonId}/cancel`, { userId: currentUser.id });
             if (res.succeeded) {
-                fetchLessons(); // Refresh data to update counts and statuses
+                fetchLessons(); 
             } else {
                 setErrorMessage(res.error);
             }
@@ -147,19 +143,17 @@ function AllLessons() {
 
     // Functions for secretary actions (Add, Edit, Delete)
     const handleAddLessonClick = () => {
-        setCurrentLessonToEdit(null); // Set to null for "add" mode
-        setErrorMessage(''); // Clear errors before opening modal
+        setCurrentLessonToEdit(null); 
+        setErrorMessage(''); 
         setIsLessonModalOpen(true);
     };
 
     const handleEditLessonClick = (lesson) => {
-        // Prepare the lesson data for the form modal.
-        // The modal expects 'coachId', so we map 'instructor_id' (from backend) to 'coachId'.
         setCurrentLessonToEdit({
             ...lesson,
             coachId: lesson.instructor_id || (lesson.Instructor ? lesson.Instructor.id : '')
         });
-        setErrorMessage(''); // Clear errors before opening modal
+        setErrorMessage(''); 
         setIsLessonModalOpen(true);
     };
 
@@ -167,12 +161,12 @@ function AllLessons() {
         if (!window.confirm('Are you sure you want to delete this lesson? This action cannot be undone.')) {
             return;
         }
-        setErrorMessage(''); // Clear previous error
+        setErrorMessage(''); 
         try {
             const res = await deleteRequest(`lessons/${lessonId}`);
             if (res.succeeded) {
                 setErrorMessage('');
-                fetchLessons(); // Refresh list after deletion
+                fetchLessons(); 
             } else {
                 setErrorMessage(res.error);
             }
@@ -183,7 +177,7 @@ function AllLessons() {
     };
 
     const handleLessonFormSubmit = async (formData) => {
-        setErrorMessage(''); // Clear error from previous attempt
+        setErrorMessage(''); 
         let result;
         try {
             if (currentLessonToEdit) {
@@ -196,12 +190,12 @@ function AllLessons() {
 
             if (result.succeeded) {
                 console.log("Lesson saved successfully:", result.data);
-                setErrorMessage(''); // Clear success messages or previous errors
-                setIsLessonModalOpen(false); // Close modal on success
-                fetchLessons(); // Refresh lessons to display changes
+                setErrorMessage(''); 
+                setIsLessonModalOpen(false); 
+                fetchLessons(); 
             } else {
                 console.error("Failed to save lesson:", result.error);
-                setErrorMessage(result.error || 'Failed to save lesson. Check server logs.'); // Display error from backend
+                setErrorMessage(result.error || 'Failed to save lesson. Check server logs.'); 
             }
         } catch (err) {
             console.error('An unexpected error occurred while saving lesson:', err);
@@ -211,14 +205,36 @@ function AllLessons() {
 
     const handleCloseLessonModal = () => {
         setIsLessonModalOpen(false);
-        setCurrentLessonToEdit(null); // Reset edited lesson
-        setErrorMessage(''); // Clear errors on modal close
+        setCurrentLessonToEdit(null); 
+        setErrorMessage(''); 
+    };
+
+    // handleToggleFavorite function (still here as it's needed for LessonCard)
+    const handleToggleFavorite = async (lessonId, shouldAdd) => {
+        if (currentRole !== 'client') {
+            setErrorMessage('Only clients can mark lessons as favorites.');
+            return;
+        }
+        setErrorMessage(''); 
+        try {
+            const endpoint = `lessons/${lessonId}/favorite`;
+            const res = shouldAdd ? await postRequest(endpoint, {}) : await deleteRequest(endpoint);
+            if (res.succeeded) {
+                // Refresh lessons to get updated favorite status
+                fetchLessons(); 
+            } else {
+                setErrorMessage(res.error);
+            }
+        } catch (err) {
+            console.error('Failed to toggle favorite status:', err);
+            setErrorMessage('Failed to update favorite status. Please try again.');
+        }
     };
 
     const getCurrentWeekText = () => {
         const today = new Date();
         const startOfCurrentWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay());
-        startOfCurrentWeek.setHours(0, 0, 0, 0); // Local midnight
+        startOfCurrentWeek.setHours(0, 0, 0, 0); 
 
         const targetWeekStart = new Date(startOfCurrentWeek);
         targetWeekStart.setDate(startOfCurrentWeek.getDate() + weekOffset * 7);
@@ -241,7 +257,6 @@ function AllLessons() {
 
     // Group lessons by day of the week
     const lessonsByDay = lessons.reduce((acc, lesson) => {
-        // The 'day' property comes from the backend and should be consistent ('Sunday', 'Monday', etc.)
         const day = lesson.day; 
         if (!acc[day]) {
             acc[day] = [];
@@ -279,14 +294,15 @@ function AllLessons() {
                     </button>
                 </div>
 
-                {currentRole === 'secretary' && (
-                    <div className="secretary-actions-header">
+                <div className="control-row">
+                    {currentRole === 'secretary' && (
                         <button className="add-button" onClick={handleAddLessonClick}>
                             <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                             Add New Lesson
                         </button>
-                    </div>
-                )}
+                    )}
+                    {/* Removed the filter-favorites-button from here */}
+                </div>
 
                 {errorMessage && <p className="error-message">{errorMessage}</p>}
                 
@@ -294,14 +310,14 @@ function AllLessons() {
                     {daysOfWeek.map((day, index) => (
                         <div key={day} className="day-column">
                             <div className="day-header">
-                                <h3 className="day-title">{day}</h3> {/* Displays English day name directly */}
+                                <h3 className="day-title">{day}</h3> 
                             </div>
 
                             <div className="lessons-container">
                                 {lessonsByDay[day]?.length > 0 ? (
                                     <div className="lessons-list">
                                         {lessonsByDay[day]
-                                            .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at)) // Sort by time
+                                            .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at)) 
                                             .map((lesson) => (
                                                 <LessonCard
                                                     key={lesson.id}
@@ -312,9 +328,11 @@ function AllLessons() {
                                                     isOnWaitlist={waitlistIds.includes(lesson.id)}
                                                     registeredCount={registeredCounts[lesson.id] || 0}
                                                     maxParticipants={lesson.max_participants}
-                                                    currentRole={currentRole} // Pass current role to LessonCard
-                                                    onEdit={handleEditLessonClick} // Pass edit function
-                                                    onDelete={handleDeleteLesson} // Pass delete function
+                                                    currentRole={currentRole} 
+                                                    onEdit={handleEditLessonClick} 
+                                                    onDelete={handleDeleteLesson} 
+                                                    isFavorite={lesson.isFavorite || false} 
+                                                    onToggleFavorite={handleToggleFavorite} 
                                                 />
                                             ))}
                                     </div>
@@ -341,9 +359,9 @@ function AllLessons() {
                 onClose={handleCloseLessonModal}
                 onSubmit={handleLessonFormSubmit}
                 initialData={currentLessonToEdit}
-                errorMessage={errorMessage} // Pass error message to modal
+                errorMessage={errorMessage} 
                 loading={false}
-                instructors={allCoaches} // Pass fetched instructors to populate dropdown
+                instructors={allCoaches} 
             />
         </>
     );

@@ -562,6 +562,139 @@ p, span, div, button, input, textarea {
     color: #8B735E;
     margin-bottom: 10px;
 }
+/* Styles for Favorite Button in LessonCard */
+.lesson-type-header {
+    position: relative; 
+    display: flex; /* Use flexbox to align title and favorite button */
+    justify-content: space-between; /* Pushes button to the end */
+    align-items: center; /* Vertically centers them */
+    padding-right: 15px; /* Adjust padding as needed, might already be there */
+    padding-left: 15px; /* Existing or similar padding */
+    min-height: 40px; /* Ensure enough space */
+    /* Other existing styles for header */
+}
+
+.lesson-type-text {
+    flex-grow: 1; /* Allows the text to take available space */
+    margin-right: 10px; /* Space between text and heart */
+    white-space: nowrap; /* Prevent text wrapping */
+    overflow: hidden; /* Hide overflow text */
+    text-overflow: ellipsis; /* Add ellipsis for overflow text */
+}
+
+.favorite-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 10; 
+    transition: transform 0.2s ease-in-out;
+    flex-shrink: 0; /* Prevent button from shrinking */
+}
+
+.favorite-button:hover {
+    transform: scale(1.2); 
+}
+
+.favorite-button .favorite-icon {
+    width: 20px; /* Smaller heart icon */
+    height: 20px;
+    color: currentColor; 
+}
+
+/* Style for when the lesson is favorited */
+.favorite-button.favorited .favorite-icon {
+    fill: #ff4d4f; /* Red fill */
+    stroke: #ff4d4f; /* Red stroke */
+}
+
+
+/* Styles for the "Show My Favorites" filter button in AllLessons and MyLessons */
+.control-row { /* For AllLessons, if you keep other buttons there */
+    display: flex;
+    justify-content: flex-end; 
+    gap: 10px; 
+    margin-bottom: 15px; 
+    padding: 0 10px; 
+    flex-wrap: wrap; 
+    align-items: center;
+}
+
+/* Specific class for favorite filter row in MyLessons */
+.control-row-favorites {
+    display: flex;
+    justify-content: center; /* Center the button on MyLessons page */
+    margin: 20px 0;
+    padding: 0 10px;
+}
+
+.filter-favorites-button,
+.add-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px; 
+    padding: 8px 15px; /* Smaller padding */
+    border-radius: 20px; 
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-size: 0.9rem; /* Smaller font size */
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1); 
+    background: linear-gradient(145deg, #f0f0f0, #e0e0e0); 
+    color: #333;
+    white-space: nowrap; /* Prevent button text wrapping */
+}
+
+.add-button {
+    background: linear-gradient(145deg, #4CAF50, #45a049); 
+    color: white;
+}
+
+.add-button .icon,
+.filter-favorites-button .icon {
+    width: 18px; 
+    height: 18px;
+    stroke: currentColor;
+    fill: none;
+}
+
+.add-button:hover {
+    transform: translateY(-1px); 
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.12); 
+    background: linear-gradient(145deg, #45a049, #4CAF50);
+}
+
+.filter-favorites-button:hover {
+    transform: translateY(-1px); 
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.12); 
+    background: linear-gradient(145deg, #d0d0d0, #c0c0c0);
+}
+
+.filter-favorites-button.active {
+    background: linear-gradient(145deg, #ff6b6b, #ff4d4f); 
+    color: white;
+    border-color: #e60000;
+    box-shadow: 0 3px 8px rgba(255, 0, 0, 0.2); 
+}
+
+.filter-favorites-button.active .favorite-icon {
+    fill: white; 
+    stroke: white;
+}
+
+/* Media queries for responsiveness */
+@media (max-width: 768px) {
+    .control-row, .control-row-favorites {
+        flex-direction: column; /* Stack buttons vertically on small screens */
+        align-items: center;
+    }
+    .filter-favorites-button,
+    .add-button {
+        width: 100%; /* Full width for buttons on small screens */
+        max-width: 280px; /* Limit max width */
+    }
+}
 
 /* Responsive Design */
 @media (min-width: 1350px) {
@@ -656,6 +789,7 @@ p, span, div, button, input, textarea {
         overflow-x: hidden;
     }
 }
+
 
 @media (max-width: 480px) {
     .main-title {
