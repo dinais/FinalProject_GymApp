@@ -1,16 +1,16 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config');
+const sequelize = require('../../config/db');
 
 
 const waiting_list = sequelize.define('waiting_list', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     user_id: {
-    type: DataTypes.INTEGER,
-    references: {
-        model: 'users',
-        key: 'id'
-    }
-},
+        type: DataTypes.INTEGER,
+        references: {
+            model: 'users',
+            key: 'id'
+        }
+    },
     lesson_id: { type: DataTypes.INTEGER },
     date: DataTypes.DATE
 }, {

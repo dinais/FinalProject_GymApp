@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config');
+const sequelize = require('../../config/db');
 
 const lesson = sequelize.define('lessons', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
@@ -18,7 +18,7 @@ const lesson = sequelize.define('lessons', {
         type: DataTypes.INTEGER,
         defaultValue: 0
     },
-    scheduled_at: DataTypes.DATE 
+    scheduled_at: DataTypes.DATE
 }, {
     tableName: 'lessons',
     timestamps: false

@@ -28,6 +28,9 @@ async function sendMessage(data) {
     return { succeeded: false, error: 'שליחת ההודעה נכשלה' };
   }
 }
+async function markMessageAsRead(messageId) {
+  return await messagesDAL.updateMessageReadStatus(messageId, true);
+};
 
     
 
@@ -35,5 +38,6 @@ async function sendMessage(data) {
 
 module.exports = {
   getMessagesByUserId,
-  sendMessage
+  sendMessage,
+  markMessageAsRead
 };

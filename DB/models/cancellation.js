@@ -1,9 +1,9 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config');
+const sequelize = require('../../config/db');
 
 const cancellation = sequelize.define('cancellation', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    instructor_id: { 
+    instructor_id: {
         type: DataTypes.INTEGER,
         references: {
             model: 'users',

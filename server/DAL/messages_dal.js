@@ -2,7 +2,6 @@ const db = require('../../DB/models'); // טוען את המודלים של Sequ
 async function createMessage(data) {
   return await db.message.create(data);
 }
-// const { message, user } = require('../models'); // ודא שאתה מייבא גם את מודל message וגם את מודל user
 
 async function getMessagesByUserId(userId, role) {
   return await db.message.findAll({
@@ -11,7 +10,7 @@ async function getMessagesByUserId(userId, role) {
       recipient_role: role
     },
     order: [['id', 'DESC']],
-    attributes: ['id', 'sender_id', 'sender_role', 'message', 'title', 'created_at'],
+    attributes: ['id', 'sender_id', 'sender_role', 'message', 'title', 'created_at','read'],
     include: [{
       model: db.user,
       as: 'Sender',
@@ -23,10 +22,17 @@ async function getMessagesByUserId(userId, role) {
     }]
   });
 }
+async function updateMessageReadStatus(messageId, read = true) {
+  const message = await db.message.findByPk(messageId);
+  if (!message) return null;
 
+  message.read = read;
+  await message.save();
+  return message;
+};
 
 module.exports = {
   createMessage,
   getMessagesByUserId,
+  updateMessageReadStatus
 };
-

@@ -36,35 +36,28 @@ function MyLessons() {
             console.log(`MyLessons: fetchMyLessons called. showFavoritesOnly is: ${showFavoritesOnly}. weekStartISO: ${weekStartISO}`); // Log 1
 
             if (showFavoritesOnly) {
-                
-                console.log(`MyLessons: Fetching FAVORITE lessons for user ${currentUser.id} for week starting ${weekStartISO}`); // Log 2
-                res = await getRequest(`lessons/user/favorites/week?weekStart=${weekStartISO}`);
-            } else {
-                console.log(`MyLessons: Fetching REGISTERED/WAITLISTED lessons for user ${currentUser.id} for week starting ${weekStartISO}`); // Log 3
-                res = await getRequest(`lessons/user/${currentUser.id}/registered?weekStart=${weekStartISO}`);
-            }
+                res = await getRequest(`lessons/user/favorites-by-week?weekStart=${weekStart}`);
+                console.log(res.data);
 
-            if (res.succeeded) {
-                const fetchedLessons = res.data || [];
-                
-                const processedLessons = fetchedLessons.map(lesson => ({
-                    ...lesson,
-                    // If fetching favorites, ensure isFavorite is true.
-                    // If fetching registered, it might already be set by backend DAL.
-                    isFavorite: lesson.isFavorite || (showFavoritesOnly ? true : false), 
-                    current_participants: lesson.current_participants || 0, // Ensure a number, default to 0
-                    max_participants: lesson.max_participants || 999 // Default to a high number if missing
-                }));
-
-                setMyLessons(processedLessons);
-                console.log("MyLessons: Fetched raw data from API:", res.data); // Log 4 (raw data from backend)
-                console.log("MyLessons: Processed lessons for display (state):", processedLessons); // Log 5 (data after processing for state)
-                setErrorMessage('');
             } else {
-                setMyLessons([]);
-                console.error("MyLessons: API call failed:", res.error); // Log API errors
-                setErrorMessage(res.error || 'Failed to fetch lessons.');
+                res = await getRequest(`lessons/user/${currentUser.id}/registered?weekStart=${weekStart}`);
+                console.log(res.data);
             }
+if (res.succeeded) {
+  // אם res.data הוא מערך - נשמור אותו, אחרת אם זה אובייקט - ננסה לקחת ממנו את המערך
+  if (Array.isArray(res.data)) {
+    setMyLessons(res.data);
+  } else if (res.data && Array.isArray(res.data.data)) {
+    // מקרה נדיר שבו res.data זה אובייקט עם שדה data, למשל
+    setMyLessons(res.data.data);
+  } else {
+    // כל מצב אחר, ננרמל למערך ריק
+    setMyLessons([]);
+  }
+} else {
+  setMyLessons([]);
+}
+
         } catch (err) {
             console.error('MyLessons: Failed to fetch my lessons due to network or unexpected error:', err);
             setErrorMessage('Failed to load your lessons. Please try again later.');
@@ -133,6 +126,7 @@ function MyLessons() {
     };
 
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    console.log(myLessons," myLessons data fetched");
     
     const lessonsByDay = daysOfWeek.reduce((acc, day) => {
         acc[day] = myLessons.filter(l => l.day === day)

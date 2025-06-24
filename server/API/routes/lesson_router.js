@@ -24,6 +24,6 @@ router.delete('/:lessonId', protect, authorizeRoles('secretary'), lessonsControl
 // --- New: Favorite Routes for Clients ---
 router.post('/:lessonId/favorite', protect, authorizeRoles('client'), lessonsController.addFavorite);
 router.delete('/:lessonId/favorite', protect, authorizeRoles('client'), lessonsController.removeFavorite);
-router.get('/user/favorites/week', protect, authorizeRoles('client'), lessonsController.getUserFavoriteLessons); // New route to get only favorite lessons for the week
+router.get('/user/favorites-by-week', protect, authorizeRoles('client'), lessonsController.getUserFavoriteLessons); // New route to get only favorite lessons for the week
 
 module.exports = router;

@@ -36,8 +36,22 @@ async function sendMessage(req, res) {
     return res.status(500).json({ succeeded: false, error: 'שגיאה בשרת' });
   }
 }
+async function markMessageAsRead(req, res){
+  const messageId = parseInt(req.params.id, 10);
 
+  try {
+    const result = await messagesManager.markMessageAsRead(messageId);
+    if (!result) {
+      return res.status(404).json({ succeeded: false, error: 'Message not found' });
+    }
+    res.json({ succeeded: true, data: result });
+  } catch (err) {
+    console.error('Error marking message as read:', err);
+    res.status(500).json({ succeeded: false, error: 'Internal server error' });
+  }
+}
 module.exports = {
   getMessagesByUserId,
-  sendMessage
+  sendMessage,
+  markMessageAsRead
 };

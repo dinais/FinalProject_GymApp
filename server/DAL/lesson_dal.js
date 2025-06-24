@@ -270,10 +270,12 @@ const findUserFavoriteLessons = async (userId, weekStart, weekEnd) => {
     const lessons = favoriteEntries.map(entry => {
         const lessonData = entry.lesson.toJSON(); 
         lessonData.isFavorite = true; 
+        console.log(`DAL-findUserFavoriteLessons: Found favorite lesson ${lessonData.id} for user ${userId}`);
+        
         return lessonData;
     });
 
-    console.log(`DAL-findUserFavoriteLessons: Found ${lessons.length} favorite lessons for user ${userId} in week.`);
+    console.log(`DAL-findUserFavoriteLessons: Found ${lessons} `);
     return lessons;
 };
 const deleteExpiredReservedSpotsForLesson = async (lessonId) => {
