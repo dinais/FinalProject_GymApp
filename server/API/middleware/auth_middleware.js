@@ -28,6 +28,7 @@ const protect = async (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || process.env.TOKEN_SECRET);
+console.log('Decoded JWT payload:', decoded);
 
         const fullUser = await user.findByPk(decoded.id, {
             attributes: { exclude: ['password_hash'] },

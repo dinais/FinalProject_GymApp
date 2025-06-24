@@ -58,10 +58,10 @@ exports.getRegisteredCounts = async (req, res) => {
     const weekStart = req.query.weekStart;
     try {
         const counts = await lessonManager.getRegisteredCounts(weekStart);
-        res.json(counts);
+        res.json({ succeeded: true, data: counts });
     } catch (error) {
         console.error('Error in getRegisteredCounts:', error);
-        res.status(500).json({ error: 'Failed to fetch registered counts.' });
+        res.status(500).json({ succeeded: false, error: 'Failed to fetch registered counts.' });
     }
 };
 
@@ -165,6 +165,8 @@ exports.removeFavorite = async (req, res) => {
 
 exports.getUserFavoriteLessons = async (req, res) => {
     const userId = req.user.id; // Get userId from authenticated token
+    console.log(`Fetching favorite lessons for user ${userId} starting from week ${req.query.weekStart}`);
+    
     const weekStart = req.query.weekStart;
     try {
         const lessons = await lessonManager.getFavoriteLessonsForUser(userId, weekStart);

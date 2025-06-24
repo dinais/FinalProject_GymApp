@@ -3,7 +3,7 @@ import {
   Mail, Send, Users, User, Calendar, ChevronDown, ChevronUp, Plus, Inbox
 } from 'lucide-react';
 import '../css/messages.css';
-import { getRequest, postRequest,putRequest } from '../Requests';
+import { getRequest, postRequest, putRequest } from '../Requests';
 import { CurrentUser } from './App';
 
 function formatDateTime(dateString) {
@@ -28,7 +28,7 @@ function Messages() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
-  
+
   const unreadCount = messages.filter(msg => !msg.read).length;
 
   useEffect(() => {
@@ -262,21 +262,33 @@ function Messages() {
                     required
                   >
                     <option value="" disabled>Select a title</option>
-                    {(currentRole === 'client' || currentRole === 'coach') && (
-                      <option value="Class Complaint">Class Complaint</option>
+                    {currentRole === 'client' && (
+                      <>
+                        <option value="Class Complaint">Class Complaint</option>
+                        <option value="General Message / Request">General Message / Request</option>
+                      </>
                     )}
                     {currentRole === 'coach' && (
-                      <option value="Class Cancellation Notice">Class Cancellation Notice</option>
+                      <>
+                        <option value="General Message / Request">General Message / Request</option>
+                        <option value="Unable to Instruct a Specific Class">Unable to Instruct a Specific Class</option>
+                        <option value="Available to Replace a Class">Available to Replace a Class</option>
+                      </>
                     )}
                     {currentRole === 'secretary' && (
                       <>
                         <option value="General Announcement">General Announcement</option>
-                        <option value="System Update">System Update</option>
+                        <option value="Class Cancellation Notification">Class Cancellation Notification</option>
+                        <option value="Class Schedule Change Notification">Class Schedule Change Notification</option>
+                        {targetGroup === 'coaches' && (
+                          <option value="Request to Replace Instructor">Request to Replace Instructor</option>
+                        )}
                       </>
                     )}
                   </select>
                 </label>
               </div>
+
               <div className="form-group">
                 <label className="form-label">
                   Message:

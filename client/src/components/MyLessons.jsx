@@ -31,17 +31,28 @@ function MyLessons() {
             const weekStart = getStartOfWeek(weekOffset);
             let res;
             if (showFavoritesOnly) {
-                res = await getRequest(`lessons/user/favorites/week?weekStart=${weekStart}`);
+                res = await getRequest(`lessons/user/favorites-by-week?weekStart=${weekStart}`);
+                console.log(res.data);
+
             } else {
                 res = await getRequest(`lessons/user/${currentUser.id}/registered?weekStart=${weekStart}`);
+                console.log(res.data);
             }
-            if (res.succeeded) {
-                setMyLessons(res.data || []);
-                setErrorMessage('');
-            } else {
-                setMyLessons([]);
-                setErrorMessage(res.error || 'Failed to fetch lessons.');
-            }
+if (res.succeeded) {
+  // אם res.data הוא מערך - נשמור אותו, אחרת אם זה אובייקט - ננסה לקחת ממנו את המערך
+  if (Array.isArray(res.data)) {
+    setMyLessons(res.data);
+  } else if (res.data && Array.isArray(res.data.data)) {
+    // מקרה נדיר שבו res.data זה אובייקט עם שדה data, למשל
+    setMyLessons(res.data.data);
+  } else {
+    // כל מצב אחר, ננרמל למערך ריק
+    setMyLessons([]);
+  }
+} else {
+  setMyLessons([]);
+}
+
         } catch (err) {
             console.error('Failed to fetch my lessons', err);
             setErrorMessage('Failed to load your lessons. Please try again later.');
@@ -110,6 +121,7 @@ function MyLessons() {
     };
 
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    console.log(myLessons," myLessons data fetched");
     
     const lessonsByDay = daysOfWeek.reduce((acc, day) => {
         acc[day] = myLessons.filter(l => l.day === day)
