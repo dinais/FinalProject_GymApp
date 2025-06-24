@@ -191,3 +191,13 @@ module.exports.getUsersByEmails = async (emailList) => {
     }
   });
 };
+module.exports.getUserEmailsById = async (userIds) => {
+  return await user.findAll({
+    where: {
+      id: userIds
+    },
+    attributes: ['email'] ,
+        raw: true  
+
+  });
+};

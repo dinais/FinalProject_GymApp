@@ -6,7 +6,6 @@ import LessonCard from './LessonCard';
 import LessonFormModal from './LessonFormModal';
 import '../css/gym-lessons.css';
 import '../css/modal.css';
-
 function AllLessons() {
   const { currentUser, currentRole } = useContext(CurrentUser);
   const { setErrorMessage, errorMessage } = useContext(Error);
