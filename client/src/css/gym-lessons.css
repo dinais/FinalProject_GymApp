@@ -3,7 +3,7 @@ body {
     margin: 0;
     font-family: 'Open Sans', sans-serif;
     color: #333;
-    background-color: #f8f8f8; /* Light background for the overall page */
+    background-color: #f8f8f8;
     direction: ltr; /* Set direction to LTR for English/left-to-right */
 }
 
@@ -28,9 +28,9 @@ p, span, div, button, input, textarea {
     overflow: hidden;
     z-index: -2;
     /* Updated image path based on your uploaded file. Please ensure this path is correct */
-    background: url('../../public/img/room5.jpg') no-repeat center center fixed;
+    background: url('../../public/img/room5.jpg') no-repeat center center fixed; /* Assuming this path is correct */
     background-size: cover;
-    filter: brightness(0.4) grayscale(0.2); /* Darken and desaturate slightly */
+    filter: brightness(0.7) grayscale(0.2); /* Darken and desaturate slightly */
 }
 
 .grid-overlay {
@@ -137,13 +137,15 @@ p, span, div, button, input, textarea {
 /* Days Grid - Optimized for all days in one row on large screens */
 .days-grid {
     display: grid;
-    grid-template-columns: repeat(7, minmax(170px, 1fr));
+    /* Use auto-fit to allow columns to adjust, then minmax */
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 20px;
     overflow-x: hidden;
     overflow-y: hidden;
     direction: ltr;
     padding-bottom: 0;
-    min-width: 1310px;
+    /* Removed fixed min-width: 1310px; as it interferes with responsiveness.
+       Let grid-template-columns and media queries handle width. */
 }
 
 .day-column {
@@ -214,32 +216,53 @@ p, span, div, button, input, textarea {
 /* Lesson Type Header */
 .lesson-type-header {
     padding: 8px 12px;
-    color: white;
+    color: #333; /* Changed to dark text for pastel backgrounds */
     font-weight: 700;
     font-size: 0.95rem;
     text-align: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05); /* Adjusted border for lighter backgrounds */
 }
 
-/* Specific lesson type colors (unchanged) */
-.lesson-type-crossfit { background-color: #F44336; }
-.lesson-type-yoga { background-color: #4CAF50; }
-.lesson-type-hiit { background-color: #FF9800; }
-.lesson-type-pilates { background-color: #2196F3; }
-.lesson-type-boxing { background-color: #673AB7; }
-.lesson-type-spinning { background-color: #00BCD4; }
-.lesson-type-zumba { background-color: #E91E63; }
-.lesson-type-powerlifting { background-color: #795548; }
-.lesson-type-default { background-color: #9E9E9E; }
+/* Specific lesson type colors (pastel palette) */
+.lesson-type-crossfit { background-color: #FFD1DC; } /* Pastel Pink */
+.lesson-type-yoga { background-color: #D2F7D2; } /* Light Pastel Green */
+.lesson-type-hiit { background-color: #FFE6CC; } /* Light Pastel Orange */
+.lesson-type-pilates { background-color: #CCE5FF; } /* Light Pastel Blue */
+.lesson-type-boxing { background-color: #E6CCFF; } /* Light Pastel Purple */
+.lesson-type-spinning { background-color: #CCF7F7; } /* Light Pastel Cyan */
+.lesson-type-zumba { background-color: #FFCCE5; } /* Light Pastel Magenta */
+.lesson-type-powerlifting { background-color: #E0D2CB; } /* Light Pastel Brown */
+.lesson-type-default { background-color: #EBEBEB; } /* Very Light Grey */
+/* Added custom classes from lesson types found in the JS with pastel colors */
+.lesson-type-design-sculpt { background-color: #F7E0A5; } /* Pastel Gold */
+.lesson-type-dynamic-design { background-color: #B5EAD7; } /* Pastel Mint */
+.lesson-type-moderate-pilates { background-color: #C7CEEA; } /* Pastel Lavender */
+.lesson-type-senior-design { background-color: #D3E0DC; } /* Pastel Sage */
+.lesson-type-core-strength { background-color: #FFC9B6; } /* Pastel Peach */
+.lesson-type-aerobic-dynamic-design { background-color: #F0B8B8; } /* Pastel Rose */
+.lesson-type-aerobic-design { background-color: #E0EEDD; } /* Pastel Celadon */
+.lesson-type-strength-fat-burn { background-color: #F4E8D7; } /* Pastel Cream */
+.lesson-type-feldenkrais { background-color: #E2F0CB; } /* Pastel Lime */
+.lesson-type-pilates-rehab { background-color: #E6E6FA; } /* Lavender Blush */
+.lesson-type-pilates-stretch { background-color: #ADD8E6; } /* Light Blue */
+.lesson-type-kung-fu { background-color: #D8BFD8; } /* Thistle */
+.lesson-type-design-pilates { background-color: #FFE4B5; } /* Moccasin */
+.lesson-type-design-hit { background-color: #FFDEAD; } /* Navajo White */
+.lesson-type-abdominal-rehab { background-color: #F5DEB3; } /* Wheat */
+.lesson-type-weight-training { background-color: #F5F5DC; } /* Beige */
+.lesson-type-kickboxing-hit { background-color: #F0F8FF; } /* Alice Blue */
+
 
 /* Lesson Basic Details (for non-expanded state) */
 .lesson-basic-details {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between; /* Pushes time to left, button/actions to right */
     align-items: center;
     padding: 10px;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-wrap: wrap; /* Allows items to wrap on smaller screens */
+    width: 100%; /* Ensure it takes full width */
+    box-sizing: border-box; /* Include padding in width */
 }
 
 .lesson-info-item {
@@ -257,15 +280,120 @@ p, span, div, button, input, textarea {
 }
 
 .lesson-action-compact {
-    flex-grow: 1;
-    text-align: left;
+    flex-grow: 1; /* Allow to take available space */
+    text-align: right; /* Align client buttons to the right */
+    display: flex; /* Allow inner items to be side-by-side */
+    justify-content: flex-end; /* Push items to the right */
+    gap: 8px; /* Space between client button and potential secretary actions */
 }
+
 .lesson-action-compact .btn {
     width: auto;
     min-width: 100px;
     font-size: 0.85rem;
     padding: 7px 12px;
     border-radius: 6px;
+}
+
+/* Secretary Actions in Header (Add New Lesson Button) */
+.secretary-actions-header {
+    display: flex;
+    justify-content: flex-end; /* Align to the right */
+    margin-bottom: 20px;
+    padding: 0 10px; /* Add some padding if needed */
+}
+
+.secretary-actions-header .add-button {
+    background-color: #C1A492; /* Brownish color as per modal submit */
+    color: white;
+    border: none;
+    padding: 12px 25px; /* Similar to week-nav button for consistency */
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600; /* Added font-weight */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.3s ease, transform 0.2s ease; /* Added transform */
+}
+
+.secretary-actions-header .add-button:hover {
+    background-color: #8B735E; /* Darker brown on hover */
+    transform: translateY(-2px); /* Lift effect on hover */
+}
+
+.secretary-actions-header .add-button .icon {
+    width: 20px; /* Icon size */
+    height: 20px;
+    stroke: white; /* Ensure icon is white */
+}
+
+
+/* General styles for icon buttons (secretary actions) */
+.btn-icon {
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.btn-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+}
+
+/* Styles for Secretary Actions (Edit/Delete Buttons) inside LessonCard */
+/* This container is for the COMPACT view's secretary actions */
+.lesson-card .secretary-actions-compact {
+    display: flex;
+    gap: 8px;
+}
+
+/* Specific styles for Edit button */
+.btn-edit { /* Apply directly as it's a general icon button style */
+    color: #4CAF50; /* Green icon */
+}
+
+.btn-edit:hover {
+    background-color: #e8f5e9; /* Light green hover background */
+    border-color: #4CAF50;
+    transform: translateY(-1px);
+}
+
+/* Specific styles for Delete button */
+.btn-delete { /* Apply directly as it's a general icon button style */
+    color: #F44336; /* Red icon */
+}
+
+.btn-delete:hover {
+    background-color: #ffebee; /* Light red hover background */
+    border-color: #F44336;
+    transform: translateY(-1px);
+}
+
+/* This applies to secretary actions when the card is EXPANDED */
+.lesson-actions-expanded {
+    display: flex;
+    justify-content: space-between; /* To push secretary buttons to the right in expanded view */
+    margin-top: 12px;
+    width: 100%;
+}
+
+/* This targets the secretary actions container specifically when it's inside the expanded view */
+.lesson-actions-expanded .secretary-actions-expanded { /* Renamed for clarity */
+    display: flex;
+    gap: 8px;
+    margin-top: 0;
 }
 
 /* Lesson Expanded Details */
@@ -292,7 +420,7 @@ p, span, div, button, input, textarea {
     padding: 4px 0;
 }
 
-.capacity-info {
+.capacity-info { /* This class is not directly used in LessonCard.jsx, but keeping it for completeness */
     display: flex;
     align-items: center;
     gap: 6px;
@@ -321,20 +449,7 @@ p, span, div, button, input, textarea {
     background-color: #F44336;
 }
 
-.lesson-actions-expanded {
-    display: flex;
-    justify-content: center;
-    margin-top: 12px;
-    width: 100%;
-}
-.lesson-actions-expanded .btn {
-    width: 90%;
-    max-width: 220px;
-    padding: 10px 18px;
-    font-size: 0.95rem;
-    border-radius: 8px;
-}
-
+/* General Button Styles for Client Actions */
 .btn {
     border: none;
     cursor: pointer;
@@ -349,6 +464,7 @@ p, span, div, button, input, textarea {
 .btn .icon {
     width: 16px;
     height: 16px;
+    stroke: currentColor; /* Ensure icon color matches text color */
 }
 
 .btn-primary {
@@ -361,7 +477,7 @@ p, span, div, button, input, textarea {
     transform: translateY(-1px);
 }
 
-.btn-secondary {
+.btn-secondary { /* This might not be used for client actions but for general buttons */
     background-color: #C1A492;
     color: white;
 }
@@ -371,6 +487,7 @@ p, span, div, button, input, textarea {
     transform: translateY(-1px);
 }
 
+/* Combined class for cancel buttons */
 .btn-cancel, .btn-cancel-waitlist {
     background-color: #F44336;
     color: white;
@@ -378,6 +495,15 @@ p, span, div, button, input, textarea {
 
 .btn-cancel:hover, .btn-cancel-waitlist:hover {
     background-color: #D32F2F;
+    transform: translateY(-1px);
+}
+
+.btn-waitlist { /* Added explicit style for waitlist button */
+    background-color: #FF9800; /* Orange */
+    color: white;
+}
+.btn-waitlist:hover {
+    background-color: #E68A00;
     transform: translateY(-1px);
 }
 
@@ -442,7 +568,7 @@ p, span, div, button, input, textarea {
     .days-grid {
         grid-template-columns: repeat(7, 1fr);
         gap: 20px;
-        min-width: unset;
+        min-width: unset; /* Ensure it's not constrained by a fixed min-width */
     }
 }
 
@@ -451,7 +577,7 @@ p, span, div, button, input, textarea {
         grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
         gap: 20px;
         overflow-x: hidden;
-        min-width: unset;
+        min-width: unset; /* Ensure it's not constrained by a fixed min-width */
     }
 }
 
@@ -493,13 +619,15 @@ p, span, div, button, input, textarea {
     .day-title {
         font-size: 1.6rem;
     }
+    /* Mobile adjustments for basic details and compact actions */
     .lesson-basic-details {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: column; /* Stack time and actions */
+        align-items: flex-start; /* Align stacked items to the left */
     }
     .lesson-action-compact {
-        width: 100%;
-        text-align: left;
+        width: 100%; /* Take full width */
+        text-align: left; /* Align client buttons to left */
+        justify-content: flex-start; /* Secretary actions also align left */
     }
 }
 
@@ -544,6 +672,25 @@ p, span, div, button, input, textarea {
         font-size: 1.4rem;
     }
     .lesson-card {
-        padding: 0;
+        padding: 0; /* Ensures no extra padding */
+    }
+
+    /* Adjust secretary icon buttons for very small screens */
+    .btn-icon { /* Apply directly since it's a shared icon button style */
+        width: 32px;
+        height: 32px;
+    }
+    .btn-icon svg { /* Apply directly since it's a shared icon button style */
+        width: 18px;
+        height: 18px;
+    }
+
+    .secretary-actions-header .add-button {
+        padding: 10px 18px; /* Slightly smaller padding for header button */
+        font-size: 0.9rem;
+    }
+    .secretary-actions-header .add-button .icon {
+        width: 18px;
+        height: 18px;
     }
 }

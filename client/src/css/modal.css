@@ -1,118 +1,415 @@
-/* src/modal.css */
+/* src/css/modal.css */
+
+/* Modal Overlay */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(0, 0, 0, 0.6);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000; /* וודא שהוא מעל שאר התוכן */
+    z-index: 1000;
+    padding: 20px; /* Add padding for small screens */
 }
 
+/* Modal Content Box */
 .modal-content {
-    background-color: #fff;
+    background-color: white;
     padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    width: 90%;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     max-width: 600px;
-    max-height: 90vh; /* גובה מקסימלי */
-    overflow-y: auto; /* גלילה במידת הצורך */
-    position: relative;
-    text-align: right; /* יישור לימין */
-    direction: rtl; /* כיוון כתיבה מימין לשמאל */
+    width: 100%;
+    position: relative; /* Crucial for absolute positioning of close button */
+    animation: fadeInScale 0.3s ease-out;
+    direction: ltr; /* Ensure LTR direction for modal content */
+    max-height: 90vh; /* Limit max height for scrollability */
+    overflow-y: auto; /* Enable vertical scrolling if content overflows */
 }
 
-.modal-content h3 {
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-content h2 { /* Changed from h3 to h2 to match LessonFormModal component */
     text-align: center;
-    color: #333;
     margin-bottom: 25px;
-    font-size: 1.8em;
+    font-size: 2rem;
+    color: #1A1A1A;
+    font-weight: 700;
 }
 
-.modal-form label {
-    display: block;
-    margin-bottom: 15px;
-    font-weight: bold;
+/* Form Styles */
+.form-group { /* Added a class for consistent form group styling */
+    margin-bottom: 15px; /* Spacing between form fields */
+}
+
+.form-group label { /* Changed from .modal-form label to .form-group label for consistency */
+    display: flex;
+    flex-direction: column;
+    font-size: 0.95rem;
     color: #555;
+    font-weight: 600;
+    margin-bottom: 5px; /* Space between label and input */
 }
 
-.modal-form input[type="text"],
-.modal-form input[type="email"],
-.modal-form input[type="password"],
-.modal-form select {
-    width: calc(100% - 20px);
-    padding: 10px;
-    margin-top: 5px;
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="tel"],
+.form-group input[type="number"],
+.form-group input[type="datetime-local"], /* Added datetime-local */
+.form-group select,
+.form-group textarea {
+    padding: 10px 12px;
     border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 1em;
-    box-sizing: border-box; /* כולל פאדינג ובורדר ברוחב */
+    border-radius: 6px;
+    font-size: 1rem;
+    margin-top: 0; /* Removed margin-top as label has margin-bottom */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.modal-form input[type="checkbox"] {
-    margin-left: 5px; /* מרווח בין התיבה לטקסט */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #8B735E;
+    box-shadow: 0 0 0 3px rgba(139, 115, 94, 0.2);
+    outline: none;
 }
 
-.roles-checkboxes {
-    margin-top: 10px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-}
+/* Removed .modal-form h4 - not used in LessonFormModal */
 
-.roles-checkboxes label {
-    font-weight: normal;
-    display: flex;
-    align-items: center;
-}
-
+/* Modal Actions (Buttons) */
 .modal-actions {
     display: flex;
-    justify-content: center;
+    justify-content: flex-end; /* Align buttons to the right */
     gap: 15px;
     margin-top: 30px;
 }
 
-.modal-actions button {
+.modal-actions .btn { /* General button style for modal actions */
     padding: 12px 25px;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 1.1em;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.modal-actions button[type="submit"] {
-    background-color: #28a745; /* ירוק */
+.modal-actions .btn-primary { /* Style for primary action (Submit) */
+    background-color: #C1A492;
     color: white;
 }
 
-.modal-actions button[type="submit"]:hover:not(:disabled) {
-    background-color: #218838;
+.modal-actions .btn-primary:hover:not(:disabled) {
+    background-color: #8B735E;
+    transform: translateY(-2px);
 }
 
-.modal-actions button.cancel-button {
-    background-color: #6c757d; /* אפור */
-    color: white;
-}
-
-.modal-actions button.cancel-button:hover:not(:disabled) {
-    background-color: #5a6268;
-}
-
-.modal-actions button:disabled {
-    opacity: 0.6;
+.modal-actions .btn-primary:disabled {
+    background-color: #ccc;
     cursor: not-allowed;
 }
 
+.modal-actions .btn-secondary { /* Style for secondary action (Cancel) */
+    background-color: #E0E0E0;
+    color: #555;
+}
+
+.modal-actions .btn-secondary:hover:not(:disabled) {
+    background-color: #C0C0C0;
+    transform: translateY(-2px);
+}
+
+.modal-actions .btn-secondary:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+
+/* Error Message in Modal */
 .error-message {
-    color: #dc3545;
+    color: #F44336;
+    background-color: #FFEBEE;
+    border: 1px solid #F44336;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
     text-align: center;
-    margin-bottom: 15px;
-    font-weight: bold;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+/* Close Button for Modal */
+.modal-close-button { /* Renamed from .close-button for clarity in context of modal */
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 28px; /* Slightly smaller for better fit */
+    line-height: 1; /* Ensure single line height */
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s ease-in-out;
+    z-index: 10;
+    padding: 0; /* Remove default button padding */
+}
+
+.modal-close-button:hover {
+    color: #333;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6); /* Darker overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px); /* Apply blur to the background */
+    -webkit-backdrop-filter: blur(5px); /* For Safari */
+}
+
+/* Modal Content */
+.modal-content {
+    background: #fff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 500px;
+    position: relative; /* Needed for absolute positioning of close button */
+    animation: fadeInScale 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-content h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2rem;
+    color: #1A1A1A;
+    margin-bottom: 25px;
+    text-align: center;
+    border-bottom: 2px solid #C1A492; /* Underline for title */
+    padding-bottom: 10px;
+}
+
+/* Close Button */
+.modal-close-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: #555;
+    transition: color 0.2s ease, transform 0.2s ease;
+    padding: 5px;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-close-button:hover {
+    color: #F44336; /* Red on hover */
+    transform: rotate(90deg);
+}
+
+/* Form Group */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="datetime-local"],
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #333;
+    box-sizing: border-box; /* Include padding in width */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #8B735E;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(139, 115, 94, 0.2); /* Soft focus ring */
+}
+
+/* Error Message */
+.error-message {
+    color: #D32F2F;
+    background-color: #FFEBEE;
+    border: 1px solid #FFCDD2;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+/* Form Actions (Buttons) */
+.form-actions {
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.form-actions .btn {
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    min-width: 120px; /* Ensure buttons have a minimum width */
+}
+
+.form-actions .btn-primary {
+    background-color: #8B735E; /* Brownish color for submit */
+    color: white;
+}
+
+.form-actions .btn-primary:hover {
+    background-color: #6C5544;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.form-actions .btn-primary:disabled {
+    background-color: #CCC;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* You won't need a btn-secondary for cancel if using the X button,
+   but I'll keep it here as a general style for other potential secondary buttons */
+.form-actions .btn-secondary {
+    background-color: #E0E0E0; /* Light grey for secondary actions */
+    color: #555;
+}
+
+.form-actions .btn-secondary:hover {
+    background-color: #C0C0C0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.form-actions .btn-secondary:disabled {
+    background-color: #CCC;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+
+/* Responsive adjustments for modal */
+@media (max-width: 600px) {
+    .modal-content {
+        padding: 20px;
+    }
+
+    .modal-content h2 {
+        font-size: 1.7rem;
+        margin-bottom: 20px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+        min-width: unset;
+    }
+}
+/* Mobile responsiveness for modal */
+@media (max-width: 600px) {
+    .modal-content {
+        padding: 20px;
+        margin: 10px;
+        max-width: 95%;
+    }
+
+    .modal-content h2 { /* Changed from h3 to h2 */
+        font-size: 1.6rem;
+        margin-bottom: 20px;
+    }
+
+    .form-group label { /* Changed from .modal-form label to .form-group label */
+        font-size: 0.9rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+    }
+
+    .modal-actions {
+        flex-direction: column-reverse; /* Stack buttons, cancel on top */
+        gap: 10px;
+    }
+
+    .modal-actions .btn { /* Changed from .modal-actions button */
+        width: 100%;
+        padding: 10px 15px;
+        font-size: 0.95rem;
+    }
+
+    .modal-close-button {
+        font-size: 24px; /* Adjust close button size for smaller screens */
+        top: 10px;
+        right: 15px;
+    }
 }

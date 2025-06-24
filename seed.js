@@ -16,45 +16,56 @@ async function seed() {
     try {
         console.log('🔄 Starting database seed...');
 
-        // 1. צור משתמשים עם כתובות מפורטות
+        // 1. Create users with detailed addresses
         const users = await user.bulkCreate([
             {
                 first_name: "David", last_name: "Cohen",
                 street_name: "הרצל", house_number: "10", apartment_number: "א", city: "תל אביב", zip_code: "6000001", country: "ישראל",
                 phone: "0501234567", id_number: "123456789", email: "dinablack092@gmail.com"
-            }, // מאמן
+            }, // Coach 1
             {
                 first_name: "Sarah", last_name: "Levi",
                 street_name: "בן יהודה", house_number: "25", apartment_number: "3", city: "ירושלים", zip_code: "9000002", country: "ישראל",
                 phone: "0529876543", id_number: "234567890", email: "sarah.levi@example.com"
-            }, // לקוחה
+            }, // Client 1
             {
                 first_name: "Maya", last_name: "Goldberg",
                 street_name: "הכרמל", house_number: "7", apartment_number: "ק1", city: "חיפה", zip_code: "3000003", country: "ישראל",
                 phone: "0541237890", id_number: "345678901", email: "maya.goldberg@example.com"
-            }, // לקוחה
+            }, // Client 2
             {
                 first_name: "Noa", last_name: "Bar",
                 street_name: "ביאליק", house_number: "30", city: "רמת גן", zip_code: "5200004", country: "ישראל",
                 phone: "0509876543", id_number: "456789012", email: "noa.bar@example.com"
-            }, // מזכירה
+            }, // Secretary
             {
                 first_name: "Tomer", last_name: "Katz",
                 street_name: "שדרות רגר", house_number: "1", city: "באר שבע", zip_code: "8400005", country: "ישראל",
                 phone: "0531112222", id_number: "567890123", email: "tomer.katz@example.com"
-            }, // מאמן
+            }, // Coach 2
             {
                 first_name: "Dana", last_name: "Aviv",
                 street_name: "השרון", house_number: "50", apartment_number: "12", city: "נתניה", zip_code: "4200006", country: "ישראל",
                 phone: "0523334444", id_number: "678901234", email: "dana.aviv@example.com"
-            } // לקוחה
+            }, // Client 3
+            // NEW COACHES ADDED BELOW
+            {
+                first_name: "Or", last_name: "Levi",
+                street_name: "הצנחנים", house_number: "5", apartment_number: "2", city: "תל אביב", zip_code: "6000007", country: "ישראל",
+                phone: "0505556666", id_number: "789012345", email: "or.levi@example.com"
+            }, // Coach 3
+            {
+                first_name: "Shir", last_name: "Cohen",
+                street_name: "האמנים", house_number: "15", apartment_number: "א", city: "ירושלים", zip_code: "9000008", country: "ישראל",
+                phone: "0527778888", id_number: "890123456", email: "shir.cohen@example.com"
+            } // Coach 4
         ], { returning: true });
 
-        const [coach1, client1, client2, secretary, coach2, client3] = users;
+        const [coach1, client1, client2, secretary, coach2, client3, coach3, coach4] = users;
 
         console.log('✅ Users created successfully.');
 
-        // 2. צור תפקידים
+        // 2. Create roles
         const roles = await role.bulkCreate([
             { role: 'coach' },
             { role: 'client' },
@@ -63,11 +74,16 @@ async function seed() {
 
         console.log('✅ Roles created successfully.');
 
-        // 3. קשר בין משתמשים לתפקידים
+        // 3. Link users to roles
         await user_role.bulkCreate([
             { user_id: coach1.id, role_id: roles.find(r => r.role === 'coach').id },
-            { user_id: coach1.id, role_id: roles.find(r => r.role === 'client').id },
+            { user_id: coach1.id, role_id: roles.find(r => r.role === 'client').id }, // Coach 1 is also a client
             { user_id: coach2.id, role_id: roles.find(r => r.role === 'coach').id },
+            { user_id: coach2.id, role_id: roles.find(r => r.role === 'client').id }, // Coach 2 is also a client
+            { user_id: coach3.id, role_id: roles.find(r => r.role === 'coach').id }, // New coach 3
+            { user_id: coach3.id, role_id: roles.find(r => r.role === 'client').id }, // New coach 3 is also a client
+            { user_id: coach4.id, role_id: roles.find(r => r.role === 'coach').id }, // New coach 4
+            { user_id: coach4.id, role_id: roles.find(r => r.role === 'client').id }, // New coach 4 is also a client
             { user_id: client1.id, role_id: roles.find(r => r.role === 'client').id },
             { user_id: client2.id, role_id: roles.find(r => r.role === 'client').id },
             { user_id: client3.id, role_id: roles.find(r => r.role === 'client').id },
@@ -75,7 +91,8 @@ async function seed() {
         ]);
 
         console.log('✅ User roles created successfully.');
-                // ההגדרה של השיעורים לפי יום ושעה
+        
+        // The lesson schedule by day and time
         const weeklySchedule = {
             Sunday: [
                 { time: "08:00", lesson_type: "Pilates" },
@@ -125,108 +142,119 @@ async function seed() {
         };
 
         const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const createdLessons = await createLessonsForRange([coach1, coach2, client3]);
 
-        // 4. צור שיעורים
+        // Define a list of actual coaches to assign to lessons
+        const actualCoaches = [coach1, coach2, coach3, coach4]; // ONLY coaches here!
+        const createdLessons = await createLessonsForRange(actualCoaches); // Pass only coaches
 
+        // 4. Create lessons
+        // The function that generates all lessons based on the range and schedule
+        async function createLessonsForRange(instructorsList) {
+            const lessonsToCreate = [];
 
-        // הפונקציה שמייצרת את כל השיעורים לפי הטווח והלוח
-      async function createLessonsForRange(instructorsList) {
-    const lessonsToCreate = [];
-
-    function getSunday(date) {
-        const day = date.getDay();
-        const diff = (day === 0) ? 0 : -day;
-        const sunday = new Date(date);
-        sunday.setHours(0, 0, 0, 0);
-        sunday.setDate(date.getDate() + diff);
-        return sunday;
-    }
-
-    const today = new Date();
-    const baseSunday = getSunday(today);
-
-    for (let weekOffset = -3; weekOffset <= 3; weekOffset++) {
-        const currentSunday = new Date(baseSunday);
-        currentSunday.setDate(baseSunday.getDate() + weekOffset * 7);
-
-        for (const dayName of daysOfWeek) {
-            const dayIndex = daysOfWeek.indexOf(dayName);
-            const lessons = weeklySchedule[dayName];
-            if (!lessons) continue;
-
-            for (let i = 0; i < lessons.length; i++) {
-                const lesson = lessons[i];
-                const lessonDate = new Date(currentSunday);
-                lessonDate.setDate(currentSunday.getDate() + dayIndex);
-                const [hour, minute] = lesson.time.split(':').map(Number);
-                lessonDate.setHours(hour, minute, 0, 0);
-
-                const instructor = instructorsList[(i + dayIndex + weekOffset + instructorsList.length) % instructorsList.length];
-
-                lessonsToCreate.push({
-                    lesson_type: lesson.lesson_type,
-                    day: dayName,
-                    instructor_id: instructor.id,
-                    room_number: `Room ${String.fromCharCode(65 + (i % 26))}`,
-                    max_participants: 15,
-                    current_participants: 0,
-                    scheduled_at: lessonDate
-                });
+            function getSunday(date) {
+                const day = date.getDay(); // Local day of the week
+                const diff = (day === 0) ? 0 : -day; // Difference to get to Sunday (0)
+                const sunday = new Date(date);
+                sunday.setHours(0, 0, 0, 0); // Set to local midnight
+                sunday.setDate(date.getDate() + diff);
+                return sunday;
             }
+
+            const today = new Date();
+            const baseSunday = getSunday(today);
+
+            // Iterate for 7 weeks (-3 to +3 from current week)
+            for (let weekOffset = -3; weekOffset <= 3; weekOffset++) {
+                const currentSunday = new Date(baseSunday);
+                currentSunday.setDate(baseSunday.getDate() + weekOffset * 7);
+
+                for (const dayName of daysOfWeek) {
+                    const dayIndex = daysOfWeek.indexOf(dayName);
+                    const lessonsInDay = weeklySchedule[dayName];
+                    if (!lessonsInDay) continue;
+
+                    for (let i = 0; i < lessonsInDay.length; i++) {
+                        const lessonEntry = lessonsInDay[i];
+                        const lessonDate = new Date(currentSunday);
+                        lessonDate.setDate(currentSunday.getDate() + dayIndex);
+                        const [hour, minute] = lessonEntry.time.split(':').map(Number);
+                        
+                        // Set the time components in LOCAL timezone to match the intended schedule
+                        lessonDate.setHours(hour, minute, 0, 0);
+
+                        // CRITICAL: Convert the local scheduled_at to UTC for database storage
+                        const scheduledAtUTC = lessonDate.toISOString();
+
+                        // Assign instructor from the provided list, cycling through them
+                        const instructor = instructorsList[(i + dayIndex + weekOffset + instructorsList.length) % instructorsList.length];
+
+                        lessonsToCreate.push({
+                            lesson_type: lessonEntry.lesson_type,
+                            day: dayName, // This should be the English day name
+                            instructor_id: instructor.id,
+                            room_number: `Room ${String.fromCharCode(65 + (i % 26))}`,
+                            max_participants: 15,
+                            current_participants: 0,
+                            scheduled_at: scheduledAtUTC // Store as UTC
+                        });
+                    }
+                }
+            }
+
+            const created = await lesson.bulkCreate(lessonsToCreate, { returning: true });
+            console.log(`✅ Created ${created.length} lessons for 7 weeks range`);
+            return created;
         }
-    }
 
-    const created = await lesson.bulkCreate(lessonsToCreate, { returning: true });
-    console.log(`✅ Created ${created.length} lessons for 7 weeks range`);
-    return created;
-}
+        // 🔥 Adding a manually full lesson (example) - choose a lesson in the current week
+        // Note: this date should also be handled carefully for timezone.
+        // If current date is June 24, 2025 (Tuesday), then this would be today 18:00
+        const fullLessonLocalTime = new Date(); // Get current local date
+        fullLessonLocalTime.setHours(18, 0, 0, 0); // Set to 18:00 local
+        // Convert to UTC for storage
+        const fullLessonScheduledAtUTC = fullLessonLocalTime.toISOString();
+        const fullLessonDay = daysOfWeek[fullLessonLocalTime.getDay()];
 
 
-
-        // 🔥 הוספת שיעור מלא (ידני) - נבחר שיעור בשבוע הנוכחי
-        const fullLessonDate = new Date('2025-06-17'); // היום!
-        fullLessonDate.setHours(18, 0, 0, 0); // בשעה 18:00
         const fullLesson = await lesson.create({
             lesson_type: 'Spinning',
-            day: 'Tuesday', // היום
+            day: fullLessonDay, // Use the actual day of the week for this specific date
             instructor_id: coach1.id,
             room_number: 'Room X',
             max_participants: 3,
-            current_participants: 3, // נגדיר אותו מלא כבר בהתחלה
-            scheduled_at: fullLessonDate
+            current_participants: 3, // Set as full initially
+            scheduled_at: fullLessonScheduledAtUTC // Store as UTC
         });
         console.log('✅ Full lesson created.');
 
 
-        // 5. מועדפים
+        // 5. Favorites
         await favorite.bulkCreate([
-            { user_id: client1.id, lesson_id: createdLessons[0].id }, // שיעור היוגה הראשון
-            { user_id: client2.id, lesson_id: createdLessons[1].id }, // שיעור הפילאטיס הראשון
-            { user_id: client3.id, lesson_id: createdLessons[2].id }  // שיעור הזומבה הראשון
+            { user_id: client1.id, lesson_id: createdLessons[0].id }, // First Yoga lesson
+            { user_id: client2.id, lesson_id: createdLessons[1].id }, // First Pilates lesson
+            { user_id: client3.id, lesson_id: createdLessons[2].id }  // First Zumba lesson
         ]);
         console.log('✅ Favorites created successfully.');
 
-        // 6. ביטולים
+        // 6. Cancellations
         await cancellation.bulkCreate([
             { instructor_id: coach1.id, lesson_id: createdLessons[0].id, notes: 'Sick' }
         ]);
         console.log('✅ Cancellations created successfully.');
 
-        // 7. הרשמות לשיעורים רגילים (כולל שיעורים מהעבר)
+        // 7. Regular lesson registrations (including past lessons)
+        // Adjusting example dates to align with "createdLessons" range and current date
+        // Assuming createdLessons[0] is in the past-most week, and createdLessons[20] in the future
         await lesson_registrations.bulkCreate([
-            // שיעורים מהשבוע הראשון (עבר)
-            { user_id: client1.id, lesson_id: createdLessons[0].id, registration_date: new Date('2025-05-30') }, // יוגה ב-1 ליוני
-            { user_id: client2.id, lesson_id: createdLessons[1].id, registration_date: new Date('2025-06-01') }, // פילאטיס ב-1 ליוני
-            // שיעורים מהשבוע השני (עבר/הווה)
-            { user_id: client3.id, lesson_id: createdLessons[10].id, registration_date: new Date('2025-06-05') }, // שיעור כלשהו בשבוע השני
-            // שיעורים מהשבוע השלישי (עתיד)
-            { user_id: client1.id, lesson_id: createdLessons[20].id, registration_date: new Date('2025-06-15') }, // שיעור כלשהו בשבוע השלישי
-            { user_id: client2.id, lesson_id: createdLessons[21].id, registration_date: new Date('2025-06-16') }, // שיעור כלשהו בשבוע השלישי
+            { user_id: client1.id, lesson_id: createdLessons[0].id, registration_date: new Date() },
+            { user_id: client2.id, lesson_id: createdLessons[1].id, registration_date: new Date() },
+            { user_id: client3.id, lesson_id: createdLessons[10].id, registration_date: new Date() },
+            { user_id: client1.id, lesson_id: createdLessons[20].id, registration_date: new Date() },
+            { user_id: client2.id, lesson_id: createdLessons[21].id, registration_date: new Date() },
         ]);
 
-        // עדכון current_participants עבור השיעורים שנרשמו
-        // נשתמש ב-Promise.all כדי לעדכן במקביל
+        // Update current_participants for registered lessons
         const registrationUpdates = [
             { id: createdLessons[0].id, by: 1 },
             { id: createdLessons[1].id, by: 1 },
@@ -241,27 +269,28 @@ const createdLessons = await createLessonsForRange([coach1, coach2, client3]);
 
         console.log('✅ Lesson registrations created and participant counts updated.');
 
-        // ✅ הרשמות לשיעור המלא (כבר מלא)
+        // ✅ Registrations for the full lesson (already full)
         await lesson_registrations.bulkCreate([
-            { user_id: coach1.id, lesson_id: fullLesson.id, registration_date: new Date('2025-06-10') },
-            { user_id: coach2.id, lesson_id: fullLesson.id, registration_date: new Date('2025-06-11') },
-            { user_id: client3.id, lesson_id: fullLesson.id, registration_date: new Date('2025-06-12') }, // לקוחה3 נרשמת לשיעור המלא
+            { user_id: coach1.id, lesson_id: fullLesson.id, registration_date: new Date() },
+            { user_id: coach2.id, lesson_id: fullLesson.id, registration_date: new Date() },
+            { user_id: client3.id, lesson_id: fullLesson.id, registration_date: new Date() }, // Client3 registered for full lesson
         ]);
         console.log('✅ Registrations for full lesson added.');
 
-        // ✅ רשימת המתנה עבור השיעור המלא
+        // ✅ Waitlist for the full lesson
         await waiting_list.bulkCreate([
-            { user_id: client1.id, lesson_id: fullLesson.id, date: new Date('2025-06-13T10:00:00Z') }, // לקוחה1 בהמתנה
-            { user_id: client2.id, lesson_id: fullLesson.id, date: new Date('2025-06-13T10:05:00Z') }, // לקוחה2 בהמתנה
-            { user_id: secretary.id, lesson_id: fullLesson.id, date: new Date('2025-06-13T10:10:00Z') }, // מזכירה בהמתנה
+            { user_id: client1.id, lesson_id: fullLesson.id, date: new Date() }, // Client1 on waitlist
+            { user_id: client2.id, lesson_id: fullLesson.id, date: new Date(Date.now() + 5 * 60 * 1000) }, // Client2 on waitlist (5 mins later)
+            { user_id: secretary.id, lesson_id: fullLesson.id, date: new Date(Date.now() + 10 * 60 * 1000) }, // Secretary on waitlist (10 mins later)
         ]);
         console.log('✅ Waitlist for full lesson created.');
 
-
-        // 9. סיסמאות
+        // 9. Passwords
         const passwords = [
             { user_id: coach1.id, plain: 'coachpass1' },
             { user_id: coach2.id, plain: 'coachpass2' },
+            { user_id: coach3.id, plain: 'coachpass3' }, // New coach password
+            { user_id: coach4.id, plain: 'coachpass4' }, // New coach password
             { user_id: client1.id, plain: 'clientpass1' },
             { user_id: client2.id, plain: 'clientpass2' },
             { user_id: client3.id, plain: 'clientpass3' },
@@ -315,8 +344,9 @@ console.log('✅ Messages with titles inserted successfully.');
 
     } catch (err) {
         console.error('❌ Seed failed:', err);
-        process.exit(1); // יציאה עם קוד שגיאה
+        process.exit(1); // Exit with error code
     }
 }
 
+// Call the seed function to populate the database
 seed();

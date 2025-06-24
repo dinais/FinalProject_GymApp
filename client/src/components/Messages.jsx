@@ -1,4 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
+import {
+  Mail, Send, Users, User, Calendar, ChevronDown, ChevronUp, Plus, Inbox
+} from 'lucide-react';
+import '../css/messages.css';
+
 import { getRequest, postRequest } from '../Requests';
 import { CurrentUser } from './App';
 
@@ -7,7 +12,7 @@ function formatDateTime(dateString) {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit', hour12: false
   };
-  return new Date(dateString).toLocaleString('he-IL', options);
+  return new Date(dateString).toLocaleString('en-US', options);
 }
 
 function Messages() {
@@ -15,16 +20,16 @@ function Messages() {
   const selectedRole = localStorage.getItem('selectedRole');
   const [view, setView] = useState('inbox');
   const [messages, setMessages] = useState([]);
+  const [expandedMessage, setExpandedMessage] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     message: '',
     recipient_emails: ''
   });
-  const [targetGroup, setTargetGroup] = useState(''); // 'coaches' or 'clients'
+  const [targetGroup, setTargetGroup] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
-console.log(messages);
 
   useEffect(() => {
     if (view === 'inbox' && currentUser) {
@@ -33,12 +38,14 @@ console.log(messages);
       getRequest(`messages/${currentUser.id}?role=${selectedRole}`)
         .then(result => {
           if (result.succeeded) {
+            console.log('Fetched messages:', result.data);
+            
             setMessages(result.data);
           } else {
-            setError(result.error || 'שגיאה בטעינת ההודעות');
+            setError(result.error || 'Error loading messages');
           }
         })
-        .catch(() => setError('שגיאה בטעינת ההודעות'))
+        .catch(() => setError('Error loading messages'))
         .finally(() => setLoading(false));
     }
   }, [view, currentUser, selectedRole]);
@@ -61,7 +68,7 @@ console.log(messages);
     const { title, message, recipient_emails } = formData;
 
     if (!title || !message || (selectedRole === 'secretary' && !recipient_emails)) {
-      setError('אנא מלא את כל השדות.');
+      setError('Please fill in all required fields.');
       return;
     }
 
@@ -70,27 +77,26 @@ console.log(messages);
 
       if (selectedRole === 'client' || selectedRole === 'coach') {
         recipients.push({
-          id: 4,
+          id: 4, // default secretary ID (replace with actual logic)
           role: 'secretary'
         });
       } else if (selectedRole === 'secretary') {
         if (recipient_emails === 'ALL') {
           const roleToQuery = targetGroup === 'coaches' ? 'coach' : 'client';
           const result = await getRequest(`users/by-role/${roleToQuery}`);
-          if (!result.succeeded) throw new Error('שגיאה באחזור המשתמשים');
-          console.log(result.data.data);
-          
+          if (!result.succeeded) throw new Error('Error fetching users');
           recipients = result.data.data.map(u => ({ id: u.id, role: roleToQuery }));
         } else {
           const emailList = recipient_emails.split(',').map(e => e.trim());
           const result = await postRequest(`users/by-emails`, { emails: emailList });
           if (!result.succeeded || !result.data || result.data.length === 0) {
-            console.log(result);
-            
-            setError('לא נמצאו משתמשים מתאימים למיילים שהוזנו');
+            setError('No matching users found for the provided emails');
             return;
           }
-          recipients = result.data.data.map(u => ({ id: u.id, role: targetGroup === 'coaches' ? 'coach' : 'client' }));
+          recipients = result.data.data.map(u => ({
+            id: u.id,
+            role: targetGroup === 'coaches' ? 'coach' : 'client'
+          }));
         }
       }
 
@@ -105,108 +111,179 @@ console.log(messages);
         });
       }
 
-      setSuccessMsg('ההודעה נשלחה בהצלחה!');
+      setSuccessMsg('Message sent successfully!');
       resetForm();
     } catch (err) {
       console.error(err);
-      setError('שליחת ההודעה נכשלה');
+      setError('Failed to send message');
     }
   }
 
+  const toggleMessageExpansion = (messageId) => {
+    setExpandedMessage(expandedMessage === messageId ? null : messageId);
+  };
+
   return (
-    <div>
-      <h1>ניהול הודעות</h1>
-      <div style={{ marginBottom: '1rem' }}>
-        <button onClick={() => setView('inbox')} disabled={view === 'inbox'}>הודעות נכנסות</button>
-        <button onClick={() => setView('send')} disabled={view === 'send'}>שליחת הודעה</button>
-      </div>
+    <div className="messages-container">
+      <div className="background-container"></div>
+      <div className="grid-overlay"></div>
 
-      {view === 'inbox' && (
-        <>
-          {loading && <p>טוען הודעות...</p>}
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-          {!loading && messages.length === 0 && <p>אין הודעות להצגה.</p>}
-          <ul>
-            {messages.map(msg => (
-              <li key={msg.id} style={{ marginBottom: '1rem', border: '1px solid #ccc', padding: '0.5rem' }}>
-                <strong>כותרת:</strong> {msg.title} <br />
-                <strong>הודעה:</strong> {msg.message} <br />
-                <strong>נשלח בתאריך:</strong> {formatDateTime(msg.created_at)}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+      <div className="container">
+        <div className="header">
+          <h1 className="main-title">
+            <Mail className="title-icon" />
+            Message Management
+          </h1>
+          <p className="subtitle">Stay connected with your fitness community</p>
+        </div>
 
-      {view === 'send' && (
-        <form onSubmit={handleSendMessage} style={{ maxWidth: '500px' }}>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-          {successMsg && <p style={{ color: 'green' }}>{successMsg}</p>}
+        <div className="message-nav">
+          <button className={`nav-tab ${view === 'inbox' ? 'active' : ''}`} onClick={() => setView('inbox')}>
+            <Inbox className="tab-icon" />
+            Inbox
+            {messages.length > 0 && <span className="message-count">{messages.length}</span>}
+          </button>
+          <button className={`nav-tab ${view === 'send' ? 'active' : ''}`} onClick={() => setView('send')}>
+            <Send className="tab-icon" />
+            Send Message
+          </button>
+        </div>
 
-          {selectedRole === 'secretary' && (
-            <>
-              <button type="button" onClick={() => setTargetGroup('clients')}>שליחה למתאמנים</button>
-              <button type="button" onClick={() => setTargetGroup('coaches')}>שליחה למאמנים</button>
-              {targetGroup && (
-                <>
-                  <label>
-                    כתובות מייל (מופרדות בפסיקים): <br />
-                    <input
-                      name="recipient_emails"
-                      value={formData.recipient_emails}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </label>
-                  <br />
-                  <button type="button" onClick={() => setFormData(f => ({ ...f, recipient_emails: 'ALL' }))}>
-                    שליחה לכל {targetGroup === 'coaches' ? 'המאמנים' : 'המתאמנים'}
-                  </button>
-                </>
-              )}
-            </>
-          )}
+        {view === 'inbox' && (
+          <div className="inbox-section">
+            {loading && <div className="loading-state"><div className="loading-spinner"></div><p>Loading messages...</p></div>}
+            {error && <div className="error-message"><p>{error}</p></div>}
+            {!loading && messages.length === 0 && (
+              <div className="no-messages">
+                <Mail className="no-messages-icon" />
+                <h3>No Messages</h3>
+                <p>You don't have any messages yet.</p>
+              </div>
+            )}
+            <div className="messages-list">
+              {messages.map(msg => (
+                <div key={msg.id} className="message-card">
+                  <div className="message-header" onClick={() => toggleMessageExpansion(msg.id)}>
+                    <div className="message-info">
+                      <h3 className="message-title">{msg.title}</h3>
+                      <div className="message-meta">
+                        <span className="sender">From: {msg.Sender.email}</span>
+                        <span className="date">
+                          <Calendar className="meta-icon" />
+                          {formatDateTime(msg.created_at)}
+                        </span>
+                      </div>
+                    </div>
+                    <button className="expand-button">
+                      {expandedMessage === msg.id ? <ChevronUp /> : <ChevronDown />}
+                    </button>
+                  </div>
+                  {expandedMessage === msg.id && (
+                    <div className="message-content">
+                      <div className="message-body">
+                        <p>{msg.message}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-          <label>
-            כותרת: <br />
-            <select
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="" disabled>בחר כותרת</option>
-              {(selectedRole === 'client' || selectedRole === 'coach') && (
-                <option value="תלונה על שיעור">תלונה על שיעור</option>
-              )}
-              {selectedRole === 'coach' && (
-                <option value="הודעה על ביטול שיעור">הודעה על ביטול שיעור</option>
-              )}
+        {view === 'send' && (
+          <div className="send-section">
+            <form onSubmit={handleSendMessage} className="message-form">
+              {error && <div className="error-message"><p>{error}</p></div>}
+              {successMsg && <div className="success-message"><p>{successMsg}</p></div>}
+
               {selectedRole === 'secretary' && (
-                <>
-                  <option value="הודעה כללית">הודעה כללית</option>
-                  <option value="עדכון מערכת">עדכון מערכת</option>
-                </>
+                <div className="recipient-section">
+                  <h3>Select Recipients</h3>
+                  <div className="target-group-buttons">
+                    <button type="button" className={`group-btn ${targetGroup === 'clients' ? 'active' : ''}`} onClick={() => setTargetGroup('clients')}>
+                      <User className="btn-icon" />
+                      Send to Clients
+                    </button>
+                    <button type="button" className={`group-btn ${targetGroup === 'coaches' ? 'active' : ''}`} onClick={() => setTargetGroup('coaches')}>
+                      <Users className="btn-icon" />
+                      Send to Coaches
+                    </button>
+                  </div>
+
+                  {targetGroup && (
+                    <div className="email-input-section">
+                      <label className="form-label">
+                        Email Addresses (comma separated):
+                        <input
+                          type="text"
+                          name="recipient_emails"
+                          value={formData.recipient_emails}
+                          onChange={handleInputChange}
+                          className="form-input"
+                          placeholder="john@example.com, jane@example.com"
+                          required
+                        />
+                      </label>
+                      <button type="button" className="send-all-btn" onClick={() => setFormData(f => ({ ...f, recipient_emails: 'ALL' }))}>
+                        <Plus className="btn-icon" />
+                        Send to All {targetGroup === 'coaches' ? 'Coaches' : 'Clients'}
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
-            </select>
-          </label>
-          <br />
 
-          <label>
-            הודעה: <br />
-            <textarea
-              name="message"
-              value={formData.message}
-              onChange={handleInputChange}
-              required
-              rows={5}
-            />
-          </label>
-          <br />
+              <div className="form-group">
+                <label className="form-label">
+                  Message Title:
+                  <select
+                    name="title"
+                    value={formData.title}
+                    onChange={handleInputChange}
+                    className="form-select"
+                    required
+                  >
+                    <option value="" disabled>Select a title</option>
+                    {(selectedRole === 'client' || selectedRole === 'coach') && (
+                      <option value="Class Complaint">Class Complaint</option>
+                    )}
+                    {selectedRole === 'coach' && (
+                      <option value="Class Cancellation Notice">Class Cancellation Notice</option>
+                    )}
+                    {selectedRole === 'secretary' && (
+                      <>
+                        <option value="General Announcement">General Announcement</option>
+                        <option value="System Update">System Update</option>
+                      </>
+                    )}
+                  </select>
+                </label>
+              </div>
 
-          <button type="submit">שלח הודעה</button>
-        </form>
-      )}
+              <div className="form-group">
+                <label className="form-label">
+                  Message:
+                  <textarea
+                    name="message"
+                    value={formData.message}
+                    onChange={handleInputChange}
+                    className="form-textarea"
+                    rows={6}
+                    placeholder="Enter your message here..."
+                    required
+                  />
+                </label>
+              </div>
+
+              <button type="submit" className="submit-btn">
+                <Send className="btn-icon" />
+                Send Message
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
