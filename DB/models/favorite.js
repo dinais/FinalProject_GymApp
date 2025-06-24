@@ -8,7 +8,7 @@ const favorite = sequelize.define('favorite', {
             model: 'users',
             key: 'id'
         },
-        primaryKey: true // Make it part of the composite primary key
+        primaryKey: true
     },
     lesson_id: { 
         type: DataTypes.INTEGER, 
@@ -16,12 +16,11 @@ const favorite = sequelize.define('favorite', {
             model: 'lessons',
             key: 'id'
         },
-        primaryKey: true // Make it part of the composite primary key
+        primaryKey: true 
     }
 }, {
     tableName: 'favorites',
     timestamps: false,
-    // Add unique constraint on the pair (user_id, lesson_id)
     indexes: [
         {
             unique: true,

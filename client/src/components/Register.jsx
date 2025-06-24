@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from "react-router-dom";
 import { CurrentUser, Error } from './App';
 import { postRequest } from '../Requests';
-import '../css/login.css'; // Import the same CSS file
+import '../css/login.css'; 
 
 function RegistrationPermission() {
     const { setCurrentUser, setCurrentRole } = useContext(CurrentUser);
@@ -14,21 +14,21 @@ function RegistrationPermission() {
         password: '',
         confirmPassword: '',
     });
-    const [isLoading, setIsLoading] = useState(false); // Loading state for button
+    const [isLoading, setIsLoading] = useState(false); 
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setErrorMessage('');
-        setIsLoading(true); // Start loading
+        setIsLoading(true); 
 
         if (!formData.email || !formData.password || !formData.confirmPassword) {
-            setErrorMessage('All fields are required.'); // Message in English
+            setErrorMessage('All fields are required.'); 
             setIsLoading(false);
             return;
         }
 
         if (formData.password !== formData.confirmPassword) {
-            setErrorMessage('Passwords do not match.'); // Message in English
+            setErrorMessage('Passwords do not match.'); 
             setIsLoading(false);
             return;
         }
@@ -61,23 +61,23 @@ function RegistrationPermission() {
                     setErrorMessage(requestResult.error);
                     navigate('/login');
                 } else {
-                    setErrorMessage(requestResult.error || 'Operation failed. Please try again.'); // Message in English
+                    setErrorMessage(requestResult.error || 'Operation failed. Please try again.'); 
                 }
             }
         } catch (error) {
             console.error('Error during password setup/login:', error);
-            setErrorMessage(error.message || 'An unexpected error occurred.'); // Message in English
+            setErrorMessage(error.message || 'An unexpected error occurred.'); 
         } finally {
-            setIsLoading(false); // End loading
+            setIsLoading(false); 
         }
     };
 
     return (
         <div className="auth-container">
-            <h2>Set Your Password</h2> {/* Title in English */}
+            <h2>Set Your Password</h2> 
             <form className="auth-form" onSubmit={handleSubmit}>
                 <div className="form-group">
-                    <label htmlFor="email">Email:</label> {/* Label in English */}
+                    <label htmlFor="email">Email:</label> 
                     <input
                         id="email"
                         required
@@ -88,7 +88,7 @@ function RegistrationPermission() {
                 </div>
 
                 <div className="form-group">
-                    <label htmlFor="password">Password:</label> {/* Label in English */}
+                    <label htmlFor="password">Password:</label> 
                     <input
                         id="password"
                         required
@@ -99,7 +99,7 @@ function RegistrationPermission() {
                 </div>
 
                 <div className="form-group">
-                    <label htmlFor="confirmPassword">Confirm Password:</label> {/* Label in English */}
+                    <label htmlFor="confirmPassword">Confirm Password:</label> 
                     <input
                         id="confirmPassword"
                         required
@@ -114,11 +114,11 @@ function RegistrationPermission() {
                     type="submit"
                     disabled={isLoading}
                 >
-                    {isLoading ? '' : 'Submit'} {/* Button text in English */}
+                    {isLoading ? '' : 'Submit'} 
                 </button>
             </form>
 
-            <Link to="/login" className="link-text">Already have an account? Login</Link> {/* Link text in English */}
+            <Link to="/login" className="link-text">Already have an account? Login</Link> 
             {errorMessage && <div className="error-message">{errorMessage}</div>}
         </div>
     );

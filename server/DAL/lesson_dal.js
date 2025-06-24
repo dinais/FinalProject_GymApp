@@ -277,6 +277,17 @@ const findUserFavoriteLessons = async (userId, weekStart, weekEnd) => {
     console.log(`DAL-findUserFavoriteLessons: Found ${lessons.length} favorite lessons for user ${userId} in week.`);
     return lessons;
 };
+const deleteExpiredReservedSpotsForLesson = async (lessonId) => {
+    const deletedCount = await reserved_spot.destroy({
+        where: {
+            lesson_id: lessonId,
+            expires_at: {
+                [Op.lt]: new Date()
+            }
+        }
+    });
+    return deletedCount > 0;
+};
 
 
 // Export all functions at the end of the file
@@ -304,5 +315,6 @@ module.exports = {
     createFavorite,
     deleteFavorite,
     isLessonFavoriteForUser, 
-    findUserFavoriteLessons
+    findUserFavoriteLessons,
+    deleteExpiredReservedSpotsForLesson
 };

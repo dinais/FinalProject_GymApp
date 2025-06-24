@@ -3,7 +3,6 @@ import {
   Mail, Send, Users, User, Calendar, ChevronDown, ChevronUp, Plus, Inbox
 } from 'lucide-react';
 import '../css/messages.css';
-
 import { getRequest, postRequest } from '../Requests';
 import { CurrentUser } from './App';
 
@@ -16,8 +15,7 @@ function formatDateTime(dateString) {
 }
 
 function Messages() {
-  const { currentUser } = useContext(CurrentUser);
-  const selectedRole = localStorage.getItem('selectedRole');
+  const { currentUser, currentRole } = useContext(CurrentUser);
   const [view, setView] = useState('inbox');
   const [messages, setMessages] = useState([]);
   const [expandedMessage, setExpandedMessage] = useState(null);
@@ -35,11 +33,11 @@ function Messages() {
     if (view === 'inbox' && currentUser) {
       setLoading(true);
       setError('');
-      getRequest(`messages/${currentUser.id}?role=${selectedRole}`)
+      getRequest(`messages/${currentUser.id}?role=${currentRole}`)
         .then(result => {
           if (result.succeeded) {
             console.log('Fetched messages:', result.data);
-            
+
             setMessages(result.data);
           } else {
             setError(result.error || 'Error loading messages');
@@ -48,7 +46,7 @@ function Messages() {
         .catch(() => setError('Error loading messages'))
         .finally(() => setLoading(false));
     }
-  }, [view, currentUser, selectedRole]);
+  }, [view, currentUser, currentRole]);
 
   function handleInputChange(e) {
     const { name, value } = e.target;
@@ -67,7 +65,7 @@ function Messages() {
 
     const { title, message, recipient_emails } = formData;
 
-    if (!title || !message || (selectedRole === 'secretary' && !recipient_emails)) {
+    if (!title || !message || (currentRole === 'secretary' && !recipient_emails)) {
       setError('Please fill in all required fields.');
       return;
     }
@@ -75,12 +73,12 @@ function Messages() {
     try {
       let recipients = [];
 
-      if (selectedRole === 'client' || selectedRole === 'coach') {
+      if (currentRole === 'client' || currentRole === 'coach') {
         recipients.push({
-          id: 4, // default secretary ID (replace with actual logic)
+          id: 4,
           role: 'secretary'
         });
-      } else if (selectedRole === 'secretary') {
+      } else if (currentRole === 'secretary') {
         if (recipient_emails === 'ALL') {
           const roleToQuery = targetGroup === 'coaches' ? 'coach' : 'client';
           const result = await getRequest(`users/by-role/${roleToQuery}`);
@@ -103,14 +101,13 @@ function Messages() {
       for (const r of recipients) {
         await postRequest('messages', {
           sender_id: currentUser.id,
-          sender_role: selectedRole,
+          sender_role: currentRole,
           recipient_id: r.id,
           recipient_role: r.role,
           title,
           message
         });
       }
-
       setSuccessMsg('Message sent successfully!');
       resetForm();
     } catch (err) {
@@ -190,14 +187,12 @@ function Messages() {
             </div>
           </div>
         )}
-
         {view === 'send' && (
           <div className="send-section">
             <form onSubmit={handleSendMessage} className="message-form">
               {error && <div className="error-message"><p>{error}</p></div>}
               {successMsg && <div className="success-message"><p>{successMsg}</p></div>}
-
-              {selectedRole === 'secretary' && (
+              {currentRole === 'secretary' && (
                 <div className="recipient-section">
                   <h3>Select Recipients</h3>
                   <div className="target-group-buttons">
@@ -210,7 +205,6 @@ function Messages() {
                       Send to Coaches
                     </button>
                   </div>
-
                   {targetGroup && (
                     <div className="email-input-section">
                       <label className="form-label">
@@ -233,7 +227,6 @@ function Messages() {
                   )}
                 </div>
               )}
-
               <div className="form-group">
                 <label className="form-label">
                   Message Title:
@@ -245,13 +238,13 @@ function Messages() {
                     required
                   >
                     <option value="" disabled>Select a title</option>
-                    {(selectedRole === 'client' || selectedRole === 'coach') && (
+                    {(currentRole === 'client' || currentRole === 'coach') && (
                       <option value="Class Complaint">Class Complaint</option>
                     )}
-                    {selectedRole === 'coach' && (
+                    {currentRole === 'coach' && (
                       <option value="Class Cancellation Notice">Class Cancellation Notice</option>
                     )}
-                    {selectedRole === 'secretary' && (
+                    {currentRole === 'secretary' && (
                       <>
                         <option value="General Announcement">General Announcement</option>
                         <option value="System Update">System Update</option>
@@ -260,7 +253,6 @@ function Messages() {
                   </select>
                 </label>
               </div>
-
               <div className="form-group">
                 <label className="form-label">
                   Message:
@@ -275,7 +267,6 @@ function Messages() {
                   />
                 </label>
               </div>
-
               <button type="submit" className="submit-btn">
                 <Send className="btn-icon" />
                 Send Message

@@ -1,32 +1,27 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { CurrentUser, Error } from './App'; // ודא שהנתיב ל-App.jsx נכון
-import '../css/Profile.css'; // נניח שיש לך קובץ CSS עבור הפרופיל
-
+import { CurrentUser, Error } from './App'; 
+import '../css/Profile.css'; 
 function Profile() {
     const { currentUser, setCurrentUser } = useContext(CurrentUser);
-      const { errorMessage, setErrorMessage } = useContext(Error);
+    const { errorMessage, setErrorMessage } = useContext(Error);
 
     useEffect(() => {
-        // אם ה-currentUser ריק (לדוגמה, רענון דף), ננסה לשלוף מ-localStorage
         if (!currentUser || !currentUser.id) {
             const storedUser = localStorage.getItem('currentUser');
             if (storedUser) {
                 try {
                     const parsedUser = JSON.parse(storedUser);
-                    setCurrentUser(parsedUser); // עדכן את הקונטקסט
-                    // setProfileData(parsedUser); // אם אתה משתמש ב-useState מקומי
+                    setCurrentUser(parsedUser);
                 } catch (e) {
                     console.error("Failed to parse currentUser from localStorage", e);
                     setErrorMessage("Failed to load user profile. Please try logging in again.");
                 }
             } else {
                 setErrorMessage("No user data found. Please log in.");
-                // אולי תרצה להפנות לדף לוגין כאן navigate('/login');
             }
         }
-    }, [currentUser, setCurrentUser, setErrorMessage]); // תלויות ל-useEffect
+    }, [currentUser, setCurrentUser, setErrorMessage]);
 
-    // לוודא שהמשתמש קיים לפני שניגשים לפרטים שלו
     if (!currentUser || !currentUser.id) {
         return (
             <div className="profile-container">
@@ -56,8 +51,6 @@ function Profile() {
                     <span className="detail-label">ID Number:</span>
                     <span className="detail-value">{currentUser.id_number}</span>
                 </div>
-
-                {/* פרטי כתובת */}
                 <h3>Address Details:</h3>
                 <div className="detail-group">
                     <span className="detail-label">Street:</span>
@@ -81,8 +74,6 @@ function Profile() {
                     <span className="detail-label">Country:</span>
                     <span className="detail-value">{currentUser.country || 'N/A'}</span>
                 </div>
-
-                {/* תפקידים */}
                 <div className="detail-group">
                     <span className="detail-label">Roles:</span>
                     <span className="detail-value">
@@ -91,7 +82,6 @@ function Profile() {
                             : 'No active roles'}
                     </span>
                 </div>
-
                 <div className="detail-group">
                     <span className="detail-label">Account Status:</span>
                     <span className="detail-value">

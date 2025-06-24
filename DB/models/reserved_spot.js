@@ -1,6 +1,6 @@
 // models/reserved_spot.js (או היכן שמתאים במבנה שלך)
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config'); // או היכן שההגדרה שלך
+const sequelize = require('../config'); 
 
 const ReservedSpot = sequelize.define('reserved_spots', {
   id: {

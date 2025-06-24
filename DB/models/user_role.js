@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config');
 
-const UserRole = sequelize.define('UserRole', { // שיניתי את השם ל-UserRole (באות גדולה) כדי שיהיה עקבי עם מודלים אחרים
+const UserRole = sequelize.define('UserRole', { 
     user_id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -18,10 +18,9 @@ const UserRole = sequelize.define('UserRole', { // שיניתי את השם ל-U
             key: 'id'
         }
     },
-    // *** הוספת השדה is_active לטבלת ה-Join ***
     is_active: {
         type: DataTypes.BOOLEAN,
-        defaultValue: true, // ברירת מחדל: התפקיד פעיל עבור המשתמש
+        defaultValue: true, 
         allowNull: false
     }
 }, {
@@ -29,4 +28,4 @@ const UserRole = sequelize.define('UserRole', { // שיניתי את השם ל-U
     timestamps: false
 });
 
-module.exports = UserRole; // שינוי השם גם בייצוא
+module.exports = UserRole;

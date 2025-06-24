@@ -17,6 +17,4 @@ const password = sequelize.define('password', {
     timestamps: false
 });
 
-// Password.belongsTo(User, { foreignKey: 'user_id' });
-
 module.exports = password;

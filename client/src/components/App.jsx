@@ -1,12 +1,10 @@
 import React, { useState, useEffect, createContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-
 import Navbar from './Navbar';
 import MyLessons from './MyLessons';
 import AllLessons from './AllLessons';
 import Messages from './Messages';
 import Profile from './Profile';
-import Favorites from './Favorites';
 import RoleSelector from './RoleSelector';
 import InstructorsList from './InstructorsList';
 import TraineesList from './TraineesList';
@@ -22,31 +20,28 @@ const App = () => {
   const [currentRole, setCurrentRole] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // טען את המשתמש מה-localStorage
-useEffect(() => {
-  const user = JSON.parse(localStorage.getItem('currentUser'));
-  const savedRole = localStorage.getItem('selectedRole');
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('currentUser'));
+    const savedRole = localStorage.getItem('selectedRole');
 
-  if (user) {
-    setCurrentUser(user);
+    if (user) {
+      setCurrentUser(user);
 
-    const roles = user.roles || [];
+      const roles = user.roles || [];
 
-    if (savedRole && roles.includes(savedRole)) {
-      setCurrentRole(savedRole);
-    } else if (roles.length === 1) {
-      const singleRole = roles[0];
-      setCurrentRole(singleRole);
-      localStorage.setItem('selectedRole', singleRole);
-    } else {
-      setCurrentRole(null);
-      localStorage.removeItem('selectedRole');
+      if (savedRole && roles.includes(savedRole)) {
+        setCurrentRole(savedRole);
+      } else if (roles.length === 1) {
+        const singleRole = roles[0];
+        setCurrentRole(singleRole);
+        localStorage.setItem('selectedRole', singleRole);
+      } else {
+        setCurrentRole(null);
+        localStorage.removeItem('selectedRole');
+      }
     }
-  }
-}, []);
+  }, []);
 
-
-  // אפס שגיאות אוטומטית
   useEffect(() => {
     if (errorMessage) {
       const timer = setTimeout(() => setErrorMessage(''), 5000);
@@ -59,33 +54,27 @@ useEffect(() => {
       <Error.Provider value={{ errorMessage, setErrorMessage }}>
         <Router>
           <Routes>
+            <Route
+              path="/"
+              element={
+                (() => {
+                  const user = JSON.parse(localStorage.getItem('currentUser'));
+                  const selectedRole = localStorage.getItem('selectedRole');
 
-            {/* דף הבית */}
-<Route
-  path="/"
-  element={
-    (() => {
-      const user = JSON.parse(localStorage.getItem('currentUser'));
-      const selectedRole = localStorage.getItem('selectedRole');
-
-      if (!user) return <Navigate to="/login" replace />;
-      if (user.roles.length === 0) {
-        return (
-          <div style={{ padding: '2rem', textAlign: 'center' }}>
-            <h2>המזכירה טרם הגדירה את תפקידך</h2>
-            <p>אנא המתן עד שהמזכירה תעדכן את תפקידך במערכת.</p>
-          </div>
-        );
-      }
-      if (!selectedRole) return <RoleSelector />;
-      return <Navigate to="/home/*" replace />;
-    })()
-  }
-/>
-
-
-
-            {/* תצוגת דף הבית לפי תפקיד */}
+                  if (!user) return <Navigate to="/login" replace />;
+                  if (user.roles.length === 0) {
+                    return (
+                      <div style={{ padding: '2rem', textAlign: 'center' }}>
+                        <h2>The secretary has not assigned your role yet</h2>
+                        <p>Please wait until the secretary updates your role in the system.</p>
+                      </div>
+                    );
+                  }
+                  if (!selectedRole) return <RoleSelector />;
+                  return <Navigate to="/home" replace />;
+                })()
+              }
+            />
             <Route
               path="/home/*"
               element={
@@ -93,12 +82,11 @@ useEffect(() => {
                   <>
                     <Navbar username={currentUser.first_name} role={currentRole} />
                     <Routes>
+                      <Route index element={<Navigate to="all-lessons" replace />} />
                       <Route path="my-lessons" element={<MyLessons />} />
                       <Route path="all-lessons" element={<AllLessons />} />
                       <Route path="messages" element={<Messages />} />
                       <Route path="profile" element={<Profile />} />
-
-                      {currentRole === 'client' && <Route path="favorites" element={<Favorites />} />}
                       {currentRole === 'coach' && <Route path="training-program" element={<TrainingProgram />} />}
                       {currentRole === 'secretary' && (
                         <>
@@ -114,7 +102,6 @@ useEffect(() => {
                 )
               }
             />
-
             <Route path="/login" element={currentUser ? <Navigate to="/" replace /> : <Login />} />
             <Route path="/register" element={currentUser ? <Navigate to="/" replace /> : <Register />} />
             <Route path="/RoleSelector" element={<Navigate to="/" replace />} />

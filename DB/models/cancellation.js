@@ -4,7 +4,7 @@ const sequelize = require('../config');
 const cancellation = sequelize.define('cancellation', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     instructor_id: { 
-        type: DataTypes.INTEGER, // ✅ תואם את users.id
+        type: DataTypes.INTEGER,
         references: {
             model: 'users',
             key: 'id'

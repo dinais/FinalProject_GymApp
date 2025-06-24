@@ -28,7 +28,7 @@ const TraineesList = () => {
         country: 'Israel',
         roleName: 'client'
     });
-    const [searchQuery, setSearchQuery] = useState(''); // NEW: State for search query
+    const [searchQuery, setSearchQuery] = useState(''); 
 
     const fetchTrainees = async () => {
         if (currentRole !== 'secretary') {
@@ -97,7 +97,6 @@ const TraineesList = () => {
         e.preventDefault();
         setLoading(true);
         let result;
-
         const dataToSend = { ...formData };
         if (Array.isArray(dataToSend.roleName) && dataToSend.roleName.length > 0) {
             dataToSend.roleName = dataToSend.roleName[0];
@@ -107,16 +106,16 @@ const TraineesList = () => {
             return;
         }
 
-        if (currentTrainee) { // Edit
+        if (currentTrainee) { 
             result = await putRequest(`users/${currentTrainee.id}`, dataToSend);
-        } else { // Add (registration)
+        } else { 
             result = await postRequest('users/register', dataToSend);
         }
 
         if (result.succeeded) {
             setErrorMessage('');
             handleCloseModal();
-            fetchTrainees(); // Refresh list after add/edit
+            fetchTrainees();
         } else {
             setErrorMessage(result.error);
         }
@@ -130,25 +129,22 @@ const TraineesList = () => {
             const result = await deleteRequest(`users/${traineeId}?roleName=${roleToDelete}`);
             if (result.succeeded) {
                 setErrorMessage('');
-                fetchTrainees(); // Refresh list after delete
+                fetchTrainees(); 
             } else {
                 setErrorMessage(result.error);
             }
             setLoading(false);
         }
     };
-
-    // NEW: Filtered trainees logic
     const filteredTrainees = trainees.filter(trainee => {
         const query = searchQuery.toLowerCase();
         return (
             trainee.first_name.toLowerCase().includes(query) ||
             trainee.last_name.toLowerCase().includes(query) ||
             trainee.email.toLowerCase().includes(query) ||
-            trainee.id_number.includes(query) // ID number might not need toLowerCase
+            trainee.id_number.includes(query) 
         );
     });
-    // End of NEW
 
     return (
         <div className="list-container">
@@ -157,10 +153,10 @@ const TraineesList = () => {
                 <p className="subtitle">Manage trainees in the system</p>
             </div>
 
-            <div className="list-controls"> {/* NEW: Wrapper for search and add button */}
+            <div className="list-controls">
                 <input
                     type="text"
-                    placeholder="Search by name, email, or ID..." // NEW: Search input
+                    placeholder="Search by name, email, or ID..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="search-input"
@@ -174,17 +170,16 @@ const TraineesList = () => {
             {!loading && filteredTrainees.length === 0 && searchQuery === '' ? (
                 <p className="no-data-message">No trainees found in the system.</p>
             ) : !loading && filteredTrainees.length === 0 && searchQuery !== '' ? (
-                <p className="no-data-message">No trainees match your search.</p> // NEW: Message for no search results
+                <p className="no-data-message">No trainees match your search.</p>
             ) : (
                 <div className="user-cards-grid">
-                    {filteredTrainees.map(trainee => ( // IMPORTANT: Use filteredTrainees here
+                    {filteredTrainees.map(trainee => (
                         <UserCard
                             key={trainee.id}
                             user={trainee}
                             type="trainee"
                             onEdit={handleEditClick}
                             onDelete={handleDeleteClick}
-                            // No onActivate for trainees, as we're removing role, not deactivating user
                         />
                     ))}
                 </div>

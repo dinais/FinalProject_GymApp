@@ -28,8 +28,7 @@ const InstructorsList = () => {
         country: 'Israel',
         roleName: 'coach'
     });
-    const [searchQuery, setSearchQuery] = useState(''); // <--- NEW: State for search query
-
+    const [searchQuery, setSearchQuery] = useState(''); 
     const fetchInstructors = async () => {
         if (currentRole !== 'secretary' && currentRole !== 'admin') {
             setErrorMessage('Unauthorized access. Only secretaries and admins can view this page.');
@@ -97,7 +96,6 @@ const InstructorsList = () => {
         e.preventDefault();
         setLoading(true);
         let result;
-
         const dataToSend = { ...formData };
         if (Array.isArray(dataToSend.roleName) && dataToSend.roleName.length > 0) {
             dataToSend.roleName = dataToSend.roleName[0];
@@ -106,17 +104,16 @@ const InstructorsList = () => {
             setLoading(false);
             return;
         }
-
-        if (currentInstructor) { // Edit
+        if (currentInstructor) { 
             result = await putRequest(`users/${currentInstructor.id}`, dataToSend);
-        } else { // Add (registration)
+        } 
+        else { 
             result = await postRequest('users/register', dataToSend);
         }
-
         if (result.succeeded) {
             setErrorMessage('');
             handleCloseModal();
-            fetchInstructors(); // Refresh list after add/edit
+            fetchInstructors(); 
         } else {
             setErrorMessage(result.error);
         }
@@ -130,7 +127,7 @@ const InstructorsList = () => {
             const result = await deleteRequest(`users/${instructorId}?roleName=${roleToDelete}`);
             if (result.succeeded) {
                 setErrorMessage('');
-                fetchInstructors(); // Refresh list after delete
+                fetchInstructors(); 
             } else {
                 setErrorMessage(result.error);
             }
@@ -144,7 +141,7 @@ const InstructorsList = () => {
             const result = await putRequest(`users/${instructorId}/activate`);
             if (result.succeeded) {
                 setErrorMessage('');
-                fetchInstructors(); // Refresh list after activate
+                fetchInstructors();
             } else {
                 setErrorMessage(result.error);
             }
@@ -152,17 +149,15 @@ const InstructorsList = () => {
         }
     };
 
-    // <--- NEW: Filtered instructors logic
     const filteredInstructors = instructors.filter(instructor => {
         const query = searchQuery.toLowerCase();
         return (
             instructor.first_name.toLowerCase().includes(query) ||
             instructor.last_name.toLowerCase().includes(query) ||
             instructor.email.toLowerCase().includes(query) ||
-            instructor.id_number.includes(query) // ID number might not need toLowerCase
+            instructor.id_number.includes(query) 
         );
     });
-    // End of NEW
 
     return (
         <div className="list-container">
@@ -171,10 +166,10 @@ const InstructorsList = () => {
                 <p className="subtitle">Manage instructors in the system</p>
             </div>
 
-            <div className="list-controls"> {/* <--- NEW: Wrapper for search and add button */}
+            <div className="list-controls"> 
                 <input
                     type="text"
-                    placeholder="Search by name, email, or ID..." // <--- NEW: Search input
+                    placeholder="Search by name, email, or ID..." 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="search-input"
@@ -188,10 +183,10 @@ const InstructorsList = () => {
             {!loading && filteredInstructors.length === 0 && searchQuery === '' ? (
                 <p className="no-data-message">No instructors found in the system.</p>
             ) : !loading && filteredInstructors.length === 0 && searchQuery !== '' ? (
-                <p className="no-data-message">No instructors match your search.</p> // <--- NEW: Message for no search results
+                <p className="no-data-message">No instructors match your search.</p> 
             ) : (
                 <div className="user-cards-grid">
-                    {filteredInstructors.map(instructor => ( // <--- IMPORTANT: Use filteredInstructors here
+                    {filteredInstructors.map(instructor => ( 
                         <UserCard
                             key={instructor.id}
                             user={instructor}

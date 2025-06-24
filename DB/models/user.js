@@ -14,16 +14,15 @@ const user = sequelize.define('user', {
     },
     first_name: DataTypes.STRING,
     last_name: DataTypes.STRING,
-    // *** שדות כתובת חדשים במקום 'address' אחד ***
     street_name: {
         type: DataTypes.STRING,
-        allowNull: true // אפשר לאפשר NULL אם הכתובת לא חובה בהרשמה ראשונית
+        allowNull: true 
     },
     house_number: {
-        type: DataTypes.STRING, // נשאיר כ-STRING כדי לתמוך בתוספות כמו 'א', 'ב' (לדוגמה: 12א)
+        type: DataTypes.STRING, 
         allowNull: true
     },
-    apartment_number: { // אופציונלי - למספר דירה, כניסה, קומה
+    apartment_number: { 
         type: DataTypes.STRING,
         allowNull: true
     },
@@ -32,10 +31,10 @@ const user = sequelize.define('user', {
         allowNull: true
     },
     zip_code: {
-        type: DataTypes.STRING, // מיקוד יכול להכיל מקפים (לדוגמה: 12345-6789)
+        type: DataTypes.STRING, 
         allowNull: true
     },
-    country: { // מומלץ אם יש פוטנציאל ללקוחות מחו"ל, אחרת אפשר להגדיר כברירת מחדל 'ישראל'
+    country: { 
         type: DataTypes.STRING,
         defaultValue: 'ישראל',
         allowNull: true
@@ -43,9 +42,8 @@ const user = sequelize.define('user', {
     is_active: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: true // כברירת מחדל, משתמש חדש פעיל
+        defaultValue: true 
     },
-    // *** סוף שדות כתובת חדשים ***
     phone: DataTypes.STRING,
     email: DataTypes.STRING
 }, {

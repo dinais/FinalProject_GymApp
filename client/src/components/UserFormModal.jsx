@@ -1,6 +1,6 @@
 // src/components/UserFormModal.jsx
 import React from 'react';
-import '../css/modal.css'; // Use the same CSS file
+import '../css/modal.css';
 
 const UserFormModal = ({
     isOpen,
@@ -10,12 +10,10 @@ const UserFormModal = ({
     handleChange,
     errorMessage,
     loading,
-    currentUser, // This will be currentInstructor or currentTrainee
-    userType // 'coach' or 'client'
+    currentUser,
+    userType
 }) => {
     if (!isOpen) return null;
-
-    // Determine the modal title based on user type and whether it's edit or add
     const modalTitle = currentUser
         ? `Edit ${userType === 'coach' ? 'Instructor' : 'Trainee'} Details`
         : `Add New ${userType === 'coach' ? 'Instructor' : 'Trainee'}`;
@@ -23,11 +21,9 @@ const UserFormModal = ({
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                {/* Close (X) button */}
                 <button className="close-button" onClick={onClose}>
                     &times;
                 </button>
-
                 <h3>{modalTitle}</h3>
                 {errorMessage && <p className="error-message">{errorMessage}</p>}
 

@@ -2,14 +2,9 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserCircle, faEnvelope, faPhone, faIdCard, faMapMarkerAlt, faEdit, faTrashAlt, faCheckCircle, faBan } from '@fortawesome/free-solid-svg-icons';
-// נצטרך להתקין את Font Awesome אם עדיין לא מותקן:
-// npm install --save @fortawesome/fontawesome-svg-core @fortawesome/free-solid-svg-icons @fortawesome/react-fontawesome
-
 const UserCard = ({ user, type, onEdit, onDelete, onActivate }) => {
-    // Determine if the user is active, mainly for coaches
-    const isActive = user.is_active !== undefined ? user.is_active : true; // Trainees are always considered active for this list
+    const isActive = user.is_active !== undefined ? user.is_active : true; 
 
-    // Function to format address
     const formatAddress = (user) => {
         const parts = [];
         if (user.street_name) parts.push(user.street_name);
@@ -23,11 +18,9 @@ const UserCard = ({ user, type, onEdit, onDelete, onActivate }) => {
 
     return (
         <div className={`user-card ${!isActive ? 'inactive-user' : ''}`}>
-            {/* User Profile Picture Placeholder (could be dynamic later) */}
             <div className="user-avatar-placeholder">
                 <FontAwesomeIcon icon={faUserCircle} />
             </div>
-
             <div className="user-details">
                 <h3 className="user-name">{user.first_name} {user.last_name}</h3>
                 {type === 'coach' && (
@@ -35,7 +28,6 @@ const UserCard = ({ user, type, onEdit, onDelete, onActivate }) => {
                         {isActive ? 'Active' : 'Inactive'}
                     </div>
                 )}
-                
                 <div className="user-info-grid">
                     <p className="user-info-item"><FontAwesomeIcon icon={faIdCard} /> ID: {user.id_number}</p>
                     <p className="user-info-item"><FontAwesomeIcon icon={faEnvelope} /> {user.email}</p>
@@ -43,7 +35,6 @@ const UserCard = ({ user, type, onEdit, onDelete, onActivate }) => {
                     <p className="user-info-item user-address"><FontAwesomeIcon icon={faMapMarkerAlt} /> {formatAddress(user)}</p>
                 </div>
             </div>
-
             <div className="user-actions">
                 <button className="action-btn edit-btn" onClick={() => onEdit(user)}>
                     <FontAwesomeIcon icon={faEdit} /> Edit

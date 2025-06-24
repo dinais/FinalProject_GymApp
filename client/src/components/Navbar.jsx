@@ -1,8 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { CurrentUser } from './App'; // Assuming App is in the same directory, adjust path if needed
-import '../css/navbar.css'; // Make sure this CSS is also updated for LTR and English texts
-
+import { CurrentUser } from './App';
+import '../css/navbar.css';
 const Navbar = ({ username, role }) => {
     const { setCurrentUser } = useContext(CurrentUser);
     const navigate = useNavigate();
@@ -21,12 +20,9 @@ const Navbar = ({ username, role }) => {
         setCurrentUser(null);
         navigate('/login');
     };
-
     const toggleMobileMenu = () => {
         setIsMobileMenuOpen(!isMobileMenuOpen);
     };
-
-    // Helper function to check if a link is active
     const isActiveLink = (path) => {
         return location.pathname.startsWith(path);
     };
@@ -34,14 +30,10 @@ const Navbar = ({ username, role }) => {
     return (
         <>
             <nav className="navbar">
-                {/* Left Area - Site Name / Logo (now on the left) */}
                 <Link to="/" className="navbar-brand">
-                    GymApp {/* Brand Name - can be changed */}
+                    GymApp
                 </Link>
-
-                {/* Desktop Links (hidden on mobile) */}
                 <div className="navbar-links">
-                    {/* Regular text links here - these are shown on desktop */}
                     {role === 'client' && (
                         <>
                             <Link to="/home/my-lessons" className={isActiveLink("/home/my-lessons") ? "active" : ""}>My Lessons</Link>
@@ -66,34 +58,26 @@ const Navbar = ({ username, role }) => {
                     )}
                 </div>
 
-                {/* Right Area - Icons + Username + Logout */}
                 <div className="navbar-right">
-                    {/* Profile Icon + Username */}
                     <Link to="/home/profile" className="navbar-profile-section">
-                        <i className="fas fa-user-circle navbar-profile-icon"></i> {/* Profile Icon */}
+                        <i className="fas fa-user-circle navbar-profile-icon"></i> 
                         <span className="navbar-welcome">Hello, <span>{username}</span></span>
                     </Link>
 
-                    {/* Messages Icon */}
                     <Link to="/home/messages">
-                        <i className="fas fa-envelope navbar-messages-icon"></i> {/* Messages Icon */}
+                        <i className="fas fa-envelope navbar-messages-icon"></i> 
                     </Link>
-
-                    {/* Logout Button */}
                     <button className="logout-btn" onClick={handleLogout}>
                         Logout
                     </button>
                 </div>
 
-                {/* Hamburger Menu for Mobile (displayed only on mobile) */}
                 <div className="hamburger-menu" onClick={toggleMobileMenu}>
                     {isMobileMenuOpen ? '✕' : '☰'}
                 </div>
             </nav>
 
-            {/* Mobile Menu slides down below the Navbar */}
             <div className={`mobile-nav-menu ${isMobileMenuOpen ? 'open' : ''}`}>
-                {/* Icons and text inside mobile menu */}
                 <Link to="/home/profile" className="nav-item-mobile" onClick={toggleMobileMenu}>
                     <i className="fas fa-user-circle icon"></i> Personal Area
                 </Link>
@@ -123,7 +107,6 @@ const Navbar = ({ username, role }) => {
                         <Link to="/home/all-lessons" className="nav-item-mobile" onClick={toggleMobileMenu}>Class Schedule</Link>
                     </>
                 )}
-                {/* Logout button also in mobile menu */}
                 <button className="logout-btn" onClick={handleLogout} style={{ marginTop: '1rem' }}>
                     Logout
                 </button>

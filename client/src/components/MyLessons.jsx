@@ -1,26 +1,25 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { getRequest, postRequest, deleteRequest } from '../Requests'; 
-import { CurrentUser, Error } from './App'; 
-import LessonCard from './LessonCard'; 
-import '../css/gym-lessons.css'; 
+import { getRequest, postRequest, deleteRequest } from '../Requests';
+import { CurrentUser, Error } from './App';
+import LessonCard from './LessonCard';
+import '../css/gym-lessons.css';
 
 function MyLessons() {
-    const { currentUser, currentRole } = useContext(CurrentUser); 
-    const { setErrorMessage, errorMessage } = useContext(Error); 
-
+    const { currentUser, currentRole } = useContext(CurrentUser);
+    const { setErrorMessage, errorMessage } = useContext(Error);
     const [myLessons, setMyLessons] = useState([]);
     const [weekOffset, setWeekOffset] = useState(0);
-    const [showFavoritesOnly, setShowFavoritesOnly] = useState(false); 
+    const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
     const getStartOfWeek = (offset = 0) => {
         const now = new Date();
         const localToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const localSunday = new Date(localToday.setDate(localToday.getDate() - localToday.getDay()));
-        
+
         localSunday.setDate(localSunday.getDate() + offset * 7);
-        localSunday.setHours(0, 0, 0, 0); 
-        
-        return localSunday.toISOString(); 
+        localSunday.setHours(0, 0, 0, 0);
+
+        return localSunday.toISOString();
     };
 
     const fetchMyLessons = async () => {
@@ -28,23 +27,16 @@ function MyLessons() {
             setErrorMessage('User not authenticated.');
             return;
         }
-
         try {
             const weekStart = getStartOfWeek(weekOffset);
             let res;
-            console.log(`MyLessons: fetchMyLessons called. showFavoritesOnly is: ${showFavoritesOnly}`); // ADD THIS LOG
-            
             if (showFavoritesOnly) {
-                console.log(`MyLessons: Fetching FAVORITE lessons for user ${currentUser.id} for week starting ${weekStart}`); // ADD THIS LOG
                 res = await getRequest(`lessons/user/favorites/week?weekStart=${weekStart}`);
             } else {
-                console.log(`MyLessons: Fetching REGISTERED/WAITLISTED lessons for user ${currentUser.id} for week starting ${weekStart}`); // ADD THIS LOG
                 res = await getRequest(`lessons/user/${currentUser.id}/registered?weekStart=${weekStart}`);
             }
-            
             if (res.succeeded) {
                 setMyLessons(res.data || []);
-                console.log("MyLessons: Fetched data:", res.data); // ADD THIS LOG
                 setErrorMessage('');
             } else {
                 setMyLessons([]);
@@ -57,11 +49,11 @@ function MyLessons() {
     };
 
     const handleCancel = async (lessonId) => {
-        setErrorMessage(''); 
+        setErrorMessage('');
         try {
             const res = await postRequest(`lessons/${lessonId}/cancel`, { userId: currentUser.id });
             if (res.succeeded) {
-                fetchMyLessons(); 
+                fetchMyLessons();
             } else {
                 setErrorMessage(res.error || 'Failed to cancel lesson.');
             }
@@ -72,17 +64,12 @@ function MyLessons() {
     };
 
     const handleToggleFavorite = async (lessonId, shouldAdd) => {
-        setErrorMessage(''); 
+        setErrorMessage('');
         try {
             const endpoint = `lessons/${lessonId}/favorite`;
             const res = shouldAdd ? await postRequest(endpoint, {}) : await deleteRequest(endpoint);
             if (res.succeeded) {
-                // After toggling favorite, re-fetch all lessons (in AllLessons)
-                // or re-fetch MyLessons if the user is currently on MyLessons page.
-                // If on AllLessons, it needs to re-fetch AllLessons to update the heart icon
-                // If on MyLessons AND showing favorites, it needs to re-fetch MyLessons.
-                // For simplicity, always re-fetch my lessons here.
-                fetchMyLessons(); 
+                fetchMyLessons();
             } else {
                 setErrorMessage(res.error || 'Failed to update favorite status.');
             }
@@ -93,22 +80,22 @@ function MyLessons() {
     };
 
     useEffect(() => {
-        if (currentRole === 'client') { 
+        if (currentRole === 'client') {
             fetchMyLessons();
         } else {
-            setMyLessons([]); 
+            setMyLessons([]);
             setErrorMessage('This page is only for clients.');
         }
-    }, [weekOffset, currentUser?.id, currentRole, showFavoritesOnly]); 
+    }, [weekOffset, currentUser?.id, currentRole, showFavoritesOnly]);
 
     const getCurrentWeekText = () => {
         const today = new Date();
         const startOfCurrentWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay());
-        startOfCurrentWeek.setHours(0, 0, 0, 0); 
+        startOfCurrentWeek.setHours(0, 0, 0, 0);
 
         const targetWeekStart = new Date(startOfCurrentWeek);
         targetWeekStart.setDate(startOfCurrentWeek.getDate() + weekOffset * 7);
-        
+
         if (weekOffset === 0) {
             return 'This Week';
         } else if (weekOffset === 1) {
@@ -123,10 +110,10 @@ function MyLessons() {
     };
 
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
+    
     const lessonsByDay = daysOfWeek.reduce((acc, day) => {
         acc[day] = myLessons.filter(l => l.day === day)
-                            .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at)); 
+            .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
         return acc;
     }, {});
 
@@ -138,8 +125,8 @@ function MyLessons() {
 
             <div className="container">
                 <div className="header">
-                    <h1 className="main-title">💪 My Lessons</h1> 
-                    <p className="subtitle">Your registered classes for the upcoming week</p> 
+                    <h1 className="main-title">💪 My Lessons</h1>
+                    <p className="subtitle">Your registered classes for the upcoming week</p>
                 </div>
 
                 <div className="week-nav">
@@ -160,18 +147,18 @@ function MyLessons() {
                 </div>
 
                 {currentRole === 'client' && (
-                    <div className="control-row-favorites"> 
-                        <button 
-                            className={`filter-favorites-button ${showFavoritesOnly ? 'active' : ''}`} 
+                    <div className="control-row-favorites">
+                        <button
+                            className={`filter-favorites-button ${showFavoritesOnly ? 'active' : ''}`}
                             onClick={() => setShowFavoritesOnly(prev => !prev)}
                         >
-                            <svg 
-                                className="favorite-icon" 
-                                viewBox="0 0 24 24" 
-                                fill={showFavoritesOnly ? 'rgb(255, 77, 79)' : 'none'} 
-                                stroke={showFavoritesOnly ? 'rgb(255, 77, 79)' : 'currentColor'} 
-                                strokeWidth="2" 
-                                strokeLinecap="round" 
+                            <svg
+                                className="favorite-icon"
+                                viewBox="0 0 24 24"
+                                fill={showFavoritesOnly ? 'rgb(255, 77, 79)' : 'none'}
+                                stroke={showFavoritesOnly ? 'rgb(255, 77, 79)' : 'currentColor'}
+                                strokeWidth="2"
+                                strokeLinecap="round"
                                 strokeLinejoin="round"
                             >
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -188,13 +175,13 @@ function MyLessons() {
                         <p>This page is only accessible to clients.</p>
                     </div>
                 )}
-                
+
                 {currentRole === 'client' && (
                     <div className="days-grid">
                         {daysOfWeek.map((day, index) => (
                             <div key={day} className="day-column">
                                 <div className="day-header">
-                                    <h3 className="day-title">{day}</h3> 
+                                    <h3 className="day-title">{day}</h3>
                                 </div>
 
                                 <div className="lessons-container">
@@ -205,15 +192,13 @@ function MyLessons() {
                                                     key={lesson.id}
                                                     lesson={lesson}
                                                     onCancel={handleCancel}
-                                                    // These props are less critical for 'My Lessons' if showing favorites,
-                                                    // but good to keep for consistency if you also display registered/waitlisted.
-                                                    isJoined={lesson.status === 'joined'} 
-                                                    isOnWaitlist={lesson.status === 'waitlist'} 
-                                                    registeredCount={lesson.current_participants || 0} 
+                                                    isJoined={lesson.status === 'joined'}
+                                                    isOnWaitlist={lesson.status === 'waitlist'}
+                                                    numOfRegistered={lesson.current_participants || 0}
                                                     maxParticipants={lesson.max_participants}
                                                     currentRole={currentRole}
-                                                    isFavorite={lesson.isFavorite || false} 
-                                                    onToggleFavorite={handleToggleFavorite} 
+                                                    isFavorite={lesson.isFavorite || false}
+                                                    onToggleFavorite={handleToggleFavorite}
                                                 />
                                             ))}
                                         </div>
