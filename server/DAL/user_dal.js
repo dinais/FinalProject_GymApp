@@ -1,6 +1,29 @@
 // DAL/user_dal.js
 const { user, role: RoleModel, password: PasswordModel, user_role } = require('../../DB/models');
 const { Op } = require('sequelize');
+// DAL/user_dal.js
+module.exports.fetchUsersByRole = async (roleName) => {
+  try {
+    console.log("Fetching users with role (DAL):", roleName);
+
+    const users = await user.findAll({
+      include: [{
+        model: RoleModel,
+        as: 'roles',
+        where: { role: roleName },
+        through: { where: { is_active: true } },
+        required: true
+      }],
+      attributes: ['id', 'first_name', 'last_name', 'email']
+    });
+
+    console.log(`Found ${users.length} users with role ${roleName}`);
+    return users;
+  } catch (error) {
+    console.error("Error in fetchUsersByRoleSimple:", error);
+    throw error; // מעביר את השגיאה הלאה כדי שה-controller ידע לטפל בה
+  }
+};
 
 module.exports.findUserByIdNumberOrEmail = async (idNumber, email) => {
     return await user.findOne({
@@ -158,4 +181,13 @@ module.exports.findAllUserRoles = async (userId) => {
 module.exports.updateUserGlobalStatus = async (userId, isActive) => {
     const [updatedCount] = await user.update({ is_active: isActive }, { where: { id: userId } });
     return updatedCount > 0;
+};
+
+module.exports.getUsersByEmails = async (emailList) => {
+  // החיפוש ב-SQL לפי רשימת האימיילים
+  return await user.findAll({
+    where: {
+      email: emailList
+    }
+  });
 };

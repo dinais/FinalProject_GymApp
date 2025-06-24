@@ -19,7 +19,9 @@ const {
     getAllRoles, // זו פונקציה מה-DAL
     upsertUserPassword,
     findAllUserRoles,
-    updateUserGlobalStatus
+    updateUserGlobalStatus,
+    fetchUsersByRole,
+    getUsersByEmails
 } = require('../DAL/user_dal');
 
 
@@ -544,6 +546,22 @@ const handleInitialLoginOrPasswordSetup = async ({ email, password: enteredPassw
     }
 };
 
+const fetchUsersByRoleSimple = async (role) => {
+  try {
+    return await fetchUsersByRole(role);
+  } catch (error) {
+    console.error('Error in fetchUsersByRoleSimple:', error);
+    throw error;
+  }
+};
+const fetchUsersByEmails = async (emailList) => {
+  if (!emailList || emailList.length === 0) return [];
+  
+  // אם רוצים להוסיף לוגיקה נוספת לפני או אחרי השאילתה - כאן המקום
+
+  const users = await getUsersByEmails(emailList);
+  return users;
+};
 module.exports = {
     registerUser,
     login,
@@ -555,5 +573,8 @@ module.exports = {
     getUsersByRole,
     getAllRoles: getAllRolesLogic, 
     refreshAccessToken,
-    handleInitialLoginOrPasswordSetup
+    handleInitialLoginOrPasswordSetup,
+    fetchUsersByRoleSimple ,
+    // פונקציה זו מיועדת לשימוש פנימי בלבד, לא ל-API
+    fetchUsersByEmails
 };

@@ -9,8 +9,8 @@ const {
     lesson_registrations,
     waiting_list,
     password,
-    system_message
-} = require('./DB/models'); // Ensure path to DB/models is correct
+    message
+} = require('./DB/models'); // ודאי שהנתיב ל-DB/models נכון
 
 async function seed() {
     try {
@@ -304,13 +304,41 @@ async function seed() {
         }
         console.log('✅ Passwords hashed and stored successfully.');
 
-        // 10. System messages
-        await system_message.bulkCreate([
-            { user_id: client1.id, role: 'client', message: 'Welcome to the gym!' },
-            { user_id: coach1.id, role: 'coach', message: 'Lesson successfully scheduled' },
-            { user_id: secretary.id, role: 'secretary', message: 'Daily report ready' }
-        ]);
-        console.log('✅ System messages created successfully.');
+        // 10. הודעות מערכת
+  const now = new Date();
+
+await message.bulkCreate([
+  {
+    sender_id: coach1.id,
+    recipient_id: client1.id,
+    sender_role: 'coach',
+    recipient_role: 'client',
+    title: 'Lesson Reminder',
+    message: 'Your lesson starts at 18:00. Don’t forget to bring a towel.',
+    created_at: now
+  },
+  {
+    sender_id: secretary.id,
+    recipient_id: coach2.id,
+    sender_role: 'secretary',
+    recipient_role: 'coach',
+    title: 'Schedule Update',
+    message: 'Your Friday lesson has been moved to 10:00.',
+    created_at: now
+  },
+  {
+    sender_id: secretary.id,
+    recipient_id: coach1.id,
+    sender_role: 'secretary',
+    recipient_role: 'coach',
+    title: 'Schedule Update',
+    message: 'Your Friday lesson has been moved to 10:00.',
+    created_at: now
+  }
+]);
+
+console.log('✅ Messages with titles inserted successfully.');
+
 
         console.log('✨ Seed data insertion complete! Database is ready. ✨');
 

@@ -36,7 +36,7 @@ const Navbar = ({ username, role }) => {
             <nav className="navbar">
                 {/* Left Area - Site Name / Logo (now on the left) */}
                 <Link to="/" className="navbar-brand">
-                    FitPulse {/* Brand Name - can be changed */}
+                    GymApp {/* Brand Name - can be changed */}
                 </Link>
 
                 {/* Desktop Links (hidden on mobile) */}

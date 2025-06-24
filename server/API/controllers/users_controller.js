@@ -338,3 +338,31 @@ exports.initialLoginOrPasswordSetup = async (req, res) => { // 👈 שינוי �
         res.status(500).json({ message: err.message || 'שגיאה פנימית בשרת.' });
     }
 };
+exports.getUsersByRole = async (req, res) => {
+  try {
+    const role = req.params.role;
+    console.log(`Fetching users with role (controller): ${role}`);
+    const users = await user_manager.fetchUsersByRoleSimple(role);
+    res.status(200).json({ succeeded: true, data: users });
+  } catch (error) {
+    console.error('Error fetching users by role (controller):', error);
+    res.status(500).json({ succeeded: false, error: 'שגיאה באחזור המשתמשים לפי תפקיד', details: error.message });
+  }
+};
+exports.getUsersByEmails = async (req, res) => {
+  try {
+    const { emails } = req.body;
+    console.log(`Fetching users by emails (controller): ${JSON.stringify(emails)}`);
+    
+    if (!emails || !Array.isArray(emails) || emails.length === 0) {
+      return res.status(400).json({ succeeded: false, error: 'Missing or invalid emails array' });
+    }
+
+    const users = await user_manager.fetchUsersByEmails(emails);
+    return res.json({ succeeded: true, data: users });
+  } catch (err) {
+    console.error('Error in getUsersByEmails:', err);
+    return res.status(500).json({ succeeded: false, error: 'Internal server error' });
+  }
+};
+
