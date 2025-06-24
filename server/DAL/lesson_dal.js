@@ -3,7 +3,6 @@ const { Op } = require('sequelize');
 const { lesson, lesson_registrations, waiting_list, reserved_spot, user, favorite } = require('../../DB/models'); 
 const { sequelize } = require('../../DB/models'); 
 
-// Helper to check if a lesson is a favorite for a given user
 const isLessonFavoriteForUser = async (lessonId, userId) => {
     if (!userId) return false; 
     const fav = await favorite.findOne({ where: { lesson_id: lessonId, user_id: userId } });
@@ -294,7 +293,7 @@ const deleteExpiredReservedSpotsForLesson = async (lessonId) => {
 module.exports = {
     findLessonById,
     findLessonsByDateRange,
-    findUserRegisteredLessons,
+    findUserRegisteredLessons ,
     findUserWaitlistedLessons,
     countLessonRegistrations,
     findLessonRegistration,

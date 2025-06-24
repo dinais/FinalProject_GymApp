@@ -308,6 +308,7 @@ function AllLessons() {
                           onDelete={handleDeleteLesson}
                           isFavorite={lesson.isFavorite || false}
                           onToggleFavorite={handleToggleFavorite}
+                          currentUser={currentUser}
                         />
                       ))}
                   </div>

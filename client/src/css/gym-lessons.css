@@ -645,6 +645,41 @@ p, span, div, button, input, textarea {
     color: #333;
     white-space: nowrap; /* Prevent button text wrapping */
 }
+/* Existing styles */
+
+/* New style for coach's own lessons */
+.lesson-card.my-coach-lesson {
+    border: 3px solid #4CAF50; /* A green border */
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.5); /* A subtle green shadow */
+    position: relative;
+    overflow: hidden; /* To ensure pseudo-elements are clipped */
+    transform: scale(1.02); /* Slightly larger */
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border 0.2s ease-in-out;
+}
+
+.lesson-card.my-coach-lesson:hover {
+    transform: scale(1.05); /* Even larger on hover */
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.7);
+}
+
+/* Optional: Add a subtle badge/ribbon */
+.lesson-card.my-coach-lesson::before {
+    content: "My Class"; /* Text for the badge */
+    position: absolute;
+    top: 15px; /* Adjust vertical position */
+    right: -25px; /* Adjust horizontal position */
+    background-color: #4CAF50; /* Green background for the badge */
+    color: white;
+    padding: 2px 25px; /* Padding for the badge */
+    font-size: 0.75em;
+    font-weight: bold;
+    text-transform: uppercase;
+    transform: rotate(45deg); /* Rotate the badge */
+    transform-origin: 100% 0; /* Rotate around the top-right corner */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 10; /* Ensure it's on top of other content */
+}
+
 
 .add-button {
     background: linear-gradient(145deg, #4CAF50, #45a049); 

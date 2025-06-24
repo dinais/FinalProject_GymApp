@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import getLessonTypeClass from '../LessonTypes';
-const LessonCard = ({ lesson, onJoin, onCancel, isJoined, isOnWaitlist, numOfRegistered, maxParticipants, currentRole, onEdit, onDelete, isFavorite, onToggleFavorite }) => {
+const LessonCard = ({ lesson, onJoin, onCancel, isJoined, isOnWaitlist, numOfRegistered, maxParticipants, currentRole, onEdit, onDelete, isFavorite, onToggleFavorite,currentUser }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const isFull = numOfRegistered >= maxParticipants;
     const capacityPercentage = Math.min((numOfRegistered / maxParticipants) * 100, 100);
     
+        const isMyLessonCoach = currentRole === 'coach' && currentUser && lesson.instructor_id === currentUser.id;
     const getRegistrationStatus = (lessonScheduledAtStr) => {
         const now = new Date();
         const scheduledDate = new Date(lessonScheduledAtStr); 
@@ -105,7 +106,7 @@ const LessonCard = ({ lesson, onJoin, onCancel, isJoined, isOnWaitlist, numOfReg
 
     return (
         <div
-            className={`lesson-card ${isJoined ? 'joined' : ''} ${isOnWaitlist ? 'waitlist' : ''} ${isExpanded ? 'expanded' : ''}`}
+            className={`lesson-card ${isJoined ? 'joined' : ''} ${isOnWaitlist ? 'waitlist' : ''} ${isExpanded ? 'expanded' : ''}${isMyLessonCoach ? 'my-coach-lesson' : ''} `}
             onClick={() => setIsExpanded(!isExpanded)} 
         >
             <div className={`lesson-type-header ${getLessonTypeClass(lesson.lesson_type)}`}>

@@ -14,12 +14,14 @@ function MyLessons() {
     const getStartOfWeek = (offset = 0) => {
         const now = new Date();
         const localToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        // Calculate Sunday of the current week (local time)
         const localSunday = new Date(localToday.setDate(localToday.getDate() - localToday.getDay()));
 
+        // Apply week offset
         localSunday.setDate(localSunday.getDate() + offset * 7);
-        localSunday.setHours(0, 0, 0, 0);
+        localSunday.setHours(0, 0, 0, 0); // Set to start of the day
 
-        return localSunday.toISOString();
+        return localSunday.toISOString(); // Return as ISO string (UTC)
     };
 
     const fetchMyLessons = async () => {
@@ -27,23 +29,44 @@ function MyLessons() {
             setErrorMessage('User not authenticated.');
             return;
         }
+
         try {
-            const weekStart = getStartOfWeek(weekOffset);
+            const weekStartISO = getStartOfWeek(weekOffset); 
             let res;
+            console.log(`MyLessons: fetchMyLessons called. showFavoritesOnly is: ${showFavoritesOnly}. weekStartISO: ${weekStartISO}`); // Log 1
+
             if (showFavoritesOnly) {
-                res = await getRequest(`lessons/user/favorites/week?weekStart=${weekStart}`);
+                
+                console.log(`MyLessons: Fetching FAVORITE lessons for user ${currentUser.id} for week starting ${weekStartISO}`); // Log 2
+                res = await getRequest(`lessons/user/favorites/week?weekStart=${weekStartISO}`);
             } else {
-                res = await getRequest(`lessons/user/${currentUser.id}/registered?weekStart=${weekStart}`);
+                console.log(`MyLessons: Fetching REGISTERED/WAITLISTED lessons for user ${currentUser.id} for week starting ${weekStartISO}`); // Log 3
+                res = await getRequest(`lessons/user/${currentUser.id}/registered?weekStart=${weekStartISO}`);
             }
+
             if (res.succeeded) {
-                setMyLessons(res.data || []);
+                const fetchedLessons = res.data || [];
+                
+                const processedLessons = fetchedLessons.map(lesson => ({
+                    ...lesson,
+                    // If fetching favorites, ensure isFavorite is true.
+                    // If fetching registered, it might already be set by backend DAL.
+                    isFavorite: lesson.isFavorite || (showFavoritesOnly ? true : false), 
+                    current_participants: lesson.current_participants || 0, // Ensure a number, default to 0
+                    max_participants: lesson.max_participants || 999 // Default to a high number if missing
+                }));
+
+                setMyLessons(processedLessons);
+                console.log("MyLessons: Fetched raw data from API:", res.data); // Log 4 (raw data from backend)
+                console.log("MyLessons: Processed lessons for display (state):", processedLessons); // Log 5 (data after processing for state)
                 setErrorMessage('');
             } else {
                 setMyLessons([]);
+                console.error("MyLessons: API call failed:", res.error); // Log API errors
                 setErrorMessage(res.error || 'Failed to fetch lessons.');
             }
         } catch (err) {
-            console.error('Failed to fetch my lessons', err);
+            console.error('MyLessons: Failed to fetch my lessons due to network or unexpected error:', err);
             setErrorMessage('Failed to load your lessons. Please try again later.');
         }
     };
@@ -69,7 +92,7 @@ function MyLessons() {
             const endpoint = `lessons/${lessonId}/favorite`;
             const res = shouldAdd ? await postRequest(endpoint, {}) : await deleteRequest(endpoint);
             if (res.succeeded) {
-                fetchMyLessons();
+                fetchMyLessons(); // Re-fetch my lessons to update the view
             } else {
                 setErrorMessage(res.error || 'Failed to update favorite status.');
             }
@@ -113,7 +136,7 @@ function MyLessons() {
     
     const lessonsByDay = daysOfWeek.reduce((acc, day) => {
         acc[day] = myLessons.filter(l => l.day === day)
-            .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
+                            .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
         return acc;
     }, {});
 
@@ -210,7 +233,7 @@ function MyLessons() {
                                                 <line x1="8" y1="2" x2="8" y2="6" />
                                                 <line x1="3" y1="10" x2="21" y2="10" />
                                             </svg>
-                                            <p>No classes registered for this week.</p>
+                                            <p>{showFavoritesOnly ? 'No favorite classes for this week.' : 'No classes registered for this week.'}</p>
                                         </div>
                                     )}
                                 </div>

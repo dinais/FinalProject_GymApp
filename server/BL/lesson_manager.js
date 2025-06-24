@@ -331,12 +331,15 @@ const getFavoriteLessonsForUser = async (userId, weekStart) => {
   const end = new Date(start);
   end.setDate(start.getDate() + 7);
 
+  console.log(`Manager: Received weekStart param: ${weekStart}`);
+  console.log(`Manager: Parsed start date: ${start}`);
+  console.log(`Manager: Calculated end date: ${end}`);
+
   if (isNaN(start.getTime()) || isNaN(end.getTime())) {
     throw new Error("Invalid weekly start date for favorites.");
   }
-  console.log(`Manager: Fetching favorite lessons for user ${userId} for week starting ${weekStart}`);
+
   const favoriteLessons = await findUserFavoriteLessons(userId, start, end);
-  // The DAL function already adds isFavorite = true and converts to JSON
   return favoriteLessons;
 };
 
