@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config');
+const sequelize = require('../../config/db');
 
-const UserRole = sequelize.define('UserRole', { 
+const UserRole = sequelize.define('UserRole', {
     user_id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -20,7 +20,7 @@ const UserRole = sequelize.define('UserRole', {
     },
     is_active: {
         type: DataTypes.BOOLEAN,
-        defaultValue: true, 
+        defaultValue: true,
         allowNull: false
     }
 }, {

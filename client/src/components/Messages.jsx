@@ -3,7 +3,7 @@ import {
   Mail, Send, Users, User, Calendar, ChevronDown, ChevronUp, Plus, Inbox
 } from 'lucide-react';
 import '../css/messages.css';
-import { getRequest, postRequest } from '../Requests';
+import { getRequest, postRequest,putRequest } from '../Requests';
 import { CurrentUser } from './App';
 
 function formatDateTime(dateString) {
@@ -28,6 +28,8 @@ function Messages() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  
+  const unreadCount = messages.filter(msg => !msg.read).length;
 
   useEffect(() => {
     if (view === 'inbox' && currentUser) {
@@ -116,9 +118,31 @@ function Messages() {
     }
   }
 
-  const toggleMessageExpansion = (messageId) => {
-    setExpandedMessage(expandedMessage === messageId ? null : messageId);
+  const toggleMessageExpansion = async (messageId) => {
+    if (expandedMessage !== messageId) {
+      const message = messages.find(m => m.id === messageId);
+      if (message && !message.read) {
+        try {
+          const res = await putRequest(`messages/${messageId}/mark-read`, {});
+
+          if (res.succeeded) {
+            setMessages(prevMessages =>
+              prevMessages.map(m =>
+                m.id === messageId ? { ...m, read: true } : m
+              )
+            );
+          }
+        } catch (error) {
+          console.error('Failed to mark message as read', error);
+        }
+      }
+      setExpandedMessage(messageId);
+    } else {
+      setExpandedMessage(null);
+    }
   };
+
+
 
   return (
     <div className="messages-container">
@@ -138,7 +162,7 @@ function Messages() {
           <button className={`nav-tab ${view === 'inbox' ? 'active' : ''}`} onClick={() => setView('inbox')}>
             <Inbox className="tab-icon" />
             Inbox
-            {messages.length > 0 && <span className="message-count">{messages.length}</span>}
+            {unreadCount > 0 && <span className="message-count">{unreadCount}</span>}
           </button>
           <button className={`nav-tab ${view === 'send' ? 'active' : ''}`} onClick={() => setView('send')}>
             <Send className="tab-icon" />

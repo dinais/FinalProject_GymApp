@@ -10,7 +10,7 @@ const {
     waiting_list,
     password,
     message
-} = require('./DB/models'); // ודאי שהנתיב ל-DB/models נכון
+} = require('../DB/models'); // ודאי שהנתיב ל-DB/models נכון
 
 async function seed() {
     try {

@@ -38,7 +38,6 @@ const Navbar = ({ username, role }) => {
                         <>
                             <Link to="/home/my-lessons" className={isActiveLink("/home/my-lessons") ? "active" : ""}>My Lessons</Link>
                             <Link to="/home/all-lessons" className={isActiveLink("/home/all-lessons") ? "active" : ""}>Class Schedule</Link>
-                            <Link to="/home/favorites" className={isActiveLink("/home/favorites") ? "active" : ""}>Favorites</Link>
                         </>
                     )}
 

@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config');
+const sequelize = require('../../config/db');
 
 const message = sequelize.define('message', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
@@ -27,17 +27,26 @@ const message = sequelize.define('message', {
   sender_role: {
     type: DataTypes.STRING
   },
- title: {
+
+  title: {
     type: DataTypes.STRING
   },
+
   message: {
     type: DataTypes.STRING
   },
-   created_at: {
+
+  read: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+
+  created_at: {
     type: DataTypes.DATE,
     allowNull: false,
     defaultValue: DataTypes.NOW
   }
+
 }, {
   tableName: 'messages',
   timestamps: false

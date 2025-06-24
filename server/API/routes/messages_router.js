@@ -9,5 +9,6 @@ router.use(protect);
 // במקום לשלוף את ההודעות של המשתמש המחובר מתוך ה-token, מקבלים userId בפרמטר URL
 router.get('/:userId', messagesController.getMessagesByUserId);
 router.post('/', messagesController.sendMessage);
+router.put('/:id/mark-read', messagesController.markMessageAsRead);
 
 module.exports = router;
