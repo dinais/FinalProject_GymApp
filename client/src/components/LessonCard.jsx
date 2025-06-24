@@ -1,13 +1,9 @@
 import React, { useState } from 'react';
 
-// The icons used are from Feather Icons (https://feathericons.com/).
-// You can include them as SVG directly or use a library.
-// For simplicity, I'm keeping them as inline SVGs.
-
-const LessonCard = ({ lesson, onJoin, onCancel, isJoined, onWaitlist, registeredCount, maxParticipants }) => {
+const LessonCard = ({ lesson, onJoin, onCancel, isJoined, isOnWaitlist, registeredCount, maxParticipants, currentRole, onEdit, onDelete }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
-    // Helper to get lesson type class for coloring
+    // Helper function to get CSS class for lesson type
     const getLessonTypeClass = (type) => {
         const typeMap = {
             'CrossFit': 'lesson-type-crossfit',
@@ -17,34 +13,62 @@ const LessonCard = ({ lesson, onJoin, onCancel, isJoined, onWaitlist, registered
             'Boxing': 'lesson-type-boxing',
             'Spinning': 'lesson-type-spinning',
             'Zumba': 'lesson-type-zumba',
-            'PowerLifting': 'lesson-type-powerlifting'
+            'PowerLifting': 'lesson-type-powerlifting',
+            'Design & Sculpt': 'lesson-type-design-sculpt',
+            'Dynamic Design': 'lesson-type-dynamic-design',
+            'Moderate Pilates': 'lesson-type-moderate-pilates',
+            'Senior Design': 'lesson-type-senior-design',
+            'Core Strength': 'lesson-type-core-strength',
+            'Aerobic & Dynamic Design': 'lesson-type-aerobic-dynamic-design',
+            'Aerobic & Design': 'lesson-type-aerobic-design',
+            'Strength & Fat Burn': 'lesson-type-strength-fat-burn',
+            'Feldenkrais': 'lesson-type-feldenkrais',
+            'Pilates Rehab': 'lesson-type-pilates-rehab',
+            'Pilates & Stretch': 'lesson-type-pilates-stretch',
+            'Kung Fu': 'lesson-type-kung-fu',
+            'Design & Pilates': 'lesson-type-design-pilates',
+            'Design HIT': 'lesson-type-design-hit',
+            'Abdominal Rehab': 'lesson-type-abdominal-rehab',
+            'Weight Training': 'lesson-type-weight-training',
+            'Kickboxing / HIT': 'lesson-type-kickboxing-hit'
         };
-        return typeMap[type] || 'lesson-type-default'; // Added a default
+        return typeMap[type] || 'lesson-type-default'; // Added default
     };
 
     // Determine if the lesson is full
     const isFull = registeredCount >= maxParticipants;
     const capacityPercentage = Math.min((registeredCount / maxParticipants) * 100, 100);
 
-    // Get registration status for AllLessons context
-    const getRegistrationStatus = (lessonStartDateStr) => {
+    // Determine registration status based on lesson time
+    const getRegistrationStatus = (lessonScheduledAtStr) => {
         const now = new Date();
-        const startDate = new Date(lessonStartDateStr);
+        const scheduledDate = new Date(lessonScheduledAtStr); // This is UTC date from server
+
         const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-        if (startDate < now) {
-            return 'closed';
-        } else if (startDate > oneWeekFromNow) {
-            return 'not_open_yet';
+        if (isNaN(scheduledDate.getTime())) {
+            console.error("Invalid scheduled_at date string:", lessonScheduledAtStr);
+            return 'invalid_date';
+        }
+
+        if (scheduledDate < now) {
+            return 'closed'; // Lesson has passed (comparing UTC times)
+        } else if (scheduledDate > oneWeekFromNow) {
+            return 'not_open_yet'; // Registration not open yet (more than a week in advance)
         } else {
-            return 'open';
+            return 'open'; // Registration is open
         }
     };
 
     const regStatus = getRegistrationStatus(lesson.scheduled_at);
 
-    // Determine which action button/status to show
+    // Determine which action button/status to display for clients
     const renderActionButton = () => {
+        // Only clients can see join/cancel buttons
+        if (currentRole !== 'client') {
+            return null;
+        }
+
         if (regStatus === 'closed') {
             return (
                 <div className="status-closed">
@@ -67,7 +91,7 @@ const LessonCard = ({ lesson, onJoin, onCancel, isJoined, onWaitlist, registered
                         <span>Cancel</span>
                     </button>
                 );
-            } else if (onWaitlist) {
+            } else if (isOnWaitlist) {
                 return (
                     <button className="btn btn-cancel-waitlist" onClick={(e) => { e.stopPropagation(); onCancel(lesson.id); }}>
                         <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="10 8 16 12 10 16"></polyline></svg>
@@ -92,13 +116,40 @@ const LessonCard = ({ lesson, onJoin, onCancel, isJoined, onWaitlist, registered
         }
     };
 
+    // Display admin/secretary actions with icon-only buttons
+    const renderSecretaryActions = (isExpandedView) => {
+        if (currentRole === 'secretary') {
+            // Secretary actions available only for 'open' or 'upcoming' lessons
+            if (regStatus === 'closed') {
+                return (
+                    <div className="secretary-actions status-closed">
+                        <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        <span>Closed</span>
+                    </div>
+                );
+            }
+
+            return (
+                <div className={isExpandedView ? "secretary-actions-expanded" : "secretary-actions-compact"}>
+                    <button className="btn-icon btn-edit" onClick={(e) => { e.stopPropagation(); onEdit(lesson); }} title="Edit Lesson">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                    <button className="btn-icon btn-delete" onClick={(e) => { e.stopPropagation(); onDelete(lesson.id); }} title="Delete Lesson">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    </button>
+                </div>
+            );
+        }
+        return null;
+    };
+
     return (
         <div
-            className={`lesson-card ${isJoined ? 'joined' : ''} ${onWaitlist ? 'waitlist' : ''} ${isExpanded ? 'expanded' : ''}`}
-            onClick={() => setIsExpanded(!isExpanded)} // Toggle expansion on card click
+            className={`lesson-card ${isJoined ? 'joined' : ''} ${isOnWaitlist ? 'waitlist' : ''} ${isExpanded ? 'expanded' : ''}`}
+            onClick={() => setIsExpanded(!isExpanded)} // Toggle expand state on card click
         >
             <div className={`lesson-type-header ${getLessonTypeClass(lesson.lesson_type)}`}>
-                {lesson.lesson_type}
+                {lesson.lesson_type} {/* This displays the actual name from DB */}
             </div>
 
             <div className="lesson-basic-details">
@@ -107,13 +158,21 @@ const LessonCard = ({ lesson, onJoin, onCancel, isJoined, onWaitlist, registered
                         <circle cx="12" cy="12" r="10" />
                         <polyline points="12,6 12,12 16,14" />
                     </svg>
-                    <span>{new Date(lesson.scheduled_at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span>
+                        {/* Display time in local timezone for the user */}
+                        {new Date(lesson.scheduled_at).toLocaleTimeString('en-US', { // Using 'en-US' or 'he-IL' is fine, just ensure timeZone is NOT set to 'UTC'
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false,
+                            // timeZone: 'UTC' IS INTENTIONALLY OMITTED HERE
+                        })}
+                    </span>
                 </div>
-                {!isExpanded && ( // Only show button when not expanded
-                    <div className="lesson-action-compact">
-                        {renderActionButton()}
-                    </div>
-                )}
+                {/* Display role-based actions and expansion state */}
+                <div className="lesson-action-compact">
+                    {currentRole === 'client' && renderActionButton()}
+                    {currentRole === 'secretary' && !isExpanded && renderSecretaryActions(false)} {/* Only show secretary actions when not expanded */}
+                </div>
             </div>
 
             {isExpanded && (
@@ -136,15 +195,25 @@ const LessonCard = ({ lesson, onJoin, onCancel, isJoined, onWaitlist, registered
                         <span>Capacity: {registeredCount} / {maxParticipants}</span>
                     </div>
 
+                    <div className="lesson-info-item">
+                        <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                        </svg>
+                        {/* Access instructor name via lesson.Instructor, which is included from backend */}
+                        <span>Coach: {lesson.Instructor ? `${lesson.Instructor.first_name} ${lesson.Instructor.last_name}` : 'N/A'}</span>
+                    </div>
+
                     <div className="capacity-bar">
                         <div
                             className={`capacity-fill ${isFull ? 'full' : ''}`}
                             style={{ width: `${capacityPercentage}%` }}
                         ></div>
                     </div>
-                    
+
                     <div className="lesson-actions-expanded">
-                        {renderActionButton()}
+                        {currentRole === 'client' && renderActionButton()}
+                        {currentRole === 'secretary' && renderSecretaryActions(true)} {/* Always show secretary actions when expanded */}
                     </div>
                     <button className="btn btn-close-card" onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}>
                         <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>

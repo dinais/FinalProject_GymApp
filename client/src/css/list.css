@@ -1,133 +1,390 @@
-/* src/list.css */
+/* General List Container Styles */
 .list-container {
     padding: 20px;
+    background-color: #f8f8f8;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
     max-width: 1200px;
-    margin: 20px auto;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    text-align: right; /* יישור לימין לטקסט בעברית */
+    margin: 40px auto;
+    direction: ltr; /* Ensure LTR direction for this container */
 }
 
-/* סגנון הכותרת - מבוסס על gym-lessons.css */
 .header {
     text-align: center;
-    margin-bottom: 40px;
-    position: relative;
-    padding-bottom: 10px;
+    margin-bottom: 30px;
 }
 
 .main-title {
-    font-size: 2.8em;
-    color: #333;
-    margin-bottom: 10px;
+    font-size: 2.8rem;
     font-weight: 700;
+    color: #1A1A1A;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px; /* Space between text and emoji */
 }
 
 .subtitle {
-    font-size: 1.2em;
+    font-size: 1.2rem;
     color: #666;
-    margin-top: 5px;
+    font-weight: 400;
 }
 
 .add-button {
-    background-color: #007bff; /* כחול */
+    background-color: #C1A492;
     color: white;
     border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
+    padding: 12px 25px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 1.1em;
-    margin-bottom: 20px;
-    transition: background-color 0.3s ease;
-    display: block; /* כדי לקבל רוחב מלא לכפתור */
-    margin-right: auto; /* ליישור לימין */
-    margin-left: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: block; /* Make it a block element to center with margin auto */
+    margin: 0 auto 30px auto; /* Center the button */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .add-button:hover {
-    background-color: #0056b3;
+    background-color: #8B735E;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
 }
 
-
-.list-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    background-color: #fff;
-    border: 1px solid #ddd;
-    direction: rtl; /* כיוון טקסט בטבלה מימין לשמאל */
+/* User Cards Grid Layout */
+.user-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Responsive grid */
+    gap: 25px;
+    padding: 20px 0;
 }
 
-.list-table th, .list-table td {
-    padding: 12px 15px;
+/* User Card Styling */
+.user-card {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 25px;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     border: 1px solid #eee;
-    text-align: right; /* יישור לימין */
+    position: relative;
+    overflow: hidden;
 }
 
-.list-table th {
-    background-color: #eef;
-    color: #333;
-    font-weight: bold;
+.user-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
-.list-table tbody tr:nth-child(even) {
-    background-color: #f6f6f6;
+.inactive-user {
+    opacity: 0.7;
+    background-color: #fcebeb; /* Light red background for inactive */
+    border-color: #f44336; /* Red border for inactive */
 }
 
-.list-table tbody tr:hover {
-    background-color: #e0e0e0;
-    cursor: pointer;
+.inactive-user::before {
+    content: 'INACTIVE';
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background-color: #F44336;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    transform: rotate(5deg);
+    z-index: 5;
 }
 
-.edit-btn, .delete-btn {
-    background-color: #007bff;
+
+.user-avatar-placeholder {
+    width: 100px;
+    height: 100px;
+    background-color: #E0E0E0;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3.5rem;
+    color: #8B735E;
+    margin-bottom: 20px;
+    border: 3px solid #C1A492;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.user-details {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.user-name {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1A1A1A;
+    margin-bottom: 10px;
+    word-break: break-word; /* Prevents long names from overflowing */
+}
+
+.user-status-tag {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.user-status-tag.active {
+    background-color: #E8F5E9; /* Light green */
+    color: #388E3C; /* Dark green */
+}
+
+.user-status-tag.inactive {
+    background-color: #FFEBEE; /* Light red */
+    color: #D32F2F; /* Dark red */
+}
+
+.user-info-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Stack items on small screens */
+    gap: 8px;
+    margin-top: 15px;
+    text-align: left; /* Align info items to the left */
+}
+
+.user-info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    color: #555;
+    word-break: break-word; /* Ensure long text wraps */
+}
+
+.user-info-item .svg-inline--fa {
+    color: #8B735E; /* Icon color */
+    font-size: 1.1rem;
+    width: 18px; /* Fixed width for icons */
+    text-align: center;
+}
+
+.user-address {
+    font-style: italic;
+    font-size: 0.9rem;
+    color: #777;
+    line-height: 1.4;
+}
+
+/* Action Buttons */
+.user-actions {
+    display: flex;
+    flex-wrap: wrap; /* Allow buttons to wrap */
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    margin-top: auto; /* Pushes actions to the bottom of the card */
+}
+
+.action-btn {
+    background-color: #8B735E;
     color: white;
     border: none;
-    padding: 8px 12px;
-    border-radius: 4px;
+    padding: 10px 15px;
+    border-radius: 7px;
     cursor: pointer;
-    font-size: 0.9em;
-    margin-left: 5px; /* מרווח בין כפתורים */
-    transition: background-color 0.3s ease;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    flex-grow: 1; /* Allow buttons to grow to fill space */
+    min-width: 120px; /* Minimum width for buttons */
 }
 
-.delete-btn {
-    background-color: #dc3545;
+.action-btn .svg-inline--fa {
+    font-size: 1rem;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.edit-btn {
+    background-color: #2196F3; /* Blue */
 }
 
 .edit-btn:hover {
-    background-color: #0056b3;
+    background-color: #1976D2;
+}
+
+.delete-btn { /* For removing client role */
+    background-color: #F44336; /* Red */
 }
 
 .delete-btn:hover {
-    background-color: #c82333;
+    background-color: #D32F2F;
 }
 
-.loading-message, .unauthorized-message, .no-data-message {
+.deactivate-btn { /* For deactivating coach role */
+    background-color: #FF9800; /* Orange */
+}
+
+.deactivate-btn:hover {
+    background-color: #FB8C00;
+}
+
+.activate-btn { /* For activating coach role */
+    background-color: #4CAF50; /* Green */
+}
+
+.activate-btn:hover {
+    background-color: #388E3C;
+}
+
+
+/* No Data Message */
+.no-data-message {
     text-align: center;
-    padding: 20px;
-    font-size: 1.2em;
-    color: #555;
-    direction: rtl;
+    font-size: 1.3rem;
+    color: #777;
+    padding: 50px 20px;
+    background-color: #f0f0f0;
+    border-radius: 10px;
+    margin-top: 30px;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.unauthorized-message {
-    color: #dc3545;
-    font-weight: bold;
+/* Loading Message */
+.loading-message {
+    text-align: center;
+    font-size: 1.3rem;
+    color: #8B735E;
+    padding: 50px 20px;
+    margin-top: 30px;
 }
 
-.spinner {
-    border: 4px solid rgba(0, 0, 0, 0.1);
-    border-top: 4px solid #007bff;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    animation: spin 1s linear infinite;
-    margin: 10px auto;
+/* src/css/list.css */
+
+/* ... existing styles ... */
+
+.list-controls {
+    display: flex;
+    justify-content: space-between; /* Distribute items with space between them */
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 15px; /* Space between search input and add button */
+    flex-wrap: wrap; /* Allow items to wrap on smaller screens */
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.search-input {
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    width: 100%; /* Take full width on small screens */
+    max-width: 300px; /* Max width for larger screens */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: border-color 0.3s ease;
+}
+
+.search-input:focus {
+    border-color: #8B735E; /* Highlight on focus */
+    outline: none;
+}
+
+/* Adjust add-button for better alignment if needed */
+.add-button {
+    /* ... existing add-button styles ... */
+    padding: 10px 20px;
+    /* You might want to adjust width if it's too wide on small screens */
+}
+
+/* Optional: Media queries for responsiveness */
+@media (max-width: 600px) {
+    .list-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .search-input {
+        margin-bottom: 15px; /* Add space below search input when stacked */
+        max-width: none; /* Allow it to take full width */
+    }
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+    .user-info-grid {
+        grid-template-columns: 1fr 1fr; /* Two columns on larger screens */
+    }
+    .user-address {
+        grid-column: span 2; /* Address spans both columns */
+    }
+}
+
+@media (max-width: 767px) {
+    .list-container {
+        padding: 15px;
+        margin: 20px auto;
+    }
+
+    .main-title {
+        font-size: 2.2rem;
+        flex-direction: column; /* Stack emoji and text */
+        gap: 5px;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .add-button {
+        padding: 10px 20px;
+        font-size: 1rem;
+        margin-bottom: 20px;
+    }
+
+    .user-cards-grid {
+        grid-template-columns: 1fr; /* Single column on mobile */
+        gap: 20px;
+    }
+
+    .user-card {
+        padding: 20px;
+    }
+
+    .user-avatar-placeholder {
+        width: 80px;
+        height: 80px;
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+
+    .user-name {
+        font-size: 1.5rem;
+    }
+
+    .user-info-item {
+        font-size: 0.9rem;
+    }
+
+    .user-actions {
+        flex-direction: column; /* Stack buttons vertically on small screens */
+        gap: 8px;
+    }
+
+    .action-btn {
+        width: 100%; /* Full width buttons */
+        padding: 12px 15px;
+        font-size: 0.9rem;
+    }
 }
