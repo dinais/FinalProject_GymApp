@@ -5,7 +5,7 @@ async function getMessagesByUserId(req, res, next) {
   try {
     const userIdFromToken = req.user.id;
     const userIdFromParams = parseInt(req.params.userId, 10);
-    const role = req.query.role; // ✅ קחי את הרול מה-query
+    const role = req.query.role; 
 
     if (isNaN(userIdFromParams)) {
       return res.status(400).json({ message: 'User ID לא חוקי' });
@@ -15,7 +15,7 @@ async function getMessagesByUserId(req, res, next) {
       return res.status(403).json({ message: 'אין לך הרשאה לצפות בהודעות של משתמש אחר' });
     }
 
-    const messages = await messagesManager.getMessagesByUserId(userIdFromParams, role); // ✅ שלחי גם את הרול
+    const messages = await messagesManager.getMessagesByUserId(userIdFromParams, role); 
     res.json(messages);
   } catch (err) {
     next(err);

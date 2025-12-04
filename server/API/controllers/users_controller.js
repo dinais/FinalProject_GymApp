@@ -2,8 +2,6 @@
 const user_manager = require('../../BL/user_manager');
 const jwt = require('jsonwebtoken');
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../../.env') });
-
-// הרשמת משתמש חדש
 exports.registerUser = async (req, res) => {
     console.log('--- Debugging registerUser Controller ---');
     console.log('Request body received in controller:', JSON.stringify(req.body, null, 2));
@@ -13,26 +11,16 @@ exports.registerUser = async (req, res) => {
         
         let actualRoleName = null;
 
-        // ✅ שינוי כאן: קודם כל בדוק אם roleName קיים, אם לא, בדוק roles.
-        if (userData.roleName) { // אם ה-Frontend שלח roleName (כפי שנראה בלוג המקורי)
+        if (userData.roleName) { 
             actualRoleName = userData.roleName;
         } else if (userData.roles && Array.isArray(userData.roles) && userData.roles.length > 0) {
-            // אם ה-Frontend שלח roles (מערך)
             actualRoleName = userData.roles[0];
         } 
-        // הערה: אם ה-Frontend יכול לשלוח roles שהוא מחרוזת בודדת, הוסף כאן בדיקה:
-        // else if (userData.roles && typeof userData.roles === 'string') {
-        //     actualRoleName = userData.roles;
-        // }
-
-        // וודא ש-actualRoleName אכן קיים
+ 
         if (!actualRoleName) {
             console.warn('role (roleName or roles array) is missing or empty.');
             return res.status(400).json({ error: 'חובה לציין את התפקיד עבור המשתמש החדש (roleName או roles).' });
         }
-        
-        // הגדר את roleName ב-userData עבור ה-user_manager, שמצפה לשם השדה הספציפי הזה
-        // זה גם יחליף את 'roles' אם הוא נשלח במקור, כדי שה-BL תמיד תקבל 'roleName'
         userData.roleName = actualRoleName; 
 
         const newUserResult = await user_manager.registerUser(userData);
@@ -72,42 +60,37 @@ exports.registerUser = async (req, res) => {
     }
 };
 
-// כניסת משתמש
 exports.loginUser = async (req, res) => {
     try {
-        console.log("קיבלתי בקשה ל־/login");
         const { email, password } = req.body;
         const result = await user_manager.login({ email, password });
 
         if (!result.succeeded) {
-            // טיפול בהודעות שגיאה ספציפיות מה-BL
             if (result.error.includes('אינו פעיל') || result.error.includes('אין לך תפקידים פעילים')) {
-                return res.status(403).json({ message: result.error }); // 403 Forbidden
+                return res.status(403).json({ message: result.error }); 
             }
             if (result.error.includes('הוגדרה סיסמה') || result.error.includes('אימייל או סיסמה שגויים')) {
-                return res.status(401).json({ message: result.error }); // 401 Unauthorized
+                return res.status(401).json({ message: result.error });
             }
-            // שגיאות אחרות מה-BL
-            return res.status(400).json({ message: result.error }); // 400 Bad Request
+            return res.status(400).json({ message: result.error }); 
         }
 
         const { accessToken, refreshToken, user } = result.data;
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // true ב-production (https), false בפיתוח
-            sameSite: 'Lax', // או 'None' אם ה-frontend בדומין אחר עם secure:true
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 ימים
+            secure: process.env.NODE_ENV === 'production', 
+            sameSite: 'Lax', 
+            maxAge: 7 * 24 * 60 * 60 * 1000 
         });
 
-        res.json({ accessToken, user }); // החזר גם את ה-user ל־React אם צריך
+        res.json({ accessToken, user }); 
     } catch (err) {
         console.error('Error in loginUser:', err);
-        res.status(500).json({ message: err.message || 'Login failed' }); // שגיאת שרת כללית במקרה של תקלה לא צפויה
+        res.status(500).json({ message: err.message || 'Login failed' }); 
     }
 };
 
-// שליפת כל המשתמשים (נגיש רק למזכירה/אדמין דרך הראוטר)
 exports.getAllUsers = async (req, res) => {
     try {
         const includeInactive = req.query.includeInactive === 'true';
@@ -119,7 +102,6 @@ exports.getAllUsers = async (req, res) => {
     }
 };
 
-// שליפת משתמש לפי ID
 exports.getUserById = async (req, res) => {
     try {
         const userId = req.params.id;
@@ -150,7 +132,6 @@ exports.getUserById = async (req, res) => {
     }
 };
 
-// עדכון משתמש (נגיש רק למזכירה/אדמין דרך הראוטר)
 exports.updateUser = async (req, res) => {
     try {
         const userId = req.params.id;
@@ -164,7 +145,6 @@ exports.updateUser = async (req, res) => {
         }
     } catch (err) {
         console.error('Error in updateUser:', err);
-        // טיפול בשגיאות ספציפיות מ-BL (לדוגמה, תפקיד לא קיים)
         if (err.message.includes('תפקיד')) {
             return res.status(400).json({ error: err.message });
         }
@@ -172,11 +152,9 @@ exports.updateUser = async (req, res) => {
     }
 };
 
-// **שינוי: פונקציית מחיקה רכה (soft delete)**
 exports.softDeleteUser = async (req, res) => {
     try {
         const userId = req.params.id;
-        // 💡 שינוי כאן: קבל את roleName מ-req.query
         const { roleName } = req.query; 
 
         console.log(`[UserController] Request to soft delete role '${roleName}' for user ${userId} using query parameter.`);
@@ -207,7 +185,6 @@ exports.softDeleteUser = async (req, res) => {
     }
 };
 
-// **פונקציה חדשה: הפעלת משתמש מחדש**
 exports.activateUser = async (req, res) => {
     try {
         const userId = req.params.id;
@@ -224,8 +201,6 @@ exports.activateUser = async (req, res) => {
     }
 };
 
-
-// שליפת מתאמנים בלבד (עבור המזכירה)
 exports.getTrainees = async (req, res) => {
     try {
         const includeInactive = req.query.includeInactive === 'true';
@@ -237,7 +212,6 @@ exports.getTrainees = async (req, res) => {
     }
 };
 
-// **פונקציה חדשה: שליפת מאמנים בלבד (עבור המזכירה/אדמין)**
 exports.getCoaches = async (req, res) => {
     try {
         const includeInactive = req.query.includeInactive === 'true';
@@ -249,19 +223,6 @@ exports.getCoaches = async (req, res) => {
     }
 };
 
-
-// שליפת כל התפקידים (עבור המזכירה/אדמין לצורך ניהול)
-exports.getAllRoles = async (req, res) => {
-    try {
-        const roles = await user_manager.getAllRoles();
-        res.json(roles);
-    } catch (err) {
-        console.error('Error in getAllRoles:', err);
-        res.status(500).json({ error: 'נכשל לשלוף את רשימת התפקידים', details: err.message });
-    }
-};
-
-// רענון טוקן גישה
 exports.refreshToken = async (req, res) => {
     try {
         const token = req.cookies.refreshToken;
@@ -273,23 +234,16 @@ exports.refreshToken = async (req, res) => {
         const result = await user_manager.refreshAccessToken(token);
 
         if (!result.succeeded) {
-            // כל השגיאות מה-BL הן שגיאות הרשאה (403) או אימות (401),
-            // כולל טוקן פג תוקף, לא פעיל, או ללא תפקידים.
-            // במקרה של שגיאה, ננקה את הקוקי כדי למנוע לולאה אינסופית של ניסיונות רענון כושלים.
             res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Lax' });
-            // בדיקת סוג השגיאה לקבלת קוד סטטוס מדויק יותר
             if (result.error.includes('משתמש לא נמצא')) {
-                return res.status(404).json({ error: result.error }); // Not Found
+                return res.status(404).json({ error: result.error }); 
             }
-            return res.status(403).json({ error: result.error || 'רענון טוקן לא תקין או כשל.' }); // Forbidden
+            return res.status(403).json({ error: result.error || 'רענון טוקן לא תקין או כשל.' }); 
         }
-
         const { accessToken } = result.data;
-
         return res.json({ accessToken });
     } catch (err) {
         console.error('Error in refreshToken:', err);
-        // טיפול בשגיאות מ-jsonwebtoken עצמו (לדוגמה, אם ה-verify נכשל)
         if (err.name === 'TokenExpiredError') {
             res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Lax' });
             return res.status(403).json({ error: 'רענון טוקן פג תוקף, אנא התחבר מחדש.' });
@@ -302,8 +256,7 @@ exports.refreshToken = async (req, res) => {
     }
 };
 
-// **שינוי: פונקציה לכניסה ראשונה/קביעת סיסמה/הפניה ללוגין**
-exports.initialLoginOrPasswordSetup = async (req, res) => { // 👈 שינוי שם הפונקציה
+exports.initialLoginOrPasswordSetup = async (req, res) => { 
     try {
         const { email, password } = req.body;
         console.log(`[Controller] Received request to initialLoginOrPasswordSetup for email: ${email}`);
@@ -312,32 +265,31 @@ exports.initialLoginOrPasswordSetup = async (req, res) => { // 👈 שינוי �
             return res.status(400).json({ message: 'חובה למלא אימייל וסיסמה.' });
         }
 
-        const result = await user_manager.handleInitialLoginOrPasswordSetup({ email, password }); // 👈 שינוי שם המתודה ב-BL
+        const result = await user_manager.handleInitialLoginOrPasswordSetup({ email, password });
 
         if (!result.succeeded) {
-            // טיפול בהודעות שגיאה מה-BL
             if (result.error.includes('אינו קיים')) {
-                return res.status(404).json({ message: result.error }); // 404 Not Found
+                return res.status(404).json({ message: result.error }); 
             }
-            if (result.error.includes('כבר רשום')) { // הודעה למשתמש שכבר יש לו סיסמה
-                 return res.status(409).json({ message: result.error, redirectToLogin: true }); // 409 Conflict, עם דגל להפניה
+            if (result.error.includes('כבר רשום')) { 
+                 return res.status(409).json({ message: result.error, redirectToLogin: true }); 
             }
             
-            return res.status(500).json({ message: result.error || 'שגיאה פנימית בשרת.' }); // שגיאות כלליות
+            return res.status(500).json({ message: result.error || 'שגיאה פנימית בשרת.' }); 
         }
 
-        // הצלחה - הוגדרה סיסמה והמשתמש התחבר אוטומטית
         res.status(200).json({
             message: result.message,
             accessToken: result.accessToken, 
             refreshToken: result.refreshToken,
-            user: result.user // 👈 מחזירים פרטי משתמש
+            user: result.user 
         });
     } catch (err) {
-        console.error('Error in initialLoginOrPasswordSetup Controller:', err); // 👈 שינוי שם
+        console.error('Error in initialLoginOrPasswordSetup Controller:', err); 
         res.status(500).json({ message: err.message || 'שגיאה פנימית בשרת.' });
     }
 };
+
 exports.getUsersByRole = async (req, res) => {
   try {
     const role = req.params.role;
@@ -349,6 +301,7 @@ exports.getUsersByRole = async (req, res) => {
     res.status(500).json({ succeeded: false, error: 'שגיאה באחזור המשתמשים לפי תפקיד', details: error.message });
   }
 };
+
 exports.getUsersByEmails = async (req, res) => {
   try {
     const { emails } = req.body;

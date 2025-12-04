@@ -300,7 +300,7 @@ function AllLessons() {
                           onCancel={handleCancel}
                           isJoined={clientLessonIds.includes(lesson.id)}
                           isOnWaitlist={waitlistIds.includes(lesson.id)}
-                          numOfRegistered={numOfRegistered[lesson.id] || 0}
+                          numOfRegistered={lesson.current_participants || 0}
                           maxParticipants={lesson.max_participants}
                           currentRole={currentRole}
                           onEdit={handleEditLessonClick}

@@ -2,21 +2,18 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../../.env') });
-
-// ייבוא סלקטיבי של כל פונקציה מה-DAL
 const {
     findUserByIdNumberOrEmail,
     findUserByIdDetailed,
     findUserByEmailForLogin,
     createUser,
-    updateUser, // זו פונקציה מה-DAL
+    updateUser,
     findRoleByName,
     findOrCreateUserRole,
     updateUserRoleStatus,
     countActiveUserRoles,
     findAllUsersWithRoles,
     findUsersByRole,
-    getAllRoles, // זו פונקציה מה-DAL
     upsertUserPassword,
     findAllUserRoles,
     updateUserGlobalStatus,
@@ -36,40 +33,34 @@ const registerUser = async (userData) => {
 
         if (existingUser) {
             console.log(`[UserManager] User ${existingUser.id_number} already exists. Updating details.`);
-            await updateUser(existingUser.id, userData); // קריאה לפונקציית DAL
+            await updateUser(existingUser.id, userData); 
             newUser = existingUser;
             isExistingUserUpdated = true;
         } else {
             console.log('[UserManager] Creating new user.');
-            newUser = await createUser(userData); // קריאה לפונקציית DAL
+            newUser = await createUser(userData); 
         }
 
-        const roleObject = await findRoleByName(userData.roleName); // קריאה לפונקציית DAL
+        const roleObject = await findRoleByName(userData.roleName);
         if (!roleObject) {
             throw new Error(`תפקיד '${userData.roleName}' לא נמצא במערכת.`);
         }
 
-        const [userRoleEntry, created] = await findOrCreateUserRole(newUser.id, roleObject.id, true); // קריאה לפונקציית DAL
+        const [userRoleEntry, created] = await findOrCreateUserRole(newUser.id, roleObject.id, true); 
 
         if (!created && !userRoleEntry.is_active) {
             console.log(`[UserManager] Reactivating role '${userData.roleName}' for user ${newUser.id}.`);
-            await updateUserRoleStatus(newUser.id, roleObject.id, true); // קריאה לפונקציית DAL
+            await updateUserRoleStatus(newUser.id, roleObject.id, true);
         } else if (created) {
             console.log(`[UserManager] Created new user-role link for user ${newUser.id} with role '${userData.roleName}'.`);
         } else {
             console.log(`[UserManager] User ${newUser.id} already has active role '${userData.roleName}'.`);
         }
-
-        // וודא שהמשתמש פעיל גלובלית אם התפקיד נוסף/הופעל מחדש
         if (!newUser.is_active) {
             console.log(`[UserManager] Activating user ${newUser.id} globally as a new role was added/activated.`);
-            await updateUserGlobalStatus(newUser.id, true); // קריאה לפונקציית DAL
+            await updateUserGlobalStatus(newUser.id, true); 
         }
-
-        // שליפה סופית של המשתמש כולל כל התפקידים המעודכנים (פעילים ולא פעילים)
-        // כדי להחזיר את האובייקט המלא ביותר.
-        const finalUser = await findUserByIdDetailed(newUser.id, true); // קריאה לפונקציית DAL
-        // יש צורך למפות את התפקידים הפעילים בלבד להחזרה ללקוח
+        const finalUser = await findUserByIdDetailed(newUser.id, true); 
         const activeRolesForFinalUser = finalUser.roles
             ? finalUser.roles.filter(r => r.UserRole?.is_active).map(r => r.role)
             : [];
@@ -89,7 +80,7 @@ const registerUser = async (userData) => {
 const login = async ({ email, password: enteredPassword }) => {
     try {
         console.log('--- Starting login process for:', email, '---');
-        const foundUser = await findUserByEmailForLogin(email); // קריאה לפונקציית DAL
+        const foundUser = await findUserByEmailForLogin(email); 
 
         console.log('Found User (before filtering roles):', JSON.stringify(foundUser, null, 2));
 
@@ -131,7 +122,6 @@ const login = async ({ email, password: enteredPassword }) => {
             };
         }
 
-        // שליפת תפקידים פעילים בלבד
         const activeUserRoles = foundUser.roles
             ? foundUser.roles.filter(r => r.UserRole && r.UserRole.is_active).map(r => r.role)
             : [];
@@ -201,9 +191,7 @@ const login = async ({ email, password: enteredPassword }) => {
 };
 
 const getAllUsers = async (includeInactive = false) => {
-    const users = await findAllUsersWithRoles(includeInactive); // קריאה לפונקציית DAL
-
-    // מיפוי אובייקטי Sequelize לאובייקטים פשוטים וסינון תפקידים פעילים להחזרה
+    const users = await findAllUsersWithRoles(includeInactive); 
     return users.map(userInstance => {
         const roles = userInstance.roles || [];
         const activeRoles = userInstance.is_active
@@ -214,18 +202,13 @@ const getAllUsers = async (includeInactive = false) => {
 };
 
 const getUserById = async (id, includeInactive = false) => {
-    // נשלוף את כל התפקידים כדי שה-BL יוכל לטפל בלוגיקה של סינון תפקידים פעילים,
-    // גם אם המשתמש לא פעיל גלובלית.
-    const userInstance = await findUserByIdDetailed(id, true); // קריאה לפונקציית DAL
-
+    const userInstance = await findUserByIdDetailed(id, true); 
     if (!userInstance) {
         return null;
     }
-
     if (!includeInactive && !userInstance.is_active) {
         return null;
     }
-
     const roles = userInstance.roles || [];
     const activeRoles = userInstance.is_active
         ? roles.filter(r => r.UserRole?.is_active).map(r => r.role)
@@ -234,39 +217,36 @@ const getUserById = async (id, includeInactive = false) => {
     return { ...userInstance.dataValues, roles: activeRoles, is_active: userInstance.is_active };
 };
 
-const updateUserLogic = async (id, updateData) => { // שם פנימי, ייצוא בשם "updateUser"
-    const userInstance = await findUserByIdDetailed(id, true); // קריאה לפונקציית DAL
+const updateUserLogic = async (id, updateData) => { 
+    const userInstance = await findUserByIdDetailed(id, true); 
     if (!userInstance) {
         return false;
     }
 
     if (updateData.password) {
         const hashedPassword = await bcrypt.hash(updateData.password, 10);
-        await upsertUserPassword(id, hashedPassword); // קריאה לפונקציית DAL
-        delete updateData.password; // חשוב למחוק כדי לא לנסות לעדכן בשדה לא קיים במודל user
+        await upsertUserPassword(id, hashedPassword); 
+        delete updateData.password; 
     }
 
     if (updateData.roleName) {
-        const roleToUpdate = await findRoleByName(updateData.roleName); // קריאה לפונקציית DAL
+        const roleToUpdate = await findRoleByName(updateData.roleName);
         if (!roleToUpdate) {
             throw new Error(`תפקיד '${updateData.roleName}' לא קיים`);
         }
-        await findOrCreateUserRole(id, roleToUpdate.id, true); // קריאה לפונקציית DAL
-        delete updateData.roleName; // חשוב למחוק
+        await findOrCreateUserRole(id, roleToUpdate.id, true);
+        delete updateData.roleName; 
     }
 
-    // טיפול בשינוי סטטוס is_active גלובלי של המשתמש והשפעתו על התפקידים
     if (Object.prototype.hasOwnProperty.call(updateData, 'is_active')) {
         const newIsActiveStatus = updateData.is_active;
-        // נקבל את כל הקישורים בין המשתמש לתפקידים ונעדכן את כולם לסטטוס הגלובלי החדש
-        const allUserRoleEntries = await findAllUserRoles(id); // קריאה לפונקציית DAL
+        const allUserRoleEntries = await findAllUserRoles(id); 
         for (const entry of allUserRoleEntries) {
-            await updateUserRoleStatus(id, entry.role_id, newIsActiveStatus); // קריאה לפונקציית DAL
+            await updateUserRoleStatus(id, entry.role_id, newIsActiveStatus);
         }
-        // הסטטוס הגלובלי של המשתמש יעודכן יחד עם שאר הנתונים למטה
     }
 
-    const updated = await updateUser(id, updateData); // קריאה לפונקציית DAL המיובאת
+    const updated = await updateUser(id, updateData); 
     return updated;
 };
 
@@ -274,7 +254,7 @@ const softDeleteUser = async (userId, roleName) => {
     try {
         console.log(`[UserManager] Attempting soft delete for user ${userId}, role: ${roleName}`);
 
-        const existingUser = await findUserByIdDetailed(userId, true); // קריאה לפונקציית DAL
+        const existingUser = await findUserByIdDetailed(userId, true); 
         if (!existingUser) {
             console.warn(`[UserManager] User ${userId} not found.`);
             throw new Error('משתמש לא נמצא.');
@@ -285,7 +265,7 @@ const softDeleteUser = async (userId, roleName) => {
             throw new Error('שם התפקיד חסר עבור פעולת המחיקה הרכה.');
         }
 
-        const roleToDeactivateObj = await findRoleByName(roleName); // קריאה לפונקציית DAL
+        const roleToDeactivateObj = await findRoleByName(roleName); 
         if (!roleToDeactivateObj) {
             console.warn(`[UserManager] Role '${roleName}' not found in roles table.`);
             throw new Error(`תפקיד '${roleName}' לא קיים במערכת.`);
@@ -302,26 +282,24 @@ const softDeleteUser = async (userId, roleName) => {
 
         if (!userRoleEntry.UserRole.is_active) {
             console.log(`[UserManager] Role '${roleName}' for user ${userId} is already inactive.`);
-            return true; // כבר לא פעיל, אין צורך בשינוי
+            return true; 
         }
 
-        console.log(`[UserManager] Deactivating role '${roleName}' for user ${userId} in user_role table.`);
-        await updateUserRoleStatus(userId, roleToDeactivateObj.id, false); // קריאה לפונקציית DAL
+        await updateUserRoleStatus(userId, roleToDeactivateObj.id, false);
 
-        const remainingActiveRolesCount = await countActiveUserRoles(userId); // קריאה לפונקציית DAL
+        const remainingActiveRolesCount = await countActiveUserRoles(userId); 
 
         if (remainingActiveRolesCount === 0) {
             if (existingUser.is_active) {
                 console.log(`[UserManager] User ${userId} has no active roles left. Deactivating user globally.`);
-                await updateUserGlobalStatus(userId, false); // קריאה לפונקציית DAL
+                await updateUserGlobalStatus(userId, false); 
             } else {
                 console.log(`[UserManager] User ${userId} already inactive globally and has no active roles.`);
             }
         } else {
-            // אם עדיין יש תפקידים פעילים, וודא שהמשתמש פעיל גלובלית
             if (!existingUser.is_active) {
                 console.log(`[UserManager] User ${userId} still has active roles. Activating user globally.`);
-                await updateUserGlobalStatus(userId, true); // קריאה לפונקציית DAL
+                await updateUserGlobalStatus(userId, true); 
             } else {
                 console.log(`[UserManager] User ${userId} still has active roles. Global status remains active.`);
             }
@@ -339,7 +317,7 @@ const softDeleteUser = async (userId, roleName) => {
 const activateUser = async (userId) => {
     try {
         console.log(`[activateUser Debug] - Attempting to activate user ${userId}.`);
-        const existingUser = await findUserByIdDetailed(userId, true); // קריאה לפונקציית DAL
+        const existingUser = await findUserByIdDetailed(userId, true); 
 
         if (!existingUser) {
             console.warn(`[activateUser Debug] - User ${userId} not found for activation.`);
@@ -351,14 +329,11 @@ const activateUser = async (userId) => {
             return true;
         }
 
-        await updateUserGlobalStatus(userId, true); // קריאה לפונקציית DAL
-        console.log(`[activateUser Debug] - User ${userId} activated globally.`);
-
-        // הפעל מחדש את כל הקישורים בטבלת user_role עבור משתמש זה
-        const allUserRoles = await findAllUserRoles(userId); // קריאה לפונקציית DAL
+        await updateUserGlobalStatus(userId, true); 
+        const allUserRoles = await findAllUserRoles(userId); 
         for (const ur of allUserRoles) {
             if (!ur.is_active) {
-                await updateUserRoleStatus(userId, ur.role_id, true); // קריאה לפונקציית DAL
+                await updateUserRoleStatus(userId, ur.role_id, true); 
                 console.log(`[activateUser Debug] - Role ${ur.role_id} for user ${userId} activated.`);
             }
         }
@@ -389,16 +364,11 @@ const getUsersByRole = async (roleName, includeInactiveGlobalUsers = false) => {
     console.log('--- End Debugging getUsersByRole ---');
     return filteredUsers;
 };
-
-const getAllRolesLogic = async () => { // שם פנימי, ייצוא בשם "getAllRoles"
-    return await getAllRoles(); // קריאה לפונקציית DAL
-};
-
 const refreshAccessToken = async (refreshToken) => {
     try {
         const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-        const foundUser = await findUserByIdDetailed(decoded.id, true); // קריאה לפונקציית DAL
+        const foundUser = await findUserByIdDetailed(decoded.id, true);
         if (!foundUser) {
             return { succeeded: false, error: 'משתמש לא נמצא עבור רענון טוקן' };
         }
@@ -439,8 +409,7 @@ const handleInitialLoginOrPasswordSetup = async ({ email, password: enteredPassw
     try {
         console.log(`[UserManager] Starting handleInitialLoginOrPasswordSetup process for email: ${email}`);
 
-        // 1. קרא למשתמש באמצעות DAL.findUserByEmailForLogin, שכבר כולל את פרטי הסיסמה
-        const foundUser = await findUserByEmailForLogin(email); // 👈 שינוי כאן
+        const foundUser = await findUserByEmailForLogin(email); 
 
         if (!foundUser) {
             console.log(`[UserManager] User with email ${email} not found.`);
@@ -450,68 +419,44 @@ const handleInitialLoginOrPasswordSetup = async ({ email, password: enteredPassw
                 data: null
             };
         }
-
-        // 2. במקום לקרוא ל-findPasswordByUserId (שלא קיימת), בדוק את foundUser.password.hash
-        // אם למשתמש יש כבר רשומת סיסמה פעילה
-        if (foundUser.password && foundUser.password.hash) { // 👈 שינוי כאן
-            // משתמש קיים ועם סיסמה - צריך להתחבר דרך מסך לוגין
-            console.log(`[UserManager] User ${foundUser.id} already has a password. Redirecting to login.`);
+        if (foundUser.password && foundUser.password.hash) { 
             return {
                 succeeded: false,
-                error: 'משתמש זה כבר רשום במערכת. אנא התחבר דרך מסך ההתחברות.', // הודעה ל-UI
+                error: 'משתמש זה כבר רשום במערכת. אנא התחבר דרך מסך ההתחברות.',
                 data: null
             };
         } else {
-            // משתמש קיים וללא סיסמה (או רשומת סיסמה ריקה) - קובעים סיסמה ומכניסים אותו לאתר
             console.log(`[UserManager] No password found for user ${foundUser.id}. Setting new password and logging in.`);
 
             const hashedPassword = await bcrypt.hash(enteredPassword, 10);
-            await upsertUserPassword(foundUser.id, hashedPassword); // קריאה לפונקציית DAL
-
-            // נפעיל את המשתמש אם הוא לא פעיל
+            await upsertUserPassword(foundUser.id, hashedPassword); 
             if (!foundUser.is_active) {
-                await updateUserGlobalStatus(foundUser.id, true); // קריאה לפונקציית DAL
+                await updateUserGlobalStatus(foundUser.id, true); 
                 console.log(`[UserManager] User ${foundUser.id} activated globally after setting password.`);
             }
-
-            // נפעיל גם את התפקידים שלו אם לא פעילים (במידה ויש לו תפקידים)
-            const allUserRoles = await findAllUserRoles(foundUser.id); // קריאה לפונקציית DAL
+            const allUserRoles = await findAllUserRoles(foundUser.id);
             for (const ur of allUserRoles) {
                 if (!ur.is_active) {
-                    await updateUserRoleStatus(foundUser.id, ur.role_id, true); // קריאה לפונקציית DAL
+                    await updateUserRoleStatus(foundUser.id, ur.role_id, true); 
                     console.log(`[UserManager] Role ${ur.role_id} for user ${foundUser.id} activated.`);
                 }
             }
-
-            // *** חשוב: מבצעים לוגין מלא ומחזירים טוקנים ופרטי משתמש ***
-            // נשלוף את המשתמש שוב כדי לקבל את כל התפקידים והפרטים המעודכנים לאחר ההפעלה
-            // findUserByIdDetailed כולל את התפקידים ואת הסיסמה
-            const userWithDetails = await findUserByIdDetailed(foundUser.id); // 👈 שינוי כאן: וודא שזה מביא את ה-roles
-
-            // נשלח רק תפקידים פעילים ב-token ובאובייקט המשתמש המוחזר
+            const userWithDetails = await findUserByIdDetailed(foundUser.id); 
             const activeUserRolesForToken = userWithDetails.roles
                 ? userWithDetails.roles.filter(r => r.UserRole && r.UserRole.is_active).map(r => r.role)
                 : [];
 
             const accessToken = jwt.sign(
-                { id: userWithDetails.id, roles: activeUserRolesForToken }, // 👈 חשוב: לשלוח מערך תפקידים
-                process.env.JWT_SECRET || process.env.ACCESS_TOKEN_SECRET, // השתמש ב-JWT_SECRET כברירת מחדל
-                { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '1h' } // השתמש ב-JWT_ACCESS_EXPIRES_IN כברירת מחדל
+                { id: userWithDetails.id, roles: activeUserRolesForToken }, 
+                process.env.JWT_SECRET || process.env.ACCESS_TOKEN_SECRET, 
+                { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '1h' } 
             );
 
             const refreshToken = jwt.sign(
                 { id: userWithDetails.id },
                 process.env.REFRESH_TOKEN_SECRET,
-                { expiresIn: process.env.REFRESH_TOKEN_EXPIRY || '7d' } // השתמש ב-REFRESH_TOKEN_EXPIRY כברירת מחדל
+                { expiresIn: process.env.REFRESH_TOKEN_EXPIRY || '7d' } 
             );
-
-            // שמירת ה-refreshToken בדאטה בייס
-            // וודא שיש לך פונקציה upsertRefreshToken ב-DAL שלך, ואם לא, הוסף אותה.
-            // (נראה שחסר ב-DAL ששלחת, אבל הוא חייב להיות אם אתה קורא לו)
-            // אם אתה שומר רענון טוקן בבסיס הנתונים:
-            // await upsertRefreshToken(userWithDetails.id, refreshToken); // אם קיים ב-DAL
-
-            console.log(`[UserManager] Password set and user ${foundUser.id} logged in successfully.`);
 
             return {
                 succeeded: true,
@@ -524,7 +469,7 @@ const handleInitialLoginOrPasswordSetup = async ({ email, password: enteredPassw
                     last_name: userWithDetails.last_name,
                     email: userWithDetails.email,
                     phone: userWithDetails.phone,
-                    roles: activeUserRolesForToken, // 👈 מחזירים רק תפקידים פעילים
+                    roles: activeUserRolesForToken, 
                     street_name: userWithDetails.street_name,
                     house_number: userWithDetails.house_number,
                     apartment_number: userWithDetails.apartment_number,
@@ -557,7 +502,6 @@ const fetchUsersByRoleSimple = async (role) => {
 const fetchUsersByEmails = async (emailList) => {
   if (!emailList || emailList.length === 0) return [];
   
-  // אם רוצים להוסיף לוגיקה נוספת לפני או אחרי השאילתה - כאן המקום
 
   const users = await getUsersByEmails(emailList);
   return users;
@@ -571,10 +515,8 @@ module.exports = {
     softDeleteUser,
     activateUser,
     getUsersByRole,
-    getAllRoles: getAllRolesLogic, 
     refreshAccessToken,
     handleInitialLoginOrPasswordSetup,
     fetchUsersByRoleSimple ,
-    // פונקציה זו מיועדת לשימוש פנימי בלבד, לא ל-API
     fetchUsersByEmails
 };

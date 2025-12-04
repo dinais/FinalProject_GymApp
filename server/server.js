@@ -4,17 +4,11 @@ const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const userRouter = require('./API/routes/users_router');
 const lessonRouter = require('./API/routes/lesson_router');
-const roleRouter = require('./API/routes/role_router');
 const messagesRouter = require('./API/routes/messages_router');
 const { protect } = require('./API/middleware/auth_middleware');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-// בדיקות סביבה
-console.log('DB_USER:', process.env.DB_USER);
-console.log('DB_PASS:', process.env.DB_PASS);
-console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'Exists' : 'Missing');
 
 // Middleware
 app.use((req, res, next) => {
@@ -40,7 +34,6 @@ app.use(protect);
 // Routes
 app.use('/api/users', userRouter);
 app.use('/api/lessons', lessonRouter);
-app.use('/api/roles', roleRouter);
 app.use('/api/messages', messagesRouter);
 
 app.get('/', (req, res) => {

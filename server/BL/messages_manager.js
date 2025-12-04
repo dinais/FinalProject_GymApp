@@ -1,12 +1,11 @@
 // API/BL/messages_manager.js
 const messagesDAL = require('../DAL/messages_dal');
-const { sendEmail } = require('../services/mailer'); // נתיב נכון לקובץ שלך
-const usersDAL = require('../DAL/user_dal'); // הנחתי שיש לך DAL כזה לשליפת מייל
+const { sendEmail } = require('../services/mailer'); 
+const usersDAL = require('../DAL/user_dal'); 
+
 async function getMessagesByUserId(userId, role) {
   return await messagesDAL.getMessagesByUserId(userId, role);
 }
-
-
 const emailRelevantTitles = [
   'Unable to Instruct a Specific Class',
   'Available to Replace a Class',
@@ -32,12 +31,8 @@ async function sendMessage(data) {
       message,
       created_at: new Date()
     });
-
-    // שליחת מייל אם הכותרת מתאימה
     if (emailRelevantTitles.includes(title)) {
-      const recipient = await usersDAL.getUserEmailsById(recipient_id); // נניח שמחזיר { email: '...' }
-      console.log(recipient[0].email);
-
+      const recipient = await usersDAL.getUserEmailsById(recipient_id); 
       if (recipient[0].email) {
         await sendEmail(
           recipient[0].email,
@@ -59,9 +54,6 @@ async function sendMessage(data) {
 async function markMessageAsRead(messageId) {
   return await messagesDAL.updateMessageReadStatus(messageId, true);
 };
-
-
-
 
 
 module.exports = {

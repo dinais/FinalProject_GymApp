@@ -1,4 +1,4 @@
-const db = require('../../DB/models'); // טוען את המודלים של Sequelize
+const db = require('../../DB/models'); 
 async function createMessage(data) {
   return await db.message.create(data);
 }

@@ -1,7 +1,5 @@
-// DAL/user_dal.js
 const { user, role: RoleModel, password: PasswordModel, user_role } = require('../../DB/models');
 const { Op } = require('sequelize');
-// DAL/user_dal.js
 module.exports.fetchUsersByRole = async (roleName) => {
   try {
     console.log("Fetching users with role (DAL):", roleName);
@@ -21,7 +19,7 @@ module.exports.fetchUsersByRole = async (roleName) => {
     return users;
   } catch (error) {
     console.error("Error in fetchUsersByRoleSimple:", error);
-    throw error; // מעביר את השגיאה הלאה כדי שה-controller ידע לטפל בה
+    throw error; 
   }
 };
 
@@ -51,7 +49,7 @@ module.exports.findUserByIdDetailed = async (userId, includeAllRoles = false) =>
     };
 
     if (!includeAllRoles) {
-        includeOptions.through.where = { is_active: true }; // רק תפקידים פעילים בקישור
+        includeOptions.through.where = { is_active: true }; 
     }
 
     return await user.findByPk(userId, {
@@ -153,7 +151,7 @@ module.exports.findUsersByRole = async (roleName, includeInactiveGlobalUsers = f
             through: {
                 model: user_role,
                 attributes: ['is_active'],
-                where: { is_active: true } // חשוב: סינון עבור קישורים פעילים בלבד לתפקיד הספציפי
+                where: { is_active: true } 
             }
         }]
     });
@@ -184,7 +182,6 @@ module.exports.updateUserGlobalStatus = async (userId, isActive) => {
 };
 
 module.exports.getUsersByEmails = async (emailList) => {
-  // החיפוש ב-SQL לפי רשימת האימיילים
   return await user.findAll({
     where: {
       email: emailList

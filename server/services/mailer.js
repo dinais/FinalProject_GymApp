@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 
-require('dotenv').config(); // בתחילת הקובץ
+require('dotenv').config(); 
 
 const transporter = nodemailer.createTransport({
     host: 'smtp-relay.brevo.com',
@@ -15,8 +15,8 @@ const transporter = nodemailer.createTransport({
 
 async function sendEmail(toEmail, subject, text) {
     const mailOptions = {
-        from: '"GymApp" <gymapp.noreply@gmail.com>', // המייל שיופיע כשולח (אפשר להגדיר פה את המייל שלך)
-        to: toEmail,
+        from: '"GymApp" <gymapp.noreply@gmail.com>', 
+        to: toEmail,              
         subject: subject,
         text: text
     };

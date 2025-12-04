@@ -217,7 +217,6 @@ const deleteLessonById = async (lessonId) => {
     return deletedRowsCount > 0;
 };
 
-// --- Favorite DAL Functions ---
 const createFavorite = async (userId, lessonId) => {
     console.log(`DAL-createFavorite: Adding favorite for user ${userId}, lesson ${lessonId}`);
     try {

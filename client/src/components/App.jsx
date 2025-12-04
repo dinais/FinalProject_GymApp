@@ -11,7 +11,7 @@ import TraineesList from './TraineesList';
 import Login from './Login';
 import Register from './Register';
 import TrainingProgram from './TrainingProgram';
-
+import AboutGym from './AboutGym';
 export const CurrentUser = createContext({});
 export const Error = createContext({});
 
@@ -85,6 +85,7 @@ const App = () => {
                       <Route index element={<Navigate to="all-lessons" replace />} />
                       <Route path="my-lessons" element={<MyLessons />} />
                       <Route path="all-lessons" element={<AllLessons />} />
+                       <Route path="about" element={<AboutGym />} />
                       <Route path="messages" element={<Messages />} />
                       <Route path="profile" element={<Profile />} />
                       {currentRole === 'coach' && <Route path="training-program" element={<TrainingProgram />} />}

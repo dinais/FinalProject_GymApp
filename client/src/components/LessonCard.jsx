@@ -4,6 +4,7 @@ const LessonCard = ({ lesson, onJoin, onCancel, isJoined, isOnWaitlist, numOfReg
     const [isExpanded, setIsExpanded] = useState(false);
     const isFull = numOfRegistered >= maxParticipants;
     const capacityPercentage = Math.min((numOfRegistered / maxParticipants) * 100, 100);
+    console.log(numOfRegistered, maxParticipants);
     
         const isMyLessonCoach = currentRole === 'coach' && currentUser && lesson.instructor_id === currentUser.id;
     const getRegistrationStatus = (lessonScheduledAtStr) => {

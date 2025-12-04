@@ -138,7 +138,6 @@ exports.deleteLesson = async (req, res) => {
     }
 };
 
-// --- New Favorite Controller Functions ---
 exports.addFavorite = async (req, res) => {
     const userId = req.user.id;
     const lessonId = parseInt(req.params.lessonId);
@@ -164,7 +163,7 @@ exports.removeFavorite = async (req, res) => {
 };
 
 exports.getUserFavoriteLessons = async (req, res) => {
-    const userId = req.user.id; // Get userId from authenticated token
+    const userId = req.user.id; 
     console.log(`Fetching favorite lessons for user ${userId} starting from week ${req.query.weekStart}`);
     
     const weekStart = req.query.weekStart;

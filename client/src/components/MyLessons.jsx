@@ -14,14 +14,12 @@ function MyLessons() {
     const getStartOfWeek = (offset = 0) => {
         const now = new Date();
         const localToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        // Calculate Sunday of the current week (local time)
         const localSunday = new Date(localToday.setDate(localToday.getDate() - localToday.getDay()));
 
-        // Apply week offset
         localSunday.setDate(localSunday.getDate() + offset * 7);
-        localSunday.setHours(0, 0, 0, 0); // Set to start of the day
+        localSunday.setHours(0, 0, 0, 0); 
 
-        return localSunday.toISOString(); // Return as ISO string (UTC)
+        return localSunday.toISOString(); 
     };
 
     const fetchMyLessons = async () => {
@@ -44,14 +42,11 @@ function MyLessons() {
                 console.log(res.data);
             }
             if (res.succeeded) {
-                // אם res.data הוא מערך - נשמור אותו, אחרת אם זה אובייקט - ננסה לקחת ממנו את המערך
                 if (Array.isArray(res.data)) {
                     setMyLessons(res.data);
                 } else if (res.data && Array.isArray(res.data.data)) {
-                    // מקרה נדיר שבו res.data זה אובייקט עם שדה data, למשל
                     setMyLessons(res.data.data);
                 } else {
-                    // כל מצב אחר, ננרמל למערך ריק
                     setMyLessons([]);
                 }
             } else {
@@ -85,7 +80,7 @@ function MyLessons() {
             const endpoint = `lessons/${lessonId}/favorite`;
             const res = shouldAdd ? await postRequest(endpoint, {}) : await deleteRequest(endpoint);
             if (res.succeeded) {
-                fetchMyLessons(); // Re-fetch my lessons to update the view
+                fetchMyLessons(); 
             } else {
                 setErrorMessage(res.error || 'Failed to update favorite status.');
             }

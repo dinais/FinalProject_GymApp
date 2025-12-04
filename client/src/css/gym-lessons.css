@@ -224,33 +224,33 @@ p, span, div, button, input, textarea {
 }
 
 /* Specific lesson type colors (pastel palette) */
-.lesson-type-crossfit { background-color: #FFD1DC; } /* Pastel Pink */
-.lesson-type-yoga { background-color: #D2F7D2; } /* Light Pastel Green */
-.lesson-type-hiit { background-color: #FFE6CC; } /* Light Pastel Orange */
-.lesson-type-pilates { background-color: #CCE5FF; } /* Light Pastel Blue */
-.lesson-type-boxing { background-color: #E6CCFF; } /* Light Pastel Purple */
-.lesson-type-spinning { background-color: #CCF7F7; } /* Light Pastel Cyan */
-.lesson-type-zumba { background-color: #FFCCE5; } /* Light Pastel Magenta */
-.lesson-type-powerlifting { background-color: #E0D2CB; } /* Light Pastel Brown */
-.lesson-type-default { background-color: #EBEBEB; } /* Very Light Grey */
+.lesson-type-crossfit { background-color: #e5cc8c; } /* Pastel Pink */
+.lesson-type-yoga { background-color: #e5cc8c; } /* Light Pastel Green */
+.lesson-type-hiit { background-color: #e5cc8c; } /* Light Pastel Orange */
+.lesson-type-pilates { background-color: #e5cc8c; } /* Light Pastel Blue */
+.lesson-type-boxing { background-color: #e5cc8c; } /* Light Pastel Purple */
+.lesson-type-spinning { background-color: #e5cc8c; } /* Light Pastel Cyan */
+.lesson-type-zumba { background-color: #e5cc8c; } /* Light Pastel Magenta */
+.lesson-type-powerlifting { background-color: #e5cc8c; } /* Light Pastel Brown */
+.lesson-type-default { background-color: #e5cc8c; } /* Very Light Grey */
 /* Added custom classes from lesson types found in the JS with pastel colors */
-.lesson-type-design-sculpt { background-color: #F7E0A5; } /* Pastel Gold */
-.lesson-type-dynamic-design { background-color: #B5EAD7; } /* Pastel Mint */
-.lesson-type-moderate-pilates { background-color: #C7CEEA; } /* Pastel Lavender */
-.lesson-type-senior-design { background-color: #D3E0DC; } /* Pastel Sage */
-.lesson-type-core-strength { background-color: #FFC9B6; } /* Pastel Peach */
-.lesson-type-aerobic-dynamic-design { background-color: #F0B8B8; } /* Pastel Rose */
-.lesson-type-aerobic-design { background-color: #E0EEDD; } /* Pastel Celadon */
-.lesson-type-strength-fat-burn { background-color: #F4E8D7; } /* Pastel Cream */
-.lesson-type-feldenkrais { background-color: #E2F0CB; } /* Pastel Lime */
-.lesson-type-pilates-rehab { background-color: #E6E6FA; } /* Lavender Blush */
-.lesson-type-pilates-stretch { background-color: #ADD8E6; } /* Light Blue */
-.lesson-type-kung-fu { background-color: #D8BFD8; } /* Thistle */
-.lesson-type-design-pilates { background-color: #FFE4B5; } /* Moccasin */
-.lesson-type-design-hit { background-color: #FFDEAD; } /* Navajo White */
-.lesson-type-abdominal-rehab { background-color: #F5DEB3; } /* Wheat */
-.lesson-type-weight-training { background-color: #F5F5DC; } /* Beige */
-.lesson-type-kickboxing-hit { background-color: #F0F8FF; } /* Alice Blue */
+.lesson-type-design-sculpt { background-color: #e5cc8c; } /* Pastel Gold */
+.lesson-type-dynamic-design { background-color: #e5cc8c; } /* Pastel Mint */
+.lesson-type-moderate-pilates { background-color: #e5cc8c; } /* Pastel Lavender */
+.lesson-type-senior-design { background-color: #e5cc8c; } /* Pastel Sage */
+.lesson-type-core-strength { background-color: #e5cc8c; } /* Pastel Peach */
+.lesson-type-aerobic-dynamic-design { background-color: #e5cc8c; } /* Pastel Rose */
+.lesson-type-aerobic-design { background-color: #e5cc8c; } /* Pastel Celadon */
+.lesson-type-strength-fat-burn { background-color: #e5cc8c; } /* Pastel Cream */
+.lesson-type-feldenkrais { background-color: #e5cc8c; } /* Pastel Lime */
+.lesson-type-pilates-rehab { background-color: #e5cc8c; } /* Lavender Blush */
+.lesson-type-pilates-stretch { background-color: #e5cc8c; } /* Light Blue */
+.lesson-type-kung-fu { background-color: #e5cc8c; } /* Thistle */
+.lesson-type-design-pilates { background-color: #e5cc8c; } /* Moccasin */
+.lesson-type-design-hit { background-color: #e5cc8c; } /* Navajo White */
+.lesson-type-abdominal-rehab { background-color: #e5cc8c; } /* Wheat */
+.lesson-type-weight-training { background-color: #e5cc8c; } /* Beige */
+.lesson-type-kickboxing-hit { background-color: #e5cc8c; } /* Alice Blue */
 
 
 /* Lesson Basic Details (for non-expanded state) */

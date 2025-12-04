@@ -10,13 +10,11 @@ const {
     waiting_list,
     password,
     message
-} = require('../DB/models'); // ודאי שהנתיב ל-DB/models נכון
+} = require('../DB/models');
 
 async function seed() {
     try {
         console.log('🔄 Starting database seed...');
-
-        // 1. Create users with detailed addresses
         const users = await user.bulkCreate([
             {
                 first_name: "David", last_name: "Cohen",
@@ -91,7 +89,7 @@ async function seed() {
         ]);
 
         console.log('✅ User roles created successfully.');
-        
+
         // The lesson schedule by day and time
         const weeklySchedule = {
             Sunday: [
@@ -179,7 +177,7 @@ async function seed() {
                         const lessonDate = new Date(currentSunday);
                         lessonDate.setDate(currentSunday.getDate() + dayIndex);
                         const [hour, minute] = lessonEntry.time.split(':').map(Number);
-                        
+
                         // Set the time components in LOCAL timezone to match the intended schedule
                         lessonDate.setHours(hour, minute, 0, 0);
 
@@ -206,6 +204,38 @@ async function seed() {
             console.log(`✅ Created ${created.length} lessons for 7 weeks range`);
             return created;
         }
+        // ✨ Adding a lesson today with 2 out of 3 participants, excluding dinablack092@gmail.com, including Maya Goldberg
+
+        const today = new Date();
+        today.setHours(14, 0, 0, 0); // למשל שיעור ב־14:00 היום
+        const scheduledAtUTC = today.toISOString(); // לאחסון ב־UTC
+        const lessonDay = daysOfWeek[today.getDay()];
+
+        const limitedLesson = await lesson.create({
+            lesson_type: 'Yoga',
+            day: lessonDay,
+            instructor_id: coach2.id,
+            room_number: 'Room B',
+            max_participants: 3,
+            current_participants: 2,
+            scheduled_at: scheduledAtUTC
+        });
+
+        await lesson_registrations.bulkCreate([
+            {
+                user_id: client2.id, // Maya Goldberg
+                lesson_id: limitedLesson.id,
+                registration_date: new Date()
+            },
+            {
+                user_id: client3.id, // Dana Aviv
+                lesson_id: limitedLesson.id,
+                registration_date: new Date()
+            }
+        ]);
+
+        console.log('✅ Limited yoga lesson added with Maya and Dana, not including Dina.');
+
 
         // 🔥 Adding a manually full lesson (example) - choose a lesson in the current week
         // Note: this date should also be handled carefully for timezone.
@@ -305,39 +335,39 @@ async function seed() {
         console.log('✅ Passwords hashed and stored successfully.');
 
         // 10. הודעות מערכת
-  const now = new Date();
+        const now = new Date();
 
-await message.bulkCreate([
-  {
-    sender_id: coach1.id,
-    recipient_id: client1.id,
-    sender_role: 'coach',
-    recipient_role: 'client',
-    title: 'Lesson Reminder',
-    message: 'Your lesson starts at 18:00. Don’t forget to bring a towel.',
-    created_at: now
-  },
-  {
-    sender_id: secretary.id,
-    recipient_id: coach2.id,
-    sender_role: 'secretary',
-    recipient_role: 'coach',
-    title: 'Schedule Update',
-    message: 'Your Friday lesson has been moved to 10:00.',
-    created_at: now
-  },
-  {
-    sender_id: secretary.id,
-    recipient_id: coach1.id,
-    sender_role: 'secretary',
-    recipient_role: 'coach',
-    title: 'Schedule Update',
-    message: 'Your Friday lesson has been moved to 10:00.',
-    created_at: now
-  }
-]);
+        await message.bulkCreate([
+            {
+                sender_id: coach1.id,
+                recipient_id: client1.id,
+                sender_role: 'coach',
+                recipient_role: 'client',
+                title: 'Lesson Reminder',
+                message: 'Your lesson starts at 18:00. Don’t forget to bring a towel.',
+                created_at: now
+            },
+            {
+                sender_id: secretary.id,
+                recipient_id: coach2.id,
+                sender_role: 'secretary',
+                recipient_role: 'coach',
+                title: 'Schedule Update',
+                message: 'Your Friday lesson has been moved to 10:00.',
+                created_at: now
+            },
+            {
+                sender_id: secretary.id,
+                recipient_id: coach1.id,
+                sender_role: 'secretary',
+                recipient_role: 'coach',
+                title: 'Schedule Update',
+                message: 'Your Friday lesson has been moved to 10:00.',
+                created_at: now
+            }
+        ]);
 
-console.log('✅ Messages with titles inserted successfully.');
+        console.log('✅ Messages with titles inserted successfully.');
 
 
         console.log('✨ Seed data insertion complete! Database is ready. ✨');

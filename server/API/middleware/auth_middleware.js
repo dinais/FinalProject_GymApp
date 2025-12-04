@@ -1,7 +1,7 @@
 // API/middleware/auth_middleware.js
 const jwt = require('jsonwebtoken');
-const { user, role } = require('../../../DB/models'); // ודא נתיב נכון ל-DB/models
-require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') }); // ודא נתיב נכון ל-.env
+const { user, role } = require('../../../DB/models'); 
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') }); 
 
 const protect = async (req, res, next) => {
     console.log('Protect Middleware:', req.method, req.path);
